@@ -902,7 +902,7 @@
 
   document.addEventListener('keydown', (event) => {
     const tag = (event.target && event.target.tagName) || '';
-    if (tag === 'INPUT' && event.target.type === 'text') return;
+    if (tag === 'INPUT' && !/^(range|checkbox|radio|button)$/.test(event.target.type)) return; // typing in a text or search box
     if (tag === 'TEXTAREA') return;
     if (event.ctrlKey && event.shiftKey && event.code === 'KeyD') {
       event.preventDefault();

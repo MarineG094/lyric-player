@@ -97,7 +97,7 @@
     const t = e.target;
     if (t === seek && (key === 'ArrowLeft' || key === 'ArrowRight')) { e.preventDefault(); jump(key === 'ArrowRight' ? 10 : -10); return; }
     if (t && t.tagName === 'TEXTAREA') return;
-    if (t && t.tagName === 'INPUT' && t.type === 'text' && (key === 'ArrowLeft' || key === 'ArrowRight')) return;
+    if (t && t.tagName === 'INPUT' && (t.type === 'text' || t.type === 'search') && (key === 'ArrowLeft' || key === 'ArrowRight')) return;
     e.preventDefault();
     move(key);
   }, true);
