@@ -36,7 +36,7 @@ const NOISE = new Set([
   'audio', 'video', 'the', 'of', 'tilawat', 'tilawah', 'complete', 'emotional', 'heart', 'touching', 'sheikh', 'shaykh', 'qari', 'imam', 'new', 'and',
 ]);
 const KEYWORDS = new Set(['surah', 'sura', 'surat', 'soorah', 'soora', 'surahs', 'ayat', 'ayah', 'ayaat', 'ayatul', 'verse', 'verses']);
-const RECITERS = /alafasy|afasy|afasi|el\s?afasi|m[ia]shar[iy]|mishary|mishari|sheikh|shaykh|sheik\b|الشيخ|القارئ|قارئ|عفاسي|العفاسي|العفاسى|مشاري|مشارى|السديس|الشريم|الحصري|المنشاوي|عبد الباسط|الغامدي|المعيقلي|العجمي|الدوسري|sudais|sudays|shuraim|shuraym|shureim|husary|hussary|minshawi|abdul\s?basit|abdulbasit|ghamdi|ghamidi|dosari|dossary|dosary|shatri|shaatree|ajmi|ajamy|qatami|luhaidan|lahidan|tablawi|rifai|hudhaify|huzaify|juhany|juhani|muaiqly|muaiqli|mueaqly|maher al|saad al ?ghamdi|ayyub|bandar|baleela|yasser al|qari|quran|qur'?an/i;
+const RECITERS = /h[uo](?:dh|th|z|d|t)[aey]+[iy]?f[iy]|الحذيفي|alafasy|afasy|afasi|el\s?afasi|m[ia]shar[iy]|mishary|mishari|sheikh|shaykh|sheik\b|الشيخ|القارئ|قارئ|عفاسي|العفاسي|العفاسى|مشاري|مشارى|السديس|الشريم|الحصري|المنشاوي|عبد الباسط|الغامدي|المعيقلي|العجمي|الدوسري|sudais|sudays|shuraim|shuraym|shureim|husary|hussary|minshawi|abdul\s?basit|abdulbasit|ghamdi|ghamidi|dosari|dossary|dosary|shatri|shaatree|ajmi|ajamy|qatami|luhaidan|lahidan|tablawi|rifai|hudhaify|huzaify|juhany|juhani|muaiqly|muaiqli|mueaqly|maher al|saad al ?ghamdi|ayyub|bandar|baleela|yasser al|qari|quran|qur'?an/i;
 
 // Letter key that ignores spelling variation: "Al-Baqarah", "Baqara", "baqaraa" all collapse to the same thing.
 function key(s) {
@@ -188,7 +188,7 @@ const RECITER_MAP = [
   [/m[ia]shar[iy]|afas[iy]|العفاسي|العفاسى|مشاري|مشارى/i, /afas[iy]|mishar/i], [/sudais|sudays|السديس/i, /sudais|sudays/i], [/shuraim|shuraym|shureim|saud\s*(al|ash)|الشريم/i, /shuraim|shuraym|saud/i],
   [/husary|hussary|husari|الحصري/i, /husar/i], [/minshawi|minshawy/i, /minshaw/i], [/abdul\s?basit|abdulbasit|abdel\s?basit|abd\s?al[\s-]?basit/i, /basit|baset/i],
   [/ghamdi|ghamidi|الغامدي/i, /ghamd|ghamid/i], [/maher|muaiqly|mueaqly|muaiqli/i, /maher|muaiqly|mueaqly/i], [/ajmi|ajamy/i, /ajm/i],
-  [/dosari|dossary|dosary|yasser/i, /dossar|dosar|yasser/i], [/hudhaify|huzaify|hudhayfi/i, /hudhaif|huzaif|hudhayf/i], [/juhany|juhani/i, /juhan/i],
+  [/dosari|dossary|dosary|yasser/i, /dossar|dosar|yasser/i], [/h[uo](?:dh|th|z|d|t)[aey]+[iy]?f[iy]|الحذيفي/i, /h[uo](?:dh|th|z|d|t)[aey]+[iy]?f[iy]|الحذيفي/i], [/juhany|juhani/i, /juhan/i],
   [/shatri|shaatree/i, /shatri|shaatr/i], [/tablawi/i, /tablaw/i], [/ayyub/i, /ayyub|ayub/i], [/bandar|baleela/i, /bandar|balila|baleela/i],
 ];
 
