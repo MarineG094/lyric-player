@@ -59,6 +59,13 @@ old_wait = "const wait = (ms) => new Promise((r) => setTimeout(r, ms));"
 assert old_wait in core_body
 core_body = core_body.replace(old_wait, "const wait = (ms) => native('sleep', { ms }).then(() => undefined);", 1)
 
+# Phone pages have no media title to compare, so "did the song change?" also looks at the song's id in the address.
+a = "title: m ? m.title : '', cur: v ? v.currentTime : 0 });"
+b = "return after.title !== before.title || (before.cur > 6 && after.cur < before.cur - 4);"
+assert a in core_body and b in core_body
+core_body = core_body.replace(a, "title: m ? m.title : '', vid: new URL(location.href).searchParams.get('v') || '', cur: v ? v.currentTime : 0 });", 1)
+core_body = core_body.replace(b, "return (before.vid && after.vid !== before.vid) || after.title !== before.title || (before.cur > 6 && after.cur < before.cur - 4);", 1)
+
 # The desktop code asks the main process for settings; here they come from the native side.
 shim = (root / 'tools/shim.js').read_text(encoding='utf8')
 core = shim.replace('/*__CORE__*/', core_body)

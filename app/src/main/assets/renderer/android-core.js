@@ -258,7 +258,7 @@ ipcMain.handle('player:browse', (_e, show, top) => {
 });
 
 const videoDo = (body) => `(() => { ${PICK_VIDEO} const v = pickVideo(); if (v) { ${body} } })()`;
-const songKey = `(() => { ${PICK_VIDEO} const v = pickVideo(); const m = navigator.mediaSession && navigator.mediaSession.metadata; return JSON.stringify({ href: location.href, title: m ? m.title : '', cur: v ? v.currentTime : 0 }); })()`;
+const songKey = `(() => { ${PICK_VIDEO} const v = pickVideo(); const m = navigator.mediaSession && navigator.mediaSession.metadata; return JSON.stringify({ href: location.href, title: m ? m.title : '', vid: new URL(location.href).searchParams.get('v') || '', cur: v ? v.currentTime : 0 }); })()`;
 const skipToEnd = videoDo('if (isFinite(v.duration) && v.duration > 1) v.currentTime = Math.max(0, v.duration - 0.4);');
 
 const playerApi = (method) => `(() => { const p = document.querySelector('#movie_player'); if (p && typeof p.${method} === 'function') { p.${method}(); return true; } return false; })()`;
@@ -455,7 +455,7 @@ async function trackChanged(wc, before) {
   try {
     const after = JSON.parse(await wc.executeJavaScript(songKey, true));
     if (!before) return true;
-    return after.title !== before.title || (before.cur > 6 && after.cur < before.cur - 4);
+    return (before.vid && after.vid !== before.vid) || after.title !== before.title || (before.cur > 6 && after.cur < before.cur - 4);
   } catch (_) {
     return true; // the page is reloading, so something changed
   }
