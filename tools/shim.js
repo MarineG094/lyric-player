@@ -100,6 +100,18 @@
   };
   const paletteCache = new Map();
 
+  const diagBtn = document.getElementById('btnDiag');
+  if (diagBtn) {
+    diagBtn.addEventListener('click', async () => {
+      const t = document.getElementById('toast');
+      const say = (m) => { if (t) { t.textContent = m; t.hidden = false; setTimeout(() => { t.hidden = true; }, 7000); } };
+      try {
+        const info = await handlers['player:diagnose']();
+        say('Copied. Paste it into your message to me. (' + info + ')');
+      } catch (e) { say('Diagnose failed: ' + e); }
+    });
+  }
+
   window.api = {
     getSettings: async () => loadSettings(),
     setSettings: async (patch) => handlers['settings:set'](null, patch),

@@ -51,6 +51,8 @@ html = html.replace('<link rel="stylesheet" href="style.css">',
                     '<link rel="stylesheet" href="style.css">\n  <link rel="stylesheet" href="android.css">')
 html = html.replace('<script src="app.js"></script>',
                     '<script src="quran.js"></script>\n  <script src="android-core.js"></script>\n  <script src="app.js"></script>')
+html = html.replace('<button id="btnPlaylist"', '<button id="btnDiag" class="ghost" type="button">Diagnose</button>\n        <button id="btnPlaylist"')
+assert 'btnDiag' in html
 assert 'android-core.js' in html and 'android.css' in html
 (out / 'index.html').write_text(html, encoding='utf8')
 
