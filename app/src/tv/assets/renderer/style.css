@@ -371,9 +371,11 @@ button.icon.play svg { width: 26px; height: 26px; }
 /* ---------- fullscreen (no top controls) ---------- */
 #app.immersive { grid-template-rows: 1fr auto; }
 #app.immersive .topbar { display: none; }
-#app.immersive .dock { transition: opacity 0.6s ease; }
+#app.immersive .dock > * { transition: opacity 0.6s ease; }
 #app.immersive.idle { cursor: none; }
-#app.immersive.idle .dock { opacity: 0; pointer-events: none; }
+/* the controls fade when idle, but the Up next strip stays in view */
+#app.immersive.idle .dock { pointer-events: none; }
+#app.immersive.idle .dock > *:not(.upnext) { opacity: 0; }
 .side.left { display: flex; align-items: center; }
 
 /* ---------- no lyrics: the album moves to the middle ---------- */
