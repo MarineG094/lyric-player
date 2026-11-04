@@ -37,7 +37,10 @@ button.icon:hover { background: transparent; }
 @media (orientation: landscape) and (max-height: 560px) {
   .topbar { padding-top: 4px; }
   .stage { padding: 6px 24px 2px; gap: 24px; }
-  .album-box { width: min(100%, 40vh); }
+  .album-col { justify-content: flex-start; gap: 6px; overflow: hidden; }
+  .album-box { width: min(100%, 30vh); flex: none; }
+  .stage.solo .album-box, .stage.intro .album-box { width: min(100%, 30vh); }
+  .song-title { font-size: 18px; }
   .lines { padding: 30vh 8px 40vh 0; }
   .line { font-size: clamp(18px, 3.2vw, 26px); }
   .dock { padding-bottom: 6px; gap: 4px; }
