@@ -851,7 +851,7 @@
     const el = nodes[idx];
     if (el) {
       const top = el.offsetTop - els.lyrics.clientHeight / 2 + el.offsetHeight / 2;
-      els.lyrics.scrollTo({ top: Math.max(0, top), behavior: window.__lpLite ? 'auto' : 'smooth' });
+      els.lyrics.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
     }
   }
 
@@ -1152,7 +1152,8 @@
     state.volume = Number.isFinite(settings.volume) ? settings.volume : 80;
     state.autoFetch = settings.autoFetch !== false;
     state.adBlock = settings.adBlock !== false;
-    state.coverFilter = settings.coverFilter !== false;
+    // The cover check runs an 8 MB image model; a TV stick starts with it off (it can be turned on with the button).
+    state.coverFilter = settings.coverFilter === undefined && window.__lpTv ? false : settings.coverFilter !== false;
     state.coverOverrides = settings.coverOverrides && typeof settings.coverOverrides === 'object' ? settings.coverOverrides : {};
     applyCoverFilterButton();
     applyAds();

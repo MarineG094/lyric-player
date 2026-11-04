@@ -1,7 +1,7 @@
 /* TV extras: remote-control navigation, and "send a link from your phone" (typing on a TV remote is painful). */
 (() => {
   const N = window.LPNative;
-  window.__lpLite = true; // lyrics jump instead of gliding: smooth scrolling is too much for a TV stick
+  window.__lpTv = true;
 
   /* ---- full screen: the menu and the player controls go away, lyrics and cover fill the TV ---- */
   let fsCb = null;
