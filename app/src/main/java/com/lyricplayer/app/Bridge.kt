@@ -45,6 +45,10 @@ class Bridge {
             }
             "http.get" -> pool.execute { Hub.resolve(id, Http.get(args.optString("url"), (args.optJSONObject("headers") ?: JSONObject()).toString())) }
             "art.thumb" -> pool.execute { Hub.resolve(id, Art.thumb(args.optString("url"), args.optInt("size", 24))) }
+            "fullscreen" -> Hub.main.post {
+                Hub.activity?.setFullscreen(args.optBoolean("on"))
+                Hub.resolve(id, "true")
+            }
             "adblock" -> {
                 AdBlock.enabled = args.optBoolean("on", true)
                 Hub.store.merge(JSONObject().put("adBlock", AdBlock.enabled).toString())

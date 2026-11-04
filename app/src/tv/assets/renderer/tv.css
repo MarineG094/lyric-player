@@ -1,5 +1,5 @@
 /* Big-screen layout for the TV app (loaded after style.css). Everything is sized to read from a sofa and to be reachable with a remote. */
-#btnFull, #btnFolder, #btnBrowse, .cover-toggle, .side.left, .side.right { display: none; }
+#btnFull, #btnPhoneFull, #btnFolder, #btnBrowse, .cover-toggle, .side.left, .side.right { display: none; }
 #app { height: 100vh; padding: 0 clamp(16px, 3vw, 56px); }
 .topbar { padding: 26px 0 0; }
 .top-actions { gap: 12px; flex-wrap: wrap; }

@@ -50,3 +50,8 @@ button.icon:hover { background: transparent; }
   .line { font-size: clamp(18px, 3.2vw, 26px); }
   .dock { padding-bottom: 6px; gap: 4px; }
 }
+
+/* Full screen (phone): the top bar goes, the controls fade after a few seconds, a tap brings them back with an Exit button. */
+#app.immersive .side.left { display: flex; justify-content: center; }
+#app.immersive #btnFull { display: inline-flex; }
+#app.immersive .lines { padding-top: 22vh; }

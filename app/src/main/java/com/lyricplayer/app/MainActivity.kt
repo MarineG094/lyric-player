@@ -13,7 +13,11 @@ import android.view.KeyEvent
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.TextView
+import android.view.WindowManager
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 
 class MainActivity : Activity() {
     private lateinit var root: FrameLayout
@@ -66,6 +70,20 @@ class MainActivity : Activity() {
         back.visibility = if (on) View.VISIBLE else View.GONE
     }
 
+    /** Full screen on the phone: hides the status and navigation bars (a swipe from the edge shows them briefly) and keeps the screen on. */
+    fun setFullscreen(on: Boolean) {
+        val c = WindowInsetsControllerCompat(window, window.decorView)
+        if (on) {
+            c.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            c.hide(WindowInsetsCompat.Type.systemBars())
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            if (Build.VERSION.SDK_INT >= 28) window.attributes = window.attributes.apply { layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES }
+        } else {
+            c.show(WindowInsetsCompat.Type.systemBars())
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+    }
+
     /** Media keys on a TV remote (and keyboards / headsets). */
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         val pos = (Hub.last?.posMs ?: 0L) / 1000.0
@@ -89,12 +107,10 @@ class MainActivity : Activity() {
             back.performClick()
             return
         }
-        if (resources.getBoolean(R.bool.is_tv)) {
-            // On TV, Back first leaves full screen; only then does it send the app to the background.
-            Hub.ui?.evaluateJavascript("(window.__lpBack && window.__lpBack()) === true") { if (it != "true") moveTaskToBack(true) }
-            return
-        }
-        moveTaskToBack(true) // leave the music playing
+        // Back first leaves full screen (TV and phone); only then does it send the app to the background.
+        val ui = Hub.ui
+        if (ui == null) { moveTaskToBack(true); return }
+        ui.evaluateJavascript("(window.__lpBack && window.__lpBack()) === true") { if (it != "true") moveTaskToBack(true) } // otherwise leave the music playing
     }
 
     override fun onStart() {

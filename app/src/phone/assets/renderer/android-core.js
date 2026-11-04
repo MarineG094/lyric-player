@@ -46,6 +46,9 @@
     return { status: r.status, ok: r.status >= 200 && r.status < 300, json: async () => JSON.parse(r.body) };
   };
 
+  let fsOn = false;
+  let fsCb = null;
+  window.__lpBack = () => { if (fsOn) { window.api.fullscreen(false); return true; } return false; }; // Back leaves full screen first
   const stateCallbacks = [];
   function emit(s) {
     for (const cb of stateCallbacks) { try { cb(s); } catch (_) { /* ignore */ } }
@@ -939,6 +942,7 @@ ipcMain.handle('lyrics:fetch', async (_event, { title, track, artist, author, du
       if (modes !== lastModes) { lastModes = modes; N.modes(modes); }
     } catch (_) { /* ignore */ }
   };
+  document.addEventListener('DOMContentLoaded', () => { const b = document.getElementById('btnPhoneFull'); if (b) b.addEventListener('click', () => window.api.fullscreen(true)); });
   window.__lpSleep = (ms) => native('sleep', { ms }).then(() => undefined);
   window.__lpCmd = (name, arg) => handlers['player:cmd'](null, name, arg);
 
@@ -1000,8 +1004,13 @@ ipcMain.handle('lyrics:fetch', async (_event, { title, track, artist, author, du
         return p;
       } catch (_) { return null; }
     },
-    fullscreen: async () => false,
-    onFullscreen: () => {},
+    fullscreen: async (on) => {
+      fsOn = on == null ? !fsOn : !!on;
+      native('fullscreen', { on: fsOn }); // hides the phone's status and navigation bars
+      if (fsCb) fsCb(fsOn);
+      return fsOn;
+    },
+    onFullscreen: (cb) => { fsCb = cb; },
     player: {
       diagnose: () => handlers['player:diagnose'](),
       open: (id, videoId) => handlers['player:open'](null, id, videoId),
