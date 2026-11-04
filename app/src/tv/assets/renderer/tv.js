@@ -10,6 +10,28 @@
     return s;
   };
 
+  /* ---- full screen: the menu and the player controls go away, lyrics and cover fill the TV ---- */
+  let fsCb = null;
+  let fsOn = false;
+  window.api.onFullscreen = (cb) => { fsCb = cb; }; // the page's own full-screen styling (menu hidden, controls fade after 3 s)
+  const setFs = (on) => {
+    fsOn = on;
+    if (fsCb) fsCb(on);
+    setTimeout(() => { const b = document.getElementById('btnPlay'); if (b) b.focus(); }, 60);
+  };
+  window.api.fullscreen = async (on) => { setFs(on == null ? !fsOn : !!on); return fsOn; };
+  window.__lpBack = () => { if (fsOn) { setFs(false); return true; } return false; }; // Back leaves full screen first
+  const actions = document.querySelector('.top-actions');
+  if (actions) {
+    const b = document.createElement('button');
+    b.id = 'btnTvFull';
+    b.type = 'button';
+    b.className = 'ghost';
+    b.textContent = 'Full screen';
+    b.addEventListener('click', () => setFs(true));
+    actions.insertBefore(b, actions.firstChild);
+  }
+
   /* ---- send a link from the phone ---- */
   const card = document.querySelector('#overlay .card');
   const hint = document.createElement('p');

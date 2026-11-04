@@ -89,6 +89,11 @@ class MainActivity : Activity() {
             back.performClick()
             return
         }
+        if (resources.getBoolean(R.bool.is_tv)) {
+            // On TV, Back first leaves full screen; only then does it send the app to the background.
+            Hub.ui?.evaluateJavascript("(window.__lpBack && window.__lpBack()) === true") { if (it != "true") moveTaskToBack(true) }
+            return
+        }
         moveTaskToBack(true) // leave the music playing
     }
 
