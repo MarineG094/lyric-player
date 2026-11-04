@@ -457,11 +457,31 @@
     if (state.artUrl) evaluateCover(state.artUrl);
   });
 
+  /* If the cover picture fails to load (a one-off network hiccup, or the server refusing one size), try again,
+     then smaller sizes, then the video's own thumbnail, instead of leaving a broken image. */
+  let artFallbacks = [];
+  els.artImg.addEventListener('error', () => {
+    const next = artFallbacks.shift();
+    if (next) {
+      setTimeout(() => { if (state.artUrl) els.artImg.src = next; }, 600);
+    } else if (state.artUrl) {
+      els.artImg.hidden = true;
+      els.artEmpty.hidden = false;
+    }
+  });
+  function artChain(url) {
+    const vid = state.snap && state.snap.videoId;
+    const sized = (size) => url.replace(/=w\d+-h\d+.*$/, size);
+    const out = [url + '#retry', sized('=w544-h544'), sized('=w226-h226'), vid ? `https://i.ytimg.com/vi/${vid}/hqdefault.jpg` : '', sized('')];
+    return out.filter((u, i) => u && u !== url && out.indexOf(u) === i);
+  }
+
   function setArt(url) {
     state.artUrl = url;
     applyPalette(url);
     evaluateCover(url);
     if (url) {
+      artFallbacks = artChain(url);
       els.artImg.src = url;
       els.artImg.hidden = false;
       els.artEmpty.hidden = true;
