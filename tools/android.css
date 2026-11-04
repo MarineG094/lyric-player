@@ -55,3 +55,16 @@ button.icon:hover { background: transparent; }
 #app.immersive .side.left { display: flex; justify-content: center; }
 #app.immersive #btnFull { display: inline-flex; }
 #app.immersive .lines { padding-top: 22vh; }
+
+/* Full screen in landscape: no top bar, so the cover and title sit in the middle of the left side, bigger. */
+#app.immersive { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+@media (orientation: landscape) and (max-height: 560px) {
+  #app.immersive .album-col { justify-content: center; align-items: center; height: 100%; text-align: center; }
+  #app.immersive .album-box { width: min(100%, 52vh); }
+  #app.immersive .meta { text-align: center; }
+  #app.immersive .stage { padding-top: 2px; padding-bottom: 2px; }
+}
+
+/* In full screen the controls float over the content (fading out when idle), so the cover and lyrics use the whole screen. */
+#app.immersive { position: relative; grid-template-rows: minmax(0, 1fr); }
+#app.immersive .dock { position: absolute; left: 0; right: 0; bottom: 0; padding-top: 28px; background: linear-gradient(to top, rgba(0, 0, 0, 0.62), transparent); z-index: 5; }
