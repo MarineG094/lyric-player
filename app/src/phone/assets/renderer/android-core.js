@@ -661,9 +661,9 @@ const LYRICS_OVH = process.env.LYRICS_OVH_BASE || 'https://api.lyrics.ovh';
 const QURAN_API = process.env.QURAN_BASE || 'https://api.alquran.cloud';
 const QURAN_COM = process.env.QURAN_COM_BASE || 'https://api.quran.com/api/v4';
 
-async function jsonGet(label, url, headers) {
+async function jsonGet(label, url, headers, timeoutMs) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 8000);
+  const timer = setTimeout(() => controller.abort(), timeoutMs || 8000);
   try {
     const res = await fetch(url, {
       headers: { 'User-Agent': `Lyric Player/${app.getVersion()} (personal desktop player)`, ...(headers || {}) },
@@ -747,19 +747,25 @@ async function quranReciters() {
   return list;
 }
 
+let quranNote = ''; // why the last Quran lookup had no timing, shown to the person
 async function quranTimes(hit, title, artist) {
   try {
-    const id = Quran.pickReciter(await quranReciters(), `${title || ''} ${artist || ''}`);
-    if (!id) return null;
-    const data = await jsonGet('Quran.com', `${QURAN_COM}/chapter_recitations/${id}/${hit.surah}`);
+    const list = await quranReciters();
+    if (!list.length) { quranNote = 'the reciter list was empty'; return null; }
+    const id = Quran.pickReciter(list, `${title || ''} ${artist || ''}`);
+    if (!id) { quranNote = 'this reciter is not in the Quran.com list'; return null; }
+    // segments=true is what makes Quran.com include the per-ayah timestamps.
+    const data = await jsonGet('Quran.com', `${QURAN_COM}/chapter_recitations/${id}/${hit.surah}?segments=true`, null, 20000);
     const stamps = data && data.audio_file && data.audio_file.timestamps;
-    return Array.isArray(stamps) && stamps.length ? stamps : null;
-  } catch (_) { return null; } // timing is a bonus; the plain text still works
+    if (!Array.isArray(stamps) || !stamps.length) { quranNote = 'Quran.com has no ayah timing for this reciter and surah'; return null; }
+    return stamps;
+  } catch (err) { quranNote = err && err.message ? err.message : 'Quran.com could not be reached'; return null; } // timing is a bonus; the plain text still works
 }
 
 async function fromQuran(title, artist, seconds, timedOnly) {
   const hit = Quran.detect(title, artist);
   if (!hit) return null;
+  quranNote = '';
   const stamps = await quranTimes(hit, title, artist);
   if (timedOnly && !stamps) return null;
   const data = await jsonGet('Al-Quran Cloud', `${QURAN_API}/v1/surah/${hit.surah}/editions/quran-uthmani,en.sahih`);
@@ -769,6 +775,7 @@ async function fromQuran(title, artist, seconds, timedOnly) {
   if (!Array.isArray(arabic) || !arabic.length) return null;
   const timed = stamps && Quran.buildTimed(arabic, english, stamps, hit.from, hit.to, seconds);
   if (timed) return { syncedLyrics: timed };
+  if (stamps && !quranNote) quranNote = 'the timing did not match this surah';
   return timedOnly ? null : { plainLyrics: Quran.buildText(arabic, english, hit.from, hit.to) };
 }
 
@@ -785,11 +792,11 @@ ipcMain.handle('lyrics:fetch', async (_event, { title, track, artist, duration, 
       const base = Lyrics.sanitizeFileName(title || track);
       fs.writeFileSync(safeLyricsFile(base + (synced ? '.lrc' : '.txt')), quran.syncedLyrics || quran.plainLyrics, 'utf8');
       if (synced) { try { fs.unlinkSync(safeLyricsFile(base + '.txt')); } catch (_) { /* no old plain copy */ } }
-      return { status: 'ok', file: base + (synced ? '.lrc' : '.txt'), synced, source: synced ? 'Al-Quran Cloud + Quran.com timing' : 'Al-Quran Cloud' };
+      return { status: 'ok', file: base + (synced ? '.lrc' : '.txt'), synced, source: synced ? 'Al-Quran Cloud + Quran.com timing' : 'Al-Quran Cloud', note: synced ? '' : quranNote };
     }
   } catch (_) { /* fall through */ }
 
-  if (timedOnly) return { status: 'notfound' };
+  if (timedOnly) return { status: 'notfound', note: quranNote };
   const sources = [
     ['LRCLIB', () => fromLrclib(track, artist, seconds)],
     ['NetEase', () => fromNetease(track, artist, seconds)],

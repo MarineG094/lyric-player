@@ -587,11 +587,11 @@
       await refreshLyricFiles();
       if (state.currentVideoId === vid && els.editor.hidden) {
         await showLyricsForCurrent();
-        toast(`${res.synced ? 'Found timed lyrics' : 'Found lyrics'} on ${res.source || 'LRCLIB'} and saved them`);
+        toast(`${res.synced ? 'Found timed lyrics' : 'Found lyrics'} on ${res.source || 'LRCLIB'} and saved them` + (res.note ? `. Not timed to the reciter: ${res.note}` : ''));
       }
       return;
     }
-    if (timedOnly) return; // the plain text already on screen stays
+    if (timedOnly) { if (res.note && state.currentVideoId === vid) toast(`Quran text isn't timed to the reciter: ${res.note}`); return; } // the plain text already on screen stays
     if (res.status === 'notfound' || res.status === 'instrumental') state.notFound.add(vid);
     if (state.currentVideoId === vid) {
       state.lyricsStatus = res.status === 'disabled' ? 'idle' : res.status;
