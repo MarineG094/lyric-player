@@ -20,16 +20,20 @@ jobs:
         with:
           gradle-version: '8.9'
       - name: Build debug APK
-        run: gradle --no-daemon --stacktrace assembleDebug
-      - name: Name the file
-        run: cp app/build/outputs/apk/debug/app-debug.apk LyricPlayer.apk
+        run: gradle --no-daemon --stacktrace assemblePhoneDebug assembleTvDebug
+      - name: Name the files
+        run: |
+          cp app/build/outputs/apk/phone/debug/app-phone-debug.apk LyricPlayer.apk
+          cp app/build/outputs/apk/tv/debug/app-tv-debug.apk LyricPlayer-TV.apk
       - uses: actions/upload-artifact@v4
         with:
           name: LyricPlayer-apk
-          path: LyricPlayer.apk
+          path: |
+            LyricPlayer.apk
+            LyricPlayer-TV.apk
       - name: Publish as the "latest" release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release delete latest --yes --cleanup-tag || true
-          gh release create latest LyricPlayer.apk --title "Lyric Player (latest)" --notes "Install this file on your Android phone." --target "$GITHUB_SHA"
+          gh release create latest LyricPlayer.apk LyricPlayer-TV.apk --title "Lyric Player (latest)" --notes "LyricPlayer.apk is for Android phones (and Android Auto). LyricPlayer-TV.apk is for Google TV / Android TV." --target "$GITHUB_SHA"

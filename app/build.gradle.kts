@@ -15,6 +15,18 @@ android {
         versionName = "1.0.0"
     }
 
+    flavorDimensions += "device"
+    productFlavors {
+        create("phone") {
+            dimension = "device"
+        }
+        create("tv") {
+            dimension = "device"
+            applicationIdSuffix = ".tv"
+            versionNameSuffix = "-tv"
+        }
+    }
+
     // A fixed signing key (kept in the repo, personal use only) so each new build installs over the last one.
     signingConfigs {
         getByName("debug") {

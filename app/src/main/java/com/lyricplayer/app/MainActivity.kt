@@ -9,6 +9,7 @@ import android.graphics.Typeface
 import android.os.Build
 import android.os.Bundle
 import android.view.Gravity
+import android.view.KeyEvent
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.TextView
@@ -49,6 +50,8 @@ class MainActivity : Activity() {
         Hub.attach(this, uiLayer, ytLayer)
         showBrowse(Hub.browsing)
 
+        if (resources.getBoolean(R.bool.is_tv)) LinkServer.start()
+
         if (Build.VERSION.SDK_INT >= 33 &&
             ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
         ) {
@@ -61,6 +64,22 @@ class MainActivity : Activity() {
     fun showBrowse(on: Boolean) {
         Hub.ui?.visibility = if (on) View.INVISIBLE else View.VISIBLE
         back.visibility = if (on) View.VISIBLE else View.GONE
+    }
+
+    /** Media keys on a TV remote (and keyboards / headsets). */
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        val pos = (Hub.last?.posMs ?: 0L) / 1000.0
+        when (keyCode) {
+            KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_HEADSETHOOK -> Hub.command("toggle")
+            KeyEvent.KEYCODE_MEDIA_PLAY -> Hub.command("play")
+            KeyEvent.KEYCODE_MEDIA_PAUSE -> Hub.command("pause")
+            KeyEvent.KEYCODE_MEDIA_NEXT -> Hub.command("next")
+            KeyEvent.KEYCODE_MEDIA_PREVIOUS -> Hub.command("prev")
+            KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> Hub.command("seek", pos + 10)
+            KeyEvent.KEYCODE_MEDIA_REWIND -> Hub.command("seek", maxOf(0.0, pos - 10))
+            else -> return super.onKeyDown(keyCode, event)
+        }
+        return true
     }
 
     @Deprecated("Deprecated in Java")

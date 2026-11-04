@@ -90,6 +90,7 @@ object Hub {
         (ui!!.parent as? ViewGroup)?.removeView(ui)
         ytParent.addView(yt, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
         uiParent.addView(ui, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+        ui!!.requestFocus()
         if (!ticking) { ticking = true; main.post(tick) }
     }
 

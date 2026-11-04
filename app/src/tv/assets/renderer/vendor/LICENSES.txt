@@ -1,0 +1,6 @@
+Third-party files in this folder (used by the cover filter):
+
+- tf.min.js   TensorFlow.js 4.22.0, Apache License 2.0 (c) Google LLC
+- nsfwjs.min.js and nsfw/ (model.json, group1-shard1of1)
+              NSFW JS 4.4.0 with its MobileNetV2 model, MIT License (c) Infinite Red, Inc. / Gant Laborde
+The model runs entirely on this computer. Nothing about your music or covers is sent anywhere by it.

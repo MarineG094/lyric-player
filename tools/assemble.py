@@ -9,7 +9,7 @@ import re, shutil, sys, pathlib
 
 src = pathlib.Path(sys.argv[1])
 root = pathlib.Path(__file__).resolve().parent.parent
-out = root / 'app/src/main/assets/renderer'
+out = root / 'tools/_out/renderer'
 if out.exists():
     shutil.rmtree(out)
 out.mkdir(parents=True)
@@ -109,3 +109,20 @@ viewport = '''
 code = code.replace("if (window.__lpAdPrune) return;", "if (window.__lpAdPrune) return;" + viewport, 1)
 (out / 'ytm-inject.js').write_text(code, encoding='utf8')
 print('ok:', sorted(p.name for p in out.iterdir()))
+
+# ---- one copy of the page per app flavour (phone / tv) ----
+for flavour in ['phone', 'tv']:
+    dest = root / f'app/src/{flavour}/assets/renderer'
+    if dest.exists():
+        shutil.rmtree(dest)
+    shutil.copytree(out, dest)
+    if flavour == 'tv':
+        (dest / 'android.css').unlink()
+        shutil.copy(root / 'tools/tv.css', dest / 'tv.css')
+        shutil.copy(root / 'tools/tv.js', dest / 'tv.js')
+        h = (dest / 'index.html').read_text(encoding='utf8')
+        h = h.replace('href="android.css"', 'href="tv.css"').replace('<script src="app.js"></script>', '<script src="tv.js"></script>\n  <script src="app.js"></script>')
+        assert 'tv.css' in h and 'tv.js' in h
+        (dest / 'index.html').write_text(h, encoding='utf8')
+shutil.rmtree(root / 'tools/_out')
+print('flavours written')
