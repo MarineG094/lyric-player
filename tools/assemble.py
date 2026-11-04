@@ -54,6 +54,11 @@ new = ("  if (!ctl.guard || ctl.guard.id !== s.videoId) ctl.guard = { id: s.vide
        "  if (ctl.trace.length > 40) ctl.trace.shift();\n")
 core_body = core_body.replace(old, new, 1)
 
+# Background pages get their timers slowed or frozen; waiting is done by the phone's own clock instead.
+old_wait = "const wait = (ms) => new Promise((r) => setTimeout(r, ms));"
+assert old_wait in core_body
+core_body = core_body.replace(old_wait, "const wait = (ms) => native('sleep', { ms }).then(() => undefined);", 1)
+
 # The desktop code asks the main process for settings; here they come from the native side.
 shim = (root / 'tools/shim.js').read_text(encoding='utf8')
 core = shim.replace('/*__CORE__*/', core_body)

@@ -30,6 +30,7 @@ class Bridge {
     fun invoke(id: Int, method: String, argsJson: String) {
         val args = try { JSONObject(argsJson) } catch (e: Exception) { JSONObject() }
         when (method) {
+            "sleep" -> Hub.main.postDelayed({ Hub.resolve(id, "true") }, args.optLong("ms", 0).coerceIn(0, 60000))
             "yt.eval" -> Hub.main.post { Hub.runYt(args.optString("script")) { Hub.resolve(id, it) } }
             "yt.load" -> Hub.main.post {
                 val url = args.optString("url")

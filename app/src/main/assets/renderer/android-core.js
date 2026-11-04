@@ -359,7 +359,7 @@ const spaNavigateScript = (videoId, listId) => `(async () => {
   const app = document.querySelector('ytmusic-app');
   const endpoint = { watchEndpoint: { videoId: ${JSON.stringify(videoId)}, playlistId: ${JSON.stringify(listId)} } };
   const arrived = () => new URL(location.href).searchParams.get('v') === ${JSON.stringify(videoId)};
-  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const wait = (ms) => native('sleep', { ms }).then(() => undefined);
   const settle = async () => { for (let i = 0; i < 9 && !arrived(); i++) await wait(150); return arrived(); };
   try {
     if (app && typeof app.navigate_ === 'function') app.navigate_(endpoint);
