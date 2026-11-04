@@ -221,3 +221,10 @@ test('cover key ignores the size part of the image address', () => {
   assert.notEqual(a, CoverFilter.coverKey('https://lh3.googleusercontent.com/Other=w800-h800'));
   assert.equal(CoverFilter.coverKey('not a url'), '');
 });
+
+test('matchFile does not match a title hidden inside another word (Vore vs Carnivore)', () => {
+  const files = [{ file: 'Carnivore.lrc', name: 'Carnivore' }];
+  assert.equal(L.matchFile('Vore', 'Sleep Token', files), null);
+  assert.equal(L.matchFile('Carnivore', 'Starset', files).file, 'Carnivore.lrc');
+  assert.equal(L.matchFile('Midnight Run Remix', '', [{ file: 'Midnight Run.lrc', name: 'Midnight Run' }]).file, 'Midnight Run.lrc');
+});

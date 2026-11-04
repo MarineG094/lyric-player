@@ -462,3 +462,6 @@ button.icon.play svg { width: 26px; height: 26px; }
 .choice-text { margin: 0 0 10px; font-size: 14px; }
 .choice-btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 .choice-btns .ghost, .choice-btns .solid { margin-top: 0; }
+
+.wrong { align-self: center; margin: 6px auto 0; opacity: .75; }
+.wrong:hover { opacity: 1; }

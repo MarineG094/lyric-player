@@ -11,6 +11,7 @@
     lines: $('#lyricsLines'),
     btnEdit: $('#btnEdit'),
     nudge: $('#syncNudge'),
+    btnWrong: $('#btnWrong'),
     nudgeVal: $('#nudgeVal'),
     editor: $('#editor'),
     editorText: $('#editorText'),
@@ -85,6 +86,7 @@
     lyricsFile: null,
     lyricsRaw: '',
     upgraded: new Set(),
+    retryN: new Map(),
     romanize: true,
     lyricsData: null,
     activeIdx: -1,
@@ -710,7 +712,7 @@
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  async function fetchOnline(vid, title, author, timedOnly) {
+  async function fetchOnline(vid, title, author, timedOnly, retry, replaceFile) {
     const query = L.queryFor(title, author);
     if (!query.track) return;
     state.fetching.add(vid);
@@ -724,12 +726,14 @@
 
     let res;
     try {
-      res = await window.api.fetchLyrics({ title, track: query.track, artist: query.artist, author: author || '', duration, timedOnly: !!timedOnly });
+      res = await window.api.fetchLyrics({ title, track: query.track, artist: query.artist, author: author || '', duration, timedOnly: !!timedOnly, retry: retry || 0, replaceFile: replaceFile || '' });
     } catch (_) {
       res = { status: 'error' };
     }
     state.fetching.delete(vid);
 
+    if (retry && res.status === 'own') { toast("Those lyrics are a file you made or edited, so the app won't replace them. Change them with Edit lyrics, or delete the file in the Lyrics folder."); return; }
+    if (retry && (res.status === 'nomore' || res.status === 'notfound')) { state.retryN.set(vid, 0); toast('No other lyrics found for this song.'); return; }
     if (res.status === 'ok') {
       await refreshLyricFiles();
       if (state.currentVideoId === vid && els.editor.hidden) {
@@ -776,6 +780,7 @@
     els.lyrics.classList.toggle('centered', !!(data && data.lines.some((l) => /[\u0600-\u06FF]/.test(l.text))));
     els.lyrics.classList.toggle('plain', !!(data && !data.synced));
     els.btnEdit.textContent = data ? 'Edit lyrics' : 'Add lyrics';
+    els.btnWrong.hidden = !(data && els.editor.hidden && state.lyricsFile && state.autoFetch);
     els.nudge.hidden = !(data && data.synced && els.editor.hidden && state.lyricsFile); // any song with timed lyrics
     { const off = (state.lyricsRaw.match(/^\s*\[offset:\s*(-?\d+)\s*\]/im) || [0, '0'])[1] | 0; els.nudgeVal.textContent = off ? `${off > 0 ? '+' : ''}${(off / 1000).toFixed(1)}s` : ''; }
 
@@ -908,6 +913,15 @@
     const b = e.target.closest('button');
     if (!b) return;
     nudgeLyrics(b.dataset.ms === 'reset' ? null : Number(b.dataset.ms));
+  });
+
+  els.btnWrong.addEventListener('click', () => {
+    const vid = state.currentVideoId;
+    if (!vid || state.fetching.has(vid) || !state.lyricsFile) return;
+    const n = (state.retryN.get(vid) || 0) + 1;
+    state.retryN.set(vid, n);
+    toast('Looking for another match…');
+    fetchOnline(vid, state.currentTitle, state.currentArtist, false, n, state.lyricsFile);
   });
 
   els.btnEdit.addEventListener('click', openEditor);

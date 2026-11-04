@@ -104,8 +104,8 @@
       let score = 0;
       if (n === t) score = 100;
       else if (a && (n === `${a} ${t}` || n === `${t} ${a}`)) score = 95;
-      else if (n.length >= 3 && t.includes(n)) score = 50 + 40 * (n.length / t.length);
-      else if (t.length >= 3 && n.includes(t)) score = 50 + 40 * (t.length / n.length);
+      else if (n.length >= 3 && (` ${t} `).includes(` ${n} `)) score = 50 + 40 * (n.length / t.length);
+      else if (t.length >= 3 && (` ${n} `).includes(` ${t} `)) score = 50 + 40 * (t.length / n.length);
       if (score > 0 && /\.lrc$/i.test(f.file || '')) score += 0.5; // prefer timed lyrics on ties
       if (score > bestScore) {
         best = f;

@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('api', {
   listLyrics: () => ipcRenderer.invoke('lyrics:list'),
   readLyrics: (file) => ipcRenderer.invoke('lyrics:read', file),
   writeLyrics: (payload) => ipcRenderer.invoke('lyrics:write', payload),
+  fetchedLyrics: () => ipcRenderer.invoke('lyrics:fetched'),
   fetchLyrics: (payload) => ipcRenderer.invoke('lyrics:fetch', payload),
   chooseLyricsFolder: () => ipcRenderer.invoke('lyrics:chooseFolder'),
   setAdBlock: (on) => ipcRenderer.invoke('adblock:set', on),

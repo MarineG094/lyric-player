@@ -1285,18 +1285,29 @@ function hasLyrics(r) {
 
 // Source 1: LRCLIB. Returns { syncedLyrics?, plainLyrics?, instrumental? } or null.
 async function fromLrclib(track, artist, seconds) {
+  const out = [];
   const exact = new URLSearchParams({ track_name: track, artist_name: artist || '' });
   if (seconds > 0) exact.set('duration', String(seconds));
-  let hit = await lrclibRequest('/get?' + exact);
-  if (hit && (hit.instrumental || hasLyrics(hit))) return hit;
+  const hit = await lrclibRequest('/get?' + exact);
+  if (hit && (hit.instrumental || hasLyrics(hit))) out.push(hit);
 
   const results = await lrclibRequest('/search?' + new URLSearchParams({ track_name: track, artist_name: artist || '' }));
-  if (!Array.isArray(results)) return null;
-  const usable = results.filter(hasLyrics);
-  // With a known length, only accept results within 10 seconds of it so we don't show a different version's timing.
-  const close = seconds > 0 ? usable.filter((r) => Math.abs((r.duration || 0) - seconds) <= 10) : usable;
-  close.sort((a, b) => Math.abs((a.duration || 0) - seconds) - Math.abs((b.duration || 0) - seconds));
-  return close[0] || null;
+  if (Array.isArray(results)) {
+    const na = Lyrics.normalize(artist);
+    const usable = results.filter(hasLyrics);
+    // With a known length, only accept results within 10 seconds of it so we don't show a different version's timing.
+    const close = seconds > 0 ? usable.filter((r) => Math.abs((r.duration || 0) - seconds) <= 10) : usable;
+    const rank = (r) => {
+      const ra = Lyrics.normalize(r.artistName);
+      const artistOk = !na || (ra && (ra.includes(na) || na.includes(ra)));
+      const rt = Lyrics.normalize(r.trackName), nt = Lyrics.normalize(track);
+      const titleOk = rt === nt || rt.startsWith(nt + ' ') || nt.startsWith(rt + ' ');
+      return (artistOk ? 0 : 2000) + (titleOk ? 0 : 1000) + Math.abs((r.duration || 0) - seconds) + (r.syncedLyrics ? 0 : 500);
+    };
+    close.sort((x, y) => rank(x) - rank(y));
+    for (const r of close) if (!out.some((o) => o.id && o.id === r.id)) out.push(r);
+  }
+  return out;
 }
 
 // Source 2: NetEase Cloud Music (timed lyrics). Strict matching so a different song is never shown.
@@ -1316,12 +1327,13 @@ async function fromNetease(track, artist, seconds) {
     const lengthOk = !(seconds > 0 && dur > 0) || Math.abs(dur - seconds) <= 10;
     return titleOk && artistOk && lengthOk;
   });
+  const out = [];
   for (const song of candidates.slice(0, 3)) {
     const data = await jsonGet('NetEase', `${NETEASE}/api/song/lyric?` + new URLSearchParams({ id: String(song.id), lv: '1', kv: '1', tv: '-1' }), headers);
     const lrc = data && data.lrc && data.lrc.lyric;
-    if (lrc && Lyrics.hasTimestamps(lrc) && lrc.split('\n').length > 3) return { syncedLyrics: lrc };
+    if (lrc && Lyrics.hasTimestamps(lrc) && lrc.split('\n').length > 3) out.push({ syncedLyrics: lrc });
   }
-  return null;
+  return out;
 }
 
 // Source 3: lyrics.ovh (plain text, needs the artist).
@@ -1383,8 +1395,10 @@ async function fromQuran(title, artist, seconds, timedOnly) {
   return timedOnly ? null : { plainLyrics: Quran.buildText(arabic, english, hit.from, hit.to) };
 }
 
-ipcMain.handle('lyrics:fetch', async (_event, { title, track, artist, author, duration, timedOnly }) => {
+ipcMain.handle('lyrics:fetch', async (_event, { title, track, artist, author, duration, timedOnly, retry, replaceFile }) => {
   if (loadSettings().autoFetch === false) return { status: 'disabled' };
+  // "Wrong lyrics?": only a file this app downloaded is replaced, never one the person made.
+  if (retry && replaceFile && !(loadSettings().fetchedLyrics || []).includes(path.basename(String(replaceFile)))) return { status: 'own' };
   if (!track) return { status: 'notfound' };
   const seconds = Math.round(Number(duration) || 0);
 
@@ -1401,37 +1415,49 @@ ipcMain.handle('lyrics:fetch', async (_event, { title, track, artist, author, du
   } catch (_) { /* fall through */ }
 
   if (timedOnly) return { status: 'notfound', note: quranNote };
+  // Every candidate, best first: timed ones from LRCLIB and NetEase, then plain text. "Try next" skips the ones already shown.
+  const skip = Math.max(0, Number(retry) || 0);
   const sources = [
     ['LRCLIB', () => fromLrclib(track, artist, seconds)],
     ['NetEase', () => fromNetease(track, artist, seconds)],
-    ['lyrics.ovh', () => fromLyricsOvh(track, artist)],
+    ['lyrics.ovh', async () => { const r = await fromLyricsOvh(track, artist); return r ? [r] : []; }],
   ];
-  let best = null; // { hit, source }
+  const all = [];
   let attempted = 0;
   let failed = 0;
   let lastError = '';
   for (const [name, lookup] of sources) {
-    if (best && name === 'lyrics.ovh') break; // already have plain text; only look further for timed lyrics
     attempted += 1;
     try {
-      const r = await lookup();
-      if (!r) continue;
-      if (r.instrumental) return { status: 'instrumental' };
-      if (r.syncedLyrics) { best = { hit: r, source: name }; break; }
-      if (r.plainLyrics && !best) best = { hit: r, source: name }; // keep looking for timed lyrics
+      for (const r of (await lookup()) || []) {
+        if (r.instrumental) { if (!skip && !all.length) return { status: 'instrumental' }; continue; }
+        const text = r.syncedLyrics || r.plainLyrics;
+        if (text && !all.some((c) => c.text === text)) all.push({ source: name, text });
+      }
     } catch (err) {
       failed += 1;
       lastError = err.message;
     }
+    if (!skip && all.some((c) => Lyrics.hasTimestamps(c.text))) break; // first time round: a timed hit is enough
   }
 
-  if (!best) return failed === attempted ? { status: 'error', message: lastError } : { status: 'notfound' };
-  const content = best.hit.syncedLyrics || best.hit.plainLyrics;
-  const synced = Lyrics.hasTimestamps(content);
-  const file = Lyrics.sanitizeFileName(title || track) + (synced ? '.lrc' : '.txt');
-  fs.writeFileSync(safeLyricsFile(file), content, 'utf8');
-  return { status: 'ok', file, synced, source: best.source };
+  if (!all.length) return failed === attempted ? { status: 'error', message: lastError } : { status: 'notfound' };
+  // Timed lyrics first, then plain; stable within each group.
+  const ordered = all.filter((c) => Lyrics.hasTimestamps(c.text)).concat(all.filter((c) => !Lyrics.hasTimestamps(c.text)));
+  const pick = ordered[skip];
+  if (!pick) return { status: 'nomore' };
+  const synced = Lyrics.hasTimestamps(pick.text);
+  const base = Lyrics.sanitizeFileName(title || track);
+  if (skip) for (const f of new Set([replaceFile, base + '.lrc', base + '.txt'].filter(Boolean))) { try { fs.unlinkSync(safeLyricsFile(f)); } catch (_) { /* not there */ } }
+  const file = base + (synced ? '.lrc' : '.txt');
+  fs.writeFileSync(safeLyricsFile(file), pick.text, 'utf8');
+  if (!skip && synced) { try { fs.unlinkSync(safeLyricsFile(base + '.txt')); } catch (_) { /* no old plain copy */ } }
+  const fetched = new Set(loadSettings().fetchedLyrics || []); fetched.add(file); fetched.add(base + (synced ? '.txt' : '.lrc'));
+  saveSettings({ ...loadSettings(), fetchedLyrics: [...fetched].slice(-2000) });
+  return { status: 'ok', file, synced, source: pick.source, index: skip, more: ordered.length - skip - 1 };
 });
+
+ipcMain.handle('lyrics:fetched', () => loadSettings().fetchedLyrics || []);
 
 ipcMain.handle('lyrics:chooseFolder', async () => {
   const result = await dialog.showOpenDialog(win, {
