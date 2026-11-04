@@ -111,7 +111,14 @@
     <div id="overlay" class="overlay" hidden>
       <div class="card">
         <h1>Play a playlist, album or song</h1>
-        <p class="sub">Drag a YouTube Music link here from your browser, or paste it below.</p>
+        <p class="sub">Search for something, or drag a YouTube Music link here, or paste it below.</p>
+        <div class="paste-row search-row">
+          <input id="searchInput" type="search" spellcheck="false" autocomplete="off" placeholder="Search songs, albums and playlists" aria-label="Search YouTube Music">
+          <button id="btnSearch" class="solid" type="button">Search</button>
+        </div>
+        <div id="searchResults" class="results" hidden></div>
+        <p id="searchMsg" class="msg" hidden></p>
+        <p class="or">or paste a link</p>
         <div class="paste-row">
           <input id="urlInput" type="text" spellcheck="false" placeholder="https://music.youtube.com/..." aria-label="Playlist, album or song link">
           <button id="btnLoad" class="solid" type="button">Load</button>

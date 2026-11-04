@@ -46,6 +46,10 @@
     overlay: $('#overlay'),
     overlayMsg: $('#overlayMsg'),
     urlInput: $('#urlInput'),
+    searchInput: $('#searchInput'),
+    btnSearch: $('#btnSearch'),
+    searchResults: $('#searchResults'),
+    searchMsg: $('#searchMsg'),
     btnLoad: $('#btnLoad'),
     btnCloseOverlay: $('#btnCloseOverlay'),
     btnPlaylist: $('#btnPlaylist'),
@@ -129,7 +133,57 @@
     } else {
       els.overlayMsg.hidden = true;
     }
-    setTimeout(() => els.urlInput.focus(), 0);
+    setTimeout(() => (els.searchInput || els.urlInput).focus(), 0);
+  }
+
+  /* ---------- search ---------- */
+
+  let searchSeq = 0;
+  const KIND_LABEL = { song: 'Song', album: 'Album', list: 'Playlist' };
+
+  function searchNote(text) {
+    els.searchMsg.textContent = text || '';
+    els.searchMsg.hidden = !text;
+  }
+
+  function renderResults(results) {
+    els.searchResults.textContent = '';
+    els.searchResults.hidden = !results.length;
+    for (const r of results) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'result';
+      if (r.thumb && /^https:/.test(r.thumb)) {
+        const img = document.createElement('img');
+        img.src = r.thumb; img.alt = ''; img.loading = 'lazy';
+        b.appendChild(img);
+      } else {
+        const none = document.createElement('div'); none.className = 'noimg'; b.appendChild(none);
+      }
+      const rt = document.createElement('div'); rt.className = 'rt';
+      const t = document.createElement('b'); t.textContent = r.title;
+      const sub = document.createElement('span'); sub.textContent = r.sub || '';
+      rt.append(t, sub);
+      const chip = document.createElement('span'); chip.className = 'chip'; chip.textContent = KIND_LABEL[r.kind] || '';
+      b.append(rt, chip);
+      b.addEventListener('click', () => { els.searchInput.value = ''; renderResults([]); searchNote(''); loadSource({ kind: r.kind, id: r.id }); });
+      els.searchResults.appendChild(b);
+    }
+  }
+
+  async function runSearch() {
+    const q = els.searchInput.value.trim();
+    const mine = ++searchSeq;
+    if (q.length < 2) { renderResults([]); searchNote(''); return; }
+    // A pasted link in the search box just works too.
+    if (L.extractSource(q)) { submitUrl(q); els.searchInput.value = ''; return; }
+    searchNote('Searching…');
+    let res;
+    try { res = await P.search(q); } catch (_) { res = { results: [], error: 'search failed' }; }
+    if (mine !== searchSeq) return; // a newer search replaced this one
+    renderResults(res.results || []);
+    if (res.results && res.results.length) searchNote('');
+    else searchNote(res.error ? "Couldn't search right now: " + res.error : 'Nothing found. Try different words.');
   }
 
   function hideOverlay() {
@@ -905,6 +959,10 @@
   });
 
   els.btnLoad.addEventListener('click', () => submitUrl(els.urlInput.value));
+  let searchTimer = 0;
+  els.btnSearch.addEventListener('click', () => { clearTimeout(searchTimer); runSearch(); });
+  els.searchInput.addEventListener('keydown', (event) => { if (event.key === 'Enter') { clearTimeout(searchTimer); runSearch(); } });
+  els.searchInput.addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(runSearch, 700); });
   els.urlInput.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') submitUrl(els.urlInput.value);
   });

@@ -271,6 +271,75 @@ ipcMain.handle('player:resolveAlbum', async (_e, browseId) => {
   return '';
 });
 
+// Runs in the page: searches YouTube Music (the same request its search box makes) and returns songs, albums and playlists.
+const searchScript = (query) => `(async () => {
+  try {
+    const cfg = window.ytcfg;
+    const get = (k) => (cfg && typeof cfg.get === 'function' ? cfg.get(k) : cfg && cfg.data_ ? cfg.data_[k] : undefined);
+    const key = get('INNERTUBE_API_KEY');
+    const context = get('INNERTUBE_CONTEXT');
+    if (!key || !context) return JSON.stringify({ wait: true });
+    const res = await fetch('/youtubei/v1/search?prettyPrint=false&key=' + encodeURIComponent(key), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+      body: JSON.stringify({ context, query: ${JSON.stringify(query)} }),
+    });
+    if (!res.ok) return JSON.stringify({ error: 'YouTube Music answered HTTP ' + res.status });
+    const data = await res.json();
+    const items = [];
+    const walk = (o) => {
+      if (!o || typeof o !== 'object') return;
+      if (o.musicResponsiveListItemRenderer) { items.push(o.musicResponsiveListItemRenderer); return; }
+      for (const k in o) walk(o[k]);
+    };
+    walk(data);
+    const text = (col) => ((col && col.musicResponsiveListItemFlexColumnRenderer && col.musicResponsiveListItemFlexColumnRenderer.text && col.musicResponsiveListItemFlexColumnRenderer.text.runs) || []).map((r) => r.text);
+    const out = [];
+    const seen = new Set();
+    for (const it of items) {
+      const cols = it.flexColumns || [];
+      const title = (text(cols[0])[0] || '').trim();
+      const sub = text(cols[1]);
+      if (!title) continue;
+      const type = String(sub[0] || '').trim();
+      if (/^(artist|podcast|episode|profile|station)$/i.test(type)) continue;
+      let thumb = '';
+      try { const th = it.thumbnail.musicThumbnailRenderer.thumbnail.thumbnails; thumb = th[th.length - 1].url; } catch (e) { /* none */ }
+      const browse = (it.navigationEndpoint && it.navigationEndpoint.browseEndpoint && it.navigationEndpoint.browseEndpoint.browseId) || '';
+      let play = null;
+      try { play = it.overlay.musicItemThumbnailOverlayRenderer.content.musicPlayButtonRenderer.playNavigationEndpoint; } catch (e) { /* none */ }
+      const watch = play && (play.watchEndpoint || play.watchPlaylistEndpoint) || null;
+      let kind = '', id = '';
+      if (/^MPREb_/.test(browse)) { kind = 'album'; id = browse; }
+      else if (/^VL/.test(browse)) { kind = 'list'; id = browse.slice(2); }
+      else if (watch && watch.videoId && /^[A-Za-z0-9_-]{11}$/.test(watch.videoId)) { kind = 'song'; id = watch.videoId; }
+      else if (watch && watch.playlistId) { kind = 'list'; id = watch.playlistId; }
+      if (!kind || seen.has(kind + id)) continue;
+      seen.add(kind + id);
+      const detail = sub.slice(1).join('').replace(/^[\\s•·]+/, '').trim();
+      out.push({ kind, id, title, sub: detail || type, type, thumb });
+      if (out.length >= 24) break;
+    }
+    return JSON.stringify({ results: out });
+  } catch (e) { return JSON.stringify({ error: String(e && e.message || e) }); }
+})()`;
+
+ipcMain.handle('player:search', async (_e, query) => {
+  const q = String(query || '').trim().slice(0, 120);
+  if (!ytView || q.length < 2) return { results: [] };
+  const wc = ytView.webContents;
+  let last = 'YouTube Music is still loading';
+  for (let i = 0; i < 20; i++) { // the page may still be starting up (up to ~14 s)
+    try {
+      const r = JSON.parse(await wc.executeJavaScript(searchScript(q), true) || '{}');
+      if (r.results) return { results: r.results };
+      if (r.error) last = r.error;
+      if (i === 6 && r.wait) wc.loadURL(YT_URL).catch(() => {}); // never got a usable page: load the home page (only if nothing else made it ready)
+    } catch (err) { last = err && err.message ? err.message : last; }
+    await wait(700);
+  }
+  return { results: [], error: last };
+});
+
 ipcMain.handle('player:browse', (_e, show, top) => {
   ytBrowse = !!show;
   if (Number.isFinite(top)) ytTop = Math.max(0, Math.min(300, Math.round(top)));
@@ -938,6 +1007,7 @@ ipcMain.handle('lyrics:fetch', async (_event, { title, track, artist, author, du
       open: (id, videoId) => handlers['player:open'](null, id, videoId),
       openSong: (videoId) => handlers['player:openSong'](null, videoId),
       resolveAlbum: (browseId) => handlers['player:resolveAlbum'](null, browseId),
+      search: (query) => handlers['player:search'](null, query),
       // The phone's own volume buttons set the loudness; the page's volume stays at full.
       cmd: (name, arg) => (name === 'volume' ? Promise.resolve(true) : handlers['player:cmd'](null, name, arg)),
       browse: (show, top) => handlers['player:browse'](null, show, top),

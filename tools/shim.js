@@ -175,6 +175,7 @@
       open: (id, videoId) => handlers['player:open'](null, id, videoId),
       openSong: (videoId) => handlers['player:openSong'](null, videoId),
       resolveAlbum: (browseId) => handlers['player:resolveAlbum'](null, browseId),
+      search: (query) => handlers['player:search'](null, query),
       // The phone's own volume buttons set the loudness; the page's volume stays at full.
       cmd: (name, arg) => (name === 'volume' ? Promise.resolve(true) : handlers['player:cmd'](null, name, arg)),
       browse: (show, top) => handlers['player:browse'](null, show, top),
