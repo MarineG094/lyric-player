@@ -128,28 +128,35 @@ const probeScript = (desiredVolume, blockAds, wantId) => `(() => {
     const want = ${desiredVolume == null ? 'null' : Number(desiredVolume)};
     if (v && want != null && Math.abs(v.volume * 100 - want) > 1.5) v.volume = Math.max(0, Math.min(1, want / 100));
     const vid = new URL(location.href).searchParams.get('v') || '';
-    const items = [...document.querySelectorAll('ytmusic-player-queue-item')];
-    // The queue's song ids only change when the queue does, so they are rebuilt (and sent) only then, or every 5 seconds.
-    const qc = window.__lpQ || (window.__lpQ = { n: -1, t: 0 });
+    // The queue is a big list of components; walking it is the costly part of a look. So it is only walked when the
+    // song, the list or the wanted song changed (or every 5 seconds); otherwise the last answer is reused.
+    const nl = document.querySelectorAll('ytmusic-player-queue-item');
+    const qc = window.__lpQ || (window.__lpQ = { n: -1, t: 0, vid: null, want: null });
     const tNow = Date.now();
-    let queueIds;
-    if (items.length !== qc.n || tNow - qc.t > 5000) {
-      qc.n = items.length;
-      qc.t = tNow;
-      queueIds = items.length < 600 ? items.map((i) => (i.data && i.data.videoId) || '').filter(Boolean) : [];
-    }
-    const metaOf = (it) => {
-      const d = it && it.data;
-      if (!d || !d.videoId) return null;
-      const runs = (x) => ((x && x.runs) || []).map((r) => r.text);
-      const th = (d.thumbnail && d.thumbnail.thumbnails) || [];
-      return { id: d.videoId, title: runs(d.title).join(''), sub: runs(d.shortBylineText).join('').split(' \u2022 ')[0].trim(), thumb: th.length ? th[th.length - 1].url : '' };
-    };
     const wantVid = ${JSON.stringify(wantId || '')};
-    const wantMeta = wantVid ? metaOf(items.find((i) => i.data && i.data.videoId === wantVid)) : null;
-    let curIdx = vid ? items.findIndex((i) => i.data && i.data.videoId === vid) : -1;
-    if (curIdx < 0) curIdx = items.findIndex((i) => i.hasAttribute('selected') || i.hasAttribute('is-playing') || i.getAttribute('play-button-state') === 'playing');
-    const nextMeta = curIdx >= 0 ? metaOf(items[curIdx + 1]) : null;
+    let queueIds;
+    if (nl.length !== qc.n || vid !== qc.vid || wantVid !== qc.want || tNow - qc.t > 5000) {
+      const items = [...nl];
+      if (items.length !== qc.n || tNow - qc.t > 5000) {
+        queueIds = items.length < 600 ? items.map((i) => (i.data && i.data.videoId) || '').filter(Boolean) : [];
+      }
+      const metaOf = (it) => {
+        const d = it && it.data;
+        if (!d || !d.videoId) return null;
+        const runs = (x) => ((x && x.runs) || []).map((r) => r.text);
+        const th = (d.thumbnail && d.thumbnail.thumbnails) || [];
+        return { id: d.videoId, title: runs(d.title).join(''), sub: runs(d.shortBylineText).join('').split(' \u2022 ')[0].trim(), thumb: th.length ? th[th.length - 1].url : '' };
+      };
+      let ci = vid ? items.findIndex((i) => i.data && i.data.videoId === vid) : -1;
+      if (ci < 0) ci = items.findIndex((i) => i.hasAttribute('selected') || i.hasAttribute('is-playing') || i.getAttribute('play-button-state') === 'playing');
+      qc.n = items.length; qc.t = tNow; qc.vid = vid; qc.want = wantVid; qc.curIdx = ci;
+      qc.wantMeta = wantVid ? metaOf(items.find((i) => i.data && i.data.videoId === wantVid)) : null;
+      qc.nextMeta = ci >= 0 ? metaOf(items[ci + 1]) : null;
+    }
+    const items = { length: qc.n };
+    const curIdx = qc.curIdx;
+    const wantMeta = qc.wantMeta;
+    const nextMeta = qc.nextMeta;
     return {
       wantMeta, nextMeta,
       hasMedia: !!(v && title),

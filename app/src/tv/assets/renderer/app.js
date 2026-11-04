@@ -370,15 +370,17 @@
   function paintNext(s) {
     const n = s && s.hasMedia && !s.ad ? s.next : null;
     if (!n || (!n.title && !n.thumb)) { els.upNext.hidden = true; upNextId = ''; return; }
-    els.upNext.hidden = false;
-    els.upNextText.textContent = n.title ? (n.sub ? `${n.title} · ${n.sub}` : n.title) : '…';
+    const label = n.title ? (n.sub ? `${n.title} · ${n.sub}` : n.title) : '…';
+    if (els.upNext.hidden) els.upNext.hidden = false;
+    if (els.upNextText.textContent !== label) els.upNextText.textContent = label;
     if (n.id !== upNextId || els.upNextImg.dataset.src !== n.thumb) {
       upNextId = n.id;
       els.upNextImg.dataset.src = n.thumb || '';
       els.upNextImg.hidden = !/^https:/.test(n.thumb || '');
       if (!els.upNextImg.hidden) els.upNextImg.src = n.thumb;
     }
-    els.upNext.title = n.queued ? 'Next in your queue' : 'Next in the playlist';
+    const tip = n.queued ? 'Next in your queue' : 'Next in the playlist';
+    if (els.upNext.title !== tip) els.upNext.title = tip;
   }
 
   function onPlayerState(s) {
@@ -831,17 +833,25 @@
     if (!data || !data.synced) return;
     const idx = L.activeIndex(data.lines, currentTime + 0.15);
     if (idx === state.activeIdx) return;
+    const prev = state.activeIdx;
     state.activeIdx = idx;
 
+    // Only the lines that changed are touched (a long surah has hundreds of lines).
     const nodes = els.lines.children;
-    for (let i = 0; i < nodes.length; i++) {
-      nodes[i].classList.toggle('active', i === idx);
-      nodes[i].classList.toggle('past', i < idx);
+    if (prev >= 0 && idx > prev && idx - prev < 40 && state.paintedFor === data) {
+      for (let i = prev; i < idx; i++) if (nodes[i]) { nodes[i].classList.remove('active'); nodes[i].classList.add('past'); }
+      if (nodes[idx]) { nodes[idx].classList.remove('past'); nodes[idx].classList.add('active'); }
+    } else {
+      for (let i = 0; i < nodes.length; i++) {
+        nodes[i].classList.toggle('active', i === idx);
+        nodes[i].classList.toggle('past', i < idx);
+      }
     }
+    state.paintedFor = data;
     const el = nodes[idx];
     if (el) {
       const top = el.offsetTop - els.lyrics.clientHeight / 2 + el.offsetHeight / 2;
-      els.lyrics.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+      els.lyrics.scrollTo({ top: Math.max(0, top), behavior: window.__lpLite ? 'auto' : 'smooth' });
     }
   }
 

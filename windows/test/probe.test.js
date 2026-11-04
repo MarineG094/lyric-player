@@ -40,3 +40,19 @@ test('probe returns the song, the next song and no error', () => {
   assert.equal(out.nextMeta.title, 'Two');
   assert.equal(out.wantMeta.id, 'bbbbbbbbbbb');
 });
+
+test('probe reuses the queue walk while nothing changed, and redoes it when the song changes', () => {
+  let reads = 0;
+  const mk = (id) => ({ hasAttribute: () => false, getAttribute: () => '', get data() { reads++; return { videoId: id, title: { runs: [{ text: id }] }, shortBylineText: { runs: [] }, thumbnail: { thumbnails: [] } }; } });
+  const items = [mk('aaaaaaaaaaa'), mk('bbbbbbbbbbb'), mk('ccccccccccc')];
+  const page = fakePage('https://music.youtube.com/watch?v=aaaaaaaaaaa&list=PL1', items);
+  vm.createContext(page);
+  const run = () => vm.runInContext(probeScript(null, false, ''), page);
+  assert.equal(run().nextMeta.id, 'bbbbbbbbbbb');
+  const first = reads;
+  const again = run();
+  assert.equal(reads, first, 'no queue reads on the second look');
+  assert.equal(again.nextMeta.id, 'bbbbbbbbbbb');
+  page.location.href = 'https://music.youtube.com/watch?v=bbbbbbbbbbb&list=PL1';
+  assert.equal(run().nextMeta.id, 'ccccccccccc');
+});

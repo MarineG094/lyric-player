@@ -65,6 +65,7 @@ object Hub {
     private val ytWaiting = HashMap<Int, (String) -> Unit>()
     private var ytSeq = 0
     private var ticking = false
+    private val isTv: Boolean by lazy { appCtx.resources.getBoolean(R.bool.is_tv) }
     private val tick = object : Runnable {
         override fun run() {
             ui?.evaluateJavascript("window.__lpTick && window.__lpTick()", null)
@@ -73,7 +74,7 @@ object Hub {
             val np = last
             val remaining = if (np != null && np.durMs > 0) np.durMs - np.posMs else Long.MAX_VALUE
             val next = when {
-                visible -> 300L
+                visible -> if (isTv) 500L else 300L
                 remaining < 6000 -> 250L
                 np != null && !np.playing -> 1500L
                 else -> 1000L

@@ -1,6 +1,7 @@
 /* TV extras: remote-control navigation, and "send a link from your phone" (typing on a TV remote is painful). */
 (() => {
   const N = window.LPNative;
+  window.__lpLite = true; // lyrics jump instead of gliding: smooth scrolling is too much for a TV stick
 
   /* ---- full screen: the menu and the player controls go away, lyrics and cover fill the TV ---- */
   let fsCb = null;
@@ -29,7 +30,7 @@
   const paintDock = () => { if (dock) document.documentElement.style.setProperty('--dockH', dock.offsetHeight + 'px'); };
   paintDock();
   window.addEventListener('resize', paintDock);
-  setInterval(paintDock, 2000);
+  setInterval(paintDock, 6000);
 
   /* ---- send a link from the phone ---- */
   const card = document.querySelector('#overlay .card');
@@ -39,9 +40,10 @@
   const paintHint = () => {
     let addr = '';
     try { addr = N.lanAddress(); } catch (_) { /* ignore */ }
-    hint.innerHTML = addr
+    const html = addr
       ? 'Easiest: on your phone (same Wi-Fi), open this address, paste the link and press Play.<strong>' + addr + '</strong>'
       : 'Connect the TV to Wi-Fi to send links from your phone.';
+    if (hint.dataset.h !== html) { hint.dataset.h = html; hint.innerHTML = html; }
   };
   paintHint();
   setInterval(paintHint, 5000);

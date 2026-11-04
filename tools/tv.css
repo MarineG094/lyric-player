@@ -43,3 +43,16 @@ input[type="range"]::-webkit-slider-thumb { width: 24px; height: 24px; margin-to
 
 /* Lighter on TV hardware: colours change at once instead of fading (the fade repaints the whole screen's gradients every frame). */
 :root { transition: none; }
+
+/* ---- Lighter drawing for TV sticks: no blurs, shadows, glows, masks or big animated gradients ---- */
+#app { background: linear-gradient(160deg, color-mix(in srgb, var(--glow) 16%, var(--bg)), var(--bg) 70%); }
+.lyrics, .lyrics-col { -webkit-mask-image: none; mask-image: none; }
+.album-box { box-shadow: none; }
+.overlay { backdrop-filter: none; background: rgba(10, 8, 6, 0.95); }
+.cover-toggle { backdrop-filter: none; }
+.art-img { transition: none; }
+.album-box.cover-hidden .art-img { filter: none; transform: none; visibility: hidden; }
+.line { transition: opacity 0.25s ease, color 0.25s ease; }
+.line.active { transform: none; text-shadow: none; }
+.stage, .album-box { transition: none; }
+.lyrics-col { transition: none; }
