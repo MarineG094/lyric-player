@@ -36,7 +36,7 @@ const NOISE = new Set([
   'audio', 'video', 'the', 'of', 'tilawat', 'tilawah', 'complete', 'emotional', 'heart', 'touching', 'sheikh', 'shaykh', 'qari', 'imam', 'new', 'and',
 ]);
 const KEYWORDS = new Set(['surah', 'sura', 'surat', 'soorah', 'soora', 'surahs', 'ayat', 'ayah', 'ayaat', 'ayatul', 'verse', 'verses']);
-const RECITERS = /h[uo](?:dh|th|z|d|t)[aey]+[iy]?f[iy]|الحذيفي|alafasy|afasy|afasi|el\s?afasi|m[ia]shar[iy]|mishary|mishari|sheikh|shaykh|sheik\b|الشيخ|القارئ|قارئ|عفاسي|العفاسي|العفاسى|مشاري|مشارى|السديس|الشريم|الحصري|المنشاوي|عبد الباسط|الغامدي|المعيقلي|العجمي|الدوسري|sudais|sudays|shuraim|shuraym|shureim|husary|hussary|minshawi|abdul\s?basit|abdulbasit|ghamdi|ghamidi|dosari|dossary|dosary|shatri|shaatree|ajmi|ajamy|qatami|luhaidan|lahidan|tablawi|rifai|hudhaify|huzaify|juhany|juhani|muaiqly|muaiqli|mueaqly|maher al|saad al ?ghamdi|ayyub|bandar|baleela|yasser al|qari|quran|qur'?an/i;
+const RECITERS = /shuraim|shuraym|sudais|sudays|husar[iy]|hussar[iy]|minshaw[iy]|abdul\s?bas[ie]t|abdulbas[ie]t|ghamd[iy]|ghamid[iy]|ajm[iy]|ajam[iy]|dos+ar[iy]|dus+ar[iy]|tablaw[iy]|rifa[iy]|r[ie]faa?[iy]|shatr[iy]|shaatr[iy]|jalil|jaleel|bukhatir|abkar|budair|bud[ae]ir|qatam[iy]|bas?far|thubait[iy]|akdar|banna|tunaij[iy]|nufais|neana|jabir|jaber|yasin\s?sahl|sahl\s?yasin|haneef|abbad|ayy?ub|juhan[iy]|muaiq?l[iy]|mueaq?l[iy]|luhaid[ai]n|lahid[ai]n|bandar|bal[ei]+la|h[uo](?:dh|th|z|d|t)[aey]+[iy]?f[iy]|الحذيفي|alafasy|afasy|afasi|el\s?afasi|m[ia]shar[iy]|mishary|mishari|sheikh|shaykh|sheik\b|الشيخ|القارئ|قارئ|عفاسي|العفاسي|العفاسى|مشاري|مشارى|السديس|الشريم|الحصري|المنشاوي|عبد الباسط|الغامدي|المعيقلي|العجمي|الدوسري|sudais|sudays|shuraim|shuraym|shureim|husary|hussary|minshawi|abdul\s?basit|abdulbasit|ghamdi|ghamidi|dosari|dossary|dosary|shatri|shaatree|ajmi|ajamy|qatami|luhaidan|lahidan|tablawi|rifai|hudhaify|huzaify|juhany|juhani|muaiqly|muaiqli|mueaqly|maher al|saad al ?ghamdi|ayyub|bandar|baleela|yasser al|qari|quran|qur'?an/i;
 
 // Letter key that ignores spelling variation: "Al-Baqarah", "Baqara", "baqaraa" all collapse to the same thing.
 function key(s) {
@@ -192,24 +192,72 @@ const RECITER_MAP = [
   [/shatri|shaatree/i, /shatri|shaatr/i], [/tablawi/i, /tablaw/i], [/ayyub/i, /ayyub|ayub/i], [/bandar|baleela/i, /bandar|balila|baleela/i],
 ];
 
-/* Picks the Quran.com reciter id for a title/artist, or 0. `list` is the API's reciter list. */
+// Spelling-proof form of a name: "Hudhaify", "Huthaifi" and "Huzaifi" all become the same thing.
+function pkey(w) {
+  return String(w || '').toLowerCase().normalize('NFKD').replace(/[̀-ͯ'’`ʿʾ]/g, '').replace(/[^a-z]/g, '')
+    .replace(/sh/g, 's').replace(/kh/g, 'k').replace(/gh/g, 'g').replace(/ph/g, 'f').replace(/dh|th|zh|z/g, 'd').replace(/q/g, 'k').replace(/c(?=[ek])|c$/g, 'k')
+    .replace(/ee|ea|ie|ei|ai|ay|ey|y/g, 'i').replace(/oo|ou|ow|o/g, 'u').replace(/(.)\1+/g, '$1');
+}
+// Words that are shared by many reciters and say nothing about which one it is.
+const GENERIC = new Set(('al el ash as an ar at ad az ath adh abu abd abdul abdur abdulrahman abdurrahman bin ibn ben sheikh shaykh sheik shaikh qari qaari imam the of full surah sura ' +
+  'muhammad mohammad mohamed muhammed mohammed ahmad ahmed ali mahmoud mahmud saad saud hani yasser khalid salah abdullah ibrahim nasser idrees omar umar hamza yusuf yousef').split(' '));
+function nameTokens(text) {
+  return String(text || '').split(/[^A-Za-zÀ-ɏ'’`ʿʾ]+/).map((w) => w.trim()).filter(Boolean);
+}
+const near = (a, b) => {
+  if (a === b) return true;
+  const m = Math.min(a.length, b.length);
+  const max = m >= 8 ? 2 : m >= 4 ? 1 : 0;
+  if (!max) return false;
+  if (m === 4 && a[0] !== b[0]) return false; // very short names must at least start the same
+  return dist(a, b, max) <= max;
+};
+// How well the name part `k` shows up in word `w` (which may be glued to others: "AbdulBaset", "Alqatami"):
+// 1 for a match, 0.5 for a loose match inside a longer word, 0 for none.
+const within = (k, w) => {
+  if (near(k, w) || (k.length >= 3 && w.length > k.length && w.includes(k))) return 1;
+  if (k.length < 4 || w.length < k.length + 3) return 0;
+  for (let len = k.length - 1; len <= k.length + 1; len++) {
+    for (let i = 0; i + len <= w.length; i++) if (near(k, w.slice(i, i + len))) return 0.5;
+  }
+  return 0;
+};
+
+/* Picks the Quran.com reciter id for a title/artist, or 0. `list` is the API's reciter list. Names are compared
+   loosely, so any spelling of a reciter's family name finds them. */
 function pickReciter(list, text) {
   const t = String(text || '');
   const wantsMujawwad = /mujawwad|mujawad/i.test(t);
+  const score = (r) => {
+    const n = `${r.name || ''} ${(r.style && r.style.name) || r.style || ''}`;
+    let v = 0;
+    if (/mujawwad|mujawad/i.test(n)) v += wantsMujawwad ? -2 : 2;
+    if (/warsh|qalon|qaloon|douri|duri|shu.?ba/i.test(n)) v += 3;
+    return v;
+  };
+  const best = (hits) => hits.slice().sort((a, b) => score(a) - score(b))[0].id;
+
+  // 1. A few well-known spellings (including Arabic) written out.
   for (const [inRe, apiRe] of RECITER_MAP) {
     if (!inRe.test(t)) continue;
     const hits = (list || []).filter((r) => apiRe.test(`${r.name || ''} ${(r.translated_name && r.translated_name.name) || ''}`));
-    if (!hits.length) continue;
-    const score = (r) => {
-      const n = `${r.name || ''} ${r.style || ''}`;
-      let v = 0;
-      if (/mujawwad|mujawad/i.test(n)) v += wantsMujawwad ? -2 : 2;
-      if (/warsh|qalon|qaloon|douri|duri|shu.?ba/i.test(n)) v += 3;
-      return v;
-    };
-    return hits.slice().sort((a, b) => score(a) - score(b))[0].id;
+    if (hits.length) return best(hits);
   }
-  return 0;
+
+  // 2. Any reciter in the list: their distinctive name parts must show up (spelled loosely) in the title/artist.
+  const raw = nameTokens(t);
+  const words = raw.filter((w) => !GENERIC.has(w.toLowerCase())).map(pkey).filter(Boolean);
+  const pool = words.slice();
+  // "Abdul Basit" can be written "AbdulBasit": glue a title-word prefix to the word after it.
+  for (let i = 0; i + 1 < raw.length; i++) if (/^(abdul|abdur|abd|abu|al|el|ash|as|ar|at|ad)$/i.test(raw[i])) pool.push(pkey(raw[i] + raw[i + 1]));
+  let top = [], topN = 0;
+  for (const r of list || []) {
+    const parts = nameTokens(`${r.name || ''} ${(r.translated_name && r.translated_name.name) || ''}`).filter((w) => !GENERIC.has(w.toLowerCase()));
+    const keys = [...new Set(parts.filter((p) => p.length >= 5).map(pkey).filter((k) => k.length >= 3))];
+    const n = keys.reduce((sum, k) => sum + Math.max(0, ...pool.map((w) => within(k, w))), 0);
+    if (n > topN) { topN = n; top = [r]; } else if (n === topN && n > 0) top.push(r);
+  }
+  return topN ? best(top) : 0;
 }
 
 const clock = (sec) => {
