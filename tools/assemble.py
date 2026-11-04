@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+"""Builds app/src/main/assets/renderer from the desktop app's sources.
+
+Usage: python3 tools/assemble.py /path/to/lyric-player
+The controller logic (shuffle, repeat, lyric lookups ...) is copied verbatim from the desktop main.js,
+so both apps behave the same. Only a thin shim around it is Android specific.
+"""
+import re, shutil, sys, pathlib
+
+src = pathlib.Path(sys.argv[1])
+root = pathlib.Path(__file__).resolve().parent.parent
+out = root / 'app/src/main/assets/renderer'
+if out.exists():
+    shutil.rmtree(out)
+out.mkdir(parents=True)
+
+main = (src / 'main.js').read_text(encoding='utf8')
+
+def between(start, end, keep_end=False):
+    a = main.index(start)
+    b = main.index(end, a)
+    return main[a:b + (len(end) if keep_end else 0)]
+
+# 1. state variables
+parts = []
+parts.append(between('let ytView = null;', 'function stripElectronUA'))
+# 2. the probe script and polling
+parts.append(between('// Runs inside the page: the <video>', 'const SELECTORS = {'))
+# 3. everything from selectors to the diagnose handler, including every ipcMain.handle for the player
+parts.append(between('const SELECTORS = {', "ipcMain.on('adblock:testhost'"))
+# 4. lyric lookups
+parts.append(between('const LRCLIB = ', "ipcMain.handle('lyrics:chooseFolder'"))
+core_body = '\n'.join(parts)
+
+# The desktop code asks the main process for settings; here they come from the native side.
+shim = (root / 'tools/shim.js').read_text(encoding='utf8')
+core = shim.replace('/*__CORE__*/', core_body)
+(out / 'android-core.js').write_text(core, encoding='utf8')
+
+# renderer files
+for name in ['app.js', 'lyrics.js', 'palette.js', 'coverfilter.js', 'style.css']:
+    shutil.copy(src / 'renderer' / name, out / name)
+shutil.copy(src / 'quran.js', out / 'quran.js')
+shutil.copytree(src / 'renderer/vendor', out / 'vendor')
+shutil.copy(root / 'tools/android.css', out / 'android.css')
+
+html = (src / 'renderer/index.html').read_text(encoding='utf8')
+html = html.replace('<meta name="viewport" content="width=device-width, initial-scale=1">',
+                    '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">')
+html = html.replace('<link rel="stylesheet" href="style.css">',
+                    '<link rel="stylesheet" href="style.css">\n  <link rel="stylesheet" href="android.css">')
+html = html.replace('<script src="app.js"></script>',
+                    '<script src="quran.js"></script>\n  <script src="android-core.js"></script>\n  <script src="app.js"></script>')
+assert 'android-core.js' in html and 'android.css' in html
+(out / 'index.html').write_text(html, encoding='utf8')
+
+# page-side ad pruning script (from ytm-preload.js), with a placeholder for the on/off switch
+pre = (src / 'ytm-preload.js').read_text(encoding='utf8')
+m = re.search(r'const code = `(.*?)`;\n  try \{ webFrame', pre, re.S)
+code = m.group(1).replace('${enabled ? \'true\' : \'false\'}', '__ENABLED__')
+(out / 'ytm-inject.js').write_text(code, encoding='utf8')
+print('ok:', sorted(p.name for p in out.iterdir()))

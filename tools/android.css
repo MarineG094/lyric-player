@@ -1,0 +1,44 @@
+/* Phone layout. Loaded after style.css. */
+#btnFull, #btnFolder { display: none; }
+#app { height: 100dvh; }
+button.icon:hover { background: transparent; }
+.topbar { padding: 8px 0 0; }
+.brand { display: none; }
+.top-actions { overflow-x: auto; flex-wrap: nowrap; padding: 4px 14px; width: 100%; scrollbar-width: none; }
+.top-actions::-webkit-scrollbar { display: none; }
+.top-actions button { white-space: nowrap; flex: 0 0 auto; }
+.side.right { display: none; }
+.controls { grid-template-columns: 1fr; justify-items: center; }
+.side.left { display: none; }
+.dock { padding: 4px 18px calc(12px + env(safe-area-inset-bottom)); }
+.card { padding: 22px; }
+.card h1 { font-size: 22px; }
+.toast { bottom: 150px; }
+
+@media (orientation: portrait) {
+  .stage, .stage.swap { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 10px; padding: 6px 18px 4px; }
+  .album-col, .stage.swap .album-col { order: -1; flex-direction: row; justify-content: flex-start; align-items: center; gap: 14px; }
+  .album-box { width: min(34vw, 150px); flex: 0 0 auto; border-radius: 10px; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5); }
+  .meta { text-align: left; min-width: 0; }
+  .song-title { font-size: 19px; }
+  .song-artist { font-size: 13px; }
+  .col-head { display: none; }
+  .lines { padding: 10vh 4px 24vh 0; }
+  .line { font-size: clamp(20px, 5.6vw, 30px); transform-origin: left center; }
+  .synced .line { max-width: 92%; }
+  .plain .line { font-size: clamp(17px, 4.6vw, 22px); }
+  #btnSide { display: none; }
+  /* no lyrics yet / song starting: the cover takes the middle */
+  .stage.solo, .stage.intro, .stage.swap.solo, .stage.swap.intro { grid-template-columns: minmax(0, 1fr); grid-template-rows: 0fr minmax(0, 1fr); gap: 0; }
+  .stage.solo .album-col, .stage.intro .album-col { flex-direction: column; justify-content: center; text-align: center; }
+  .stage.solo .album-box, .stage.intro .album-box { width: min(78vw, 46vh, 360px); }
+  .stage.solo .meta, .stage.intro .meta { text-align: center; }
+}
+@media (orientation: landscape) and (max-height: 560px) {
+  .topbar { padding-top: 4px; }
+  .stage { padding: 6px 24px 2px; gap: 24px; }
+  .album-box { width: min(100%, 40vh); }
+  .lines { padding: 30vh 8px 40vh 0; }
+  .line { font-size: clamp(18px, 3.2vw, 26px); }
+  .dock { padding-bottom: 6px; gap: 4px; }
+}
