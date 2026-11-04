@@ -72,8 +72,46 @@ core = shim.replace('/*__CORE__*/', core_body)
 (out / 'android-core.js').write_text(core, encoding='utf8')
 
 # renderer files
-for name in ['app.js', 'lyrics.js', 'palette.js', 'coverfilter.js', 'style.css']:
+for name in ['lyrics.js', 'palette.js', 'coverfilter.js', 'style.css']:
     shutil.copy(src / 'renderer' / name, out / name)
+
+# The cover filter's AI check normally runs on the graphics chip, which depends on timers that Android freezes
+# when the screen is off (so the car never got the verdict). With the screen off it runs on the processor instead,
+# and a check that stalls is retried that way.
+app = (src / 'renderer/app.js').read_text(encoding='utf8')
+old_backend = "        try { await window.tf.setBackend('webgl'); } catch (_) { /* falls back below */ }"
+assert old_backend in app
+app = app.replace(old_backend, "        window.__nsfwBackend = (window.__nsfwCpu || document.visibilityState !== 'visible') ? 'cpu' : 'webgl';\n        try { await window.tf.setBackend(window.__nsfwBackend); } catch (_) { /* falls back below */ }", 1)
+old_classify = app[app.index('  async function classifyCover(url) {'):app.index('  function setCoverMode(mode) {')]
+new_classify = '''  async function classifyCover(url) {
+    const want = () => ((window.__nsfwCpu || document.visibilityState !== 'visible') ? 'cpu' : 'webgl');
+    const run = async () => {
+      if (nsfwModel && window.__nsfwBackend !== want()) { // the screen went on or off: reload the model on the right backend
+        try { nsfwModel.model.dispose(); } catch (_) { /* ignore */ }
+        nsfwModel = null;
+        nsfwLoading = null;
+      }
+      const model = await ensureClassifier();
+      if (!model) return null;
+      const thumb = await window.api.getThumb(url);
+      if (!thumb) return null;
+      const image = new ImageData(new Uint8ClampedArray(thumb.data), thumb.w, thumb.h);
+      const predictions = await model.classify(image);
+      console.log('[cover filter]', window.__nsfwBackend, predictions.map((p) => `${p.className} ${p.probability.toFixed(2)}`).join(', '));
+      return window.CoverFilter.shouldBlur(predictions);
+    };
+    const sleep = window.__lpSleep || ((ms) => new Promise((r) => setTimeout(r, ms)));
+    let result = await Promise.race([run(), sleep(7000).then(() => 'stalled')]);
+    if (result === 'stalled') { // the graphics route froze (screen off): do it on the processor
+      window.__nsfwCpu = true;
+      result = await Promise.race([run(), sleep(40000).then(() => null)]);
+    }
+    return result === 'stalled' ? null : result;
+  }
+
+'''
+app = app.replace(old_classify, new_classify, 1)
+(out / 'app.js').write_text(app, encoding='utf8')
 shutil.copy(src / 'quran.js', out / 'quran.js')
 shutil.copytree(src / 'renderer/vendor', out / 'vendor')
 shutil.copy(root / 'tools/android.css', out / 'android.css')

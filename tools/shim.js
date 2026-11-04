@@ -107,6 +107,7 @@
       if (modes !== lastModes) { lastModes = modes; N.modes(modes); }
     } catch (_) { /* ignore */ }
   };
+  window.__lpSleep = (ms) => native('sleep', { ms }).then(() => undefined);
   window.__lpCmd = (name, arg) => handlers['player:cmd'](null, name, arg);
 
   const decode64 = (b64) => {

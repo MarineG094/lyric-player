@@ -363,7 +363,8 @@
         if (!('regeneratorRuntime' in window)) window.regeneratorRuntime = {};
         await loadScript('vendor/tf.min.js');
         await loadScript('vendor/nsfwjs.min.js');
-        try { await window.tf.setBackend('webgl'); } catch (_) { /* falls back below */ }
+        window.__nsfwBackend = (window.__nsfwCpu || document.visibilityState !== 'visible') ? 'cpu' : 'webgl';
+        try { await window.tf.setBackend(window.__nsfwBackend); } catch (_) { /* falls back below */ }
         await window.tf.ready();
         nsfwModel = await window.nsfwjs.load('vendor/nsfw/', { size: 224, type: 'layers' });
         return nsfwModel;
@@ -377,14 +378,29 @@
   }
 
   async function classifyCover(url) {
-    const model = await ensureClassifier();
-    if (!model) return null;
-    const thumb = await window.api.getThumb(url);
-    if (!thumb) return null;
-    const image = new ImageData(new Uint8ClampedArray(thumb.data), thumb.w, thumb.h);
-    const predictions = await model.classify(image);
-    console.log('[cover filter]', predictions.map((p) => `${p.className} ${p.probability.toFixed(2)}`).join(', '));
-    return window.CoverFilter.shouldBlur(predictions);
+    const want = () => ((window.__nsfwCpu || document.visibilityState !== 'visible') ? 'cpu' : 'webgl');
+    const run = async () => {
+      if (nsfwModel && window.__nsfwBackend !== want()) { // the screen went on or off: reload the model on the right backend
+        try { nsfwModel.model.dispose(); } catch (_) { /* ignore */ }
+        nsfwModel = null;
+        nsfwLoading = null;
+      }
+      const model = await ensureClassifier();
+      if (!model) return null;
+      const thumb = await window.api.getThumb(url);
+      if (!thumb) return null;
+      const image = new ImageData(new Uint8ClampedArray(thumb.data), thumb.w, thumb.h);
+      const predictions = await model.classify(image);
+      console.log('[cover filter]', window.__nsfwBackend, predictions.map((p) => `${p.className} ${p.probability.toFixed(2)}`).join(', '));
+      return window.CoverFilter.shouldBlur(predictions);
+    };
+    const sleep = window.__lpSleep || ((ms) => new Promise((r) => setTimeout(r, ms)));
+    let result = await Promise.race([run(), sleep(7000).then(() => 'stalled')]);
+    if (result === 'stalled') { // the graphics route froze (screen off): do it on the processor
+      window.__nsfwCpu = true;
+      result = await Promise.race([run(), sleep(40000).then(() => null)]);
+    }
+    return result === 'stalled' ? null : result;
   }
 
   function setCoverMode(mode) {
