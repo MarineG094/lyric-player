@@ -270,7 +270,7 @@ const clock = (sec) => {
    `stamps` are Quran.com timestamps ({ verse_key, timestamp_from, timestamp_to } in ms, relative to their own audio).
    `seconds` is the length of the track being played: it decides how to line the two recordings up. Returns null
    when too few ayahs have timing. */
-function buildTimed(arabic, english, stamps, from, to, seconds) {
+function buildTimed(arabic, english, stamps, from, to, seconds, estimated) {
   const st = new Map();
   for (const x of stamps || []) {
     const n = Number(String(x.verse_key || '').split(':')[1]);
@@ -283,15 +283,22 @@ function buildTimed(arabic, english, stamps, from, to, seconds) {
 
   const base = st.get(have[0].numberInSurah).timestamp_from / 1000;
   const span = st.get(have[have.length - 1].numberInSurah).timestamp_to / 1000 - base;
-  let shift = 0, scale = 1;
+  let shift = 0, scale = 1, origin = base;
   const d = (Number(seconds) || 0) - span;
-  if (Number(seconds) > 0 && span > 0) {
+  if (estimated) {
+    // Another reciter's rhythm stretched over this track. A whole surah keeps that recording's own opening (from the file start).
+    const whole = !from && !to;
+    origin = whole ? 0 : base;
+    const total = st.get(have[have.length - 1].numberInSurah).timestamp_to / 1000 - origin;
+    if (!(Number(seconds) > 0 && total > 0)) return null;
+    scale = seconds / total;
+  } else if (Number(seconds) > 0 && span > 0) {
     if (d > 1.5 && d <= 45) shift = d;                         // the upload has an intro (opening words, silence)
     else if (Math.abs(d) / span >= 0.02 && Math.abs(d) / span <= 0.12) scale = seconds / span; // a slightly different pace
   }
-  const lines = ['[by:Quran.com timing]'];
+  const lines = [estimated ? '[by:Quran.com timing (estimated)]' : '[by:Quran.com timing]'];
   for (const x of have) {
-    const t = shift + ((st.get(x.numberInSurah).timestamp_from / 1000) - base) * scale;
+    const t = shift + ((st.get(x.numberInSurah).timestamp_from / 1000) - origin) * scale;
     const text = [`${x.text} ﴿${x.numberInSurah}﴾`, en.get(x.numberInSurah)].filter(Boolean).join('\u2028'); // one timed entry, shown on two lines
     lines.push(`[${clock(t)}]${text}`);
   }

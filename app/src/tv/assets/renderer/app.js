@@ -587,7 +587,7 @@
       await refreshLyricFiles();
       if (state.currentVideoId === vid && els.editor.hidden) {
         await showLyricsForCurrent();
-        toast(`${res.synced ? 'Found timed lyrics' : 'Found lyrics'} on ${res.source || 'LRCLIB'} and saved them` + (res.note ? `. Not timed to the reciter: ${res.note}` : ''));
+        toast(`${res.synced ? 'Found timed lyrics' : 'Found lyrics'} on ${res.source || 'LRCLIB'} and saved them` + (res.note ? (res.synced ? `. Note: ${res.note}. Use the Sync buttons to adjust` : `. Not timed to the reciter: ${res.note}`) : ''));
       }
       return;
     }
@@ -629,7 +629,7 @@
     els.lyrics.classList.toggle('centered', !!(data && data.lines.some((l) => /[\u0600-\u06FF]/.test(l.text))));
     els.lyrics.classList.toggle('plain', !!(data && !data.synced));
     els.btnEdit.textContent = data ? 'Edit lyrics' : 'Add lyrics';
-    els.nudge.hidden = !(data && els.editor.hidden && /^\s*\[by:Quran\.com timing\]/im.test(state.lyricsRaw));
+    els.nudge.hidden = !(data && els.editor.hidden && /^\s*\[by:Quran\.com timing/im.test(state.lyricsRaw));
     { const off = (state.lyricsRaw.match(/^\s*\[offset:\s*(-?\d+)\s*\]/im) || [0, '0'])[1] | 0; els.nudgeVal.textContent = off ? `${off > 0 ? '+' : ''}${(off / 1000).toFixed(1)}s` : ''; }
 
     if (!data || !data.lines.length) {
