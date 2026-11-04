@@ -779,14 +779,14 @@ async function fromQuran(title, artist, seconds, timedOnly) {
   return timedOnly ? null : { plainLyrics: Quran.buildText(arabic, english, hit.from, hit.to) };
 }
 
-ipcMain.handle('lyrics:fetch', async (_event, { title, track, artist, duration, timedOnly }) => {
+ipcMain.handle('lyrics:fetch', async (_event, { title, track, artist, author, duration, timedOnly }) => {
   if (loadSettings().autoFetch === false) return { status: 'disabled' };
   if (!track) return { status: 'notfound' };
   const seconds = Math.round(Number(duration) || 0);
 
   // A Quran recitation gets the Quran text; if that service can't be reached we carry on to the normal sources.
   try {
-    const quran = await fromQuran(title || track, artist, seconds, timedOnly);
+    const quran = await fromQuran(title || track, `${artist || ''} ${author || ''}`.trim(), seconds, timedOnly);
     if (quran) {
       const synced = !!quran.syncedLyrics;
       const base = Lyrics.sanitizeFileName(title || track);

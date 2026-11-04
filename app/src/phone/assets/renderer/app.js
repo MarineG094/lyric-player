@@ -577,7 +577,7 @@
 
     let res;
     try {
-      res = await window.api.fetchLyrics({ title, track: query.track, artist: query.artist, duration, timedOnly: !!timedOnly });
+      res = await window.api.fetchLyrics({ title, track: query.track, artist: query.artist, author: author || '', duration, timedOnly: !!timedOnly });
     } catch (_) {
       res = { status: 'error' };
     }
