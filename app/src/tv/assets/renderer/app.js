@@ -683,7 +683,7 @@
     els.lyrics.classList.toggle('centered', !!(data && data.lines.some((l) => /[\u0600-\u06FF]/.test(l.text))));
     els.lyrics.classList.toggle('plain', !!(data && !data.synced));
     els.btnEdit.textContent = data ? 'Edit lyrics' : 'Add lyrics';
-    els.nudge.hidden = !(data && els.editor.hidden && /^\s*\[by:Quran\.com timing/im.test(state.lyricsRaw));
+    els.nudge.hidden = !(data && data.synced && els.editor.hidden && state.lyricsFile); // any song with timed lyrics
     { const off = (state.lyricsRaw.match(/^\s*\[offset:\s*(-?\d+)\s*\]/im) || [0, '0'])[1] | 0; els.nudgeVal.textContent = off ? `${off > 0 ? '+' : ''}${(off / 1000).toFixed(1)}s` : ''; }
 
     if (!data || !data.lines.length) {
@@ -795,7 +795,7 @@
     }
   }
 
-  // Quran timing comes from another recording of the reciter, so the text can be a little early or late: nudge it.
+  // Timed lyrics can be a little early or late for the version playing (and Quran timing comes from another recording): nudge them.
   async function nudgeLyrics(ms) {
     if (!state.lyricsFile || !state.lyricsRaw) return;
     const cur = (state.lyricsRaw.match(/^\s*\[offset:\s*(-?\d+)\s*\]/im) || [0, '0'])[1] | 0;
