@@ -32,8 +32,9 @@ button.icon:hover { background: transparent; }
   .plain .line { font-size: clamp(17px, 4.6vw, 22px); }
   #btnSide { display: none; }
   /* no lyrics yet / song starting: the cover takes the middle */
-  .stage.solo, .stage.intro, .stage.swap.solo, .stage.swap.intro { grid-template-columns: minmax(0, 1fr); grid-template-rows: 0fr minmax(0, 1fr); gap: 0; }
-  .stage.solo .album-col, .stage.intro .album-col { flex-direction: column; justify-content: center; text-align: center; }
+  .stage.solo, .stage.intro, .stage.swap.solo, .stage.swap.intro { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) 0fr; gap: 0; }
+  .stage.solo .album-col, .stage.intro .album-col { flex-direction: column; justify-content: center; align-items: center; text-align: center; height: 100%; gap: 14px; }
+  .stage.solo .lyrics-col, .stage.intro .lyrics-col { min-height: 0; height: 0; }
   .stage.solo .album-box, .stage.intro .album-box { width: min(78vw, 46vh, 360px); }
   .stage.solo .meta, .stage.intro .meta { text-align: center; }
 }
