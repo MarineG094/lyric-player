@@ -50,6 +50,15 @@
     btnSearch: $('#btnSearch'),
     searchResults: $('#searchResults'),
     searchMsg: $('#searchMsg'),
+    upNext: $('#upNext'),
+    upNextImg: $('#upNextImg'),
+    upNextText: $('#upNextText'),
+    linkChoice: $('#linkChoice'),
+    choiceText: $('#choiceText'),
+    chPlayNow: $('#chPlayNow'),
+    chPlayNext: $('#chPlayNext'),
+    chQueue: $('#chQueue'),
+    chCancel: $('#chCancel'),
     queueBox: $('#queueBox'),
     queueList: $('#queueList'),
     btnClearQueue: $('#btnClearQueue'),
@@ -137,6 +146,7 @@
       els.overlayMsg.hidden = true;
     }
     refreshQueue();
+    hideChoice();
     setTimeout(() => (els.searchInput || els.urlInput).focus(), 0);
   }
 
@@ -166,11 +176,22 @@
   async function refreshQueue() { try { renderQueue(await P.queue()); } catch (_) { /* ignore */ } }
   els.btnClearQueue.addEventListener('click', async () => renderQueue(await P.clearQueue()));
 
-  async function queueSong(r, front) {
-    if (!state.currentVideoId) { loadSource({ kind: 'song', id: r.id }); return; } // nothing playing yet: just play it
-    try { renderQueue(await P.enqueue({ id: r.id, title: r.title, sub: r.sub, thumb: r.thumb }, front)); } catch (_) { return; }
-    toast(front ? `Playing next: ${r.title}` : `Added to the queue: ${r.title}`);
+  // Adds whatever a link or search result points at (one song, or all songs of an album / playlist) to the queue.
+  async function queueSource(src, title, front) {
+    let res;
+    try { res = await P.resolveItems(src); } catch (_) { res = { items: [], error: 'failed' }; }
+    const items = (res && res.items) || [];
+    if (!items.length) { toast("Couldn't add that: " + ((res && res.error) || 'nothing found')); return false; }
+    let out;
+    try { out = await P.enqueueMany(items, front); } catch (_) { return false; }
+    renderQueue(out.queue);
+    const what = items.length === 1 ? (items[0].title || title || 'the song') : `${out.added} songs`;
+    toast((front ? 'Playing next: ' : 'Added to the queue: ') + what + (out.skipped ? ` (${out.skipped} didn't fit, the queue holds 200)` : ''));
+    return true;
   }
+
+  // Play now / Play next / Add to queue, for a result or a pasted link. With nothing playing, there is nothing to queue behind.
+  function playNow(src) { loadSource(src); }
 
   function renderResults(results) {
     els.searchResults.textContent = '';
@@ -196,13 +217,15 @@
       b.append(rt, chip);
       b.addEventListener('click', () => { els.searchInput.value = ''; renderResults([]); searchNote(''); loadSource({ kind: r.kind, id: r.id }); });
       row.appendChild(b);
-      if (r.kind === 'song') {
+      {
         const q = document.createElement('div'); q.className = 'qbtns';
-        const next = document.createElement('button'); next.type = 'button'; next.className = 'qbtn'; next.textContent = 'Play next'; next.title = 'Play this right after the current song';
-        const add = document.createElement('button'); add.type = 'button'; add.className = 'qbtn'; add.textContent = '+ Queue'; add.title = 'Add this to the end of the queue';
-        next.addEventListener('click', () => queueSong(r, true));
-        add.addEventListener('click', () => queueSong(r, false));
-        q.append(next, add);
+        const src = { kind: r.kind, id: r.id };
+        const mk = (label, title, fn) => { const x = document.createElement('button'); x.type = 'button'; x.className = 'qbtn'; x.textContent = label; x.title = title; x.addEventListener('click', fn); return x; };
+        q.append(
+          mk('Play now', 'Play this now', () => { els.searchInput.value = ''; renderResults([]); searchNote(''); playNow(src); }),
+          mk('Play next', 'Play this right after the current song', () => { if (!state.currentVideoId) playNow(src); else queueSource(src, r.title, true); }),
+          mk('+ Queue', 'Add this to the end of the queue', () => { if (!state.currentVideoId) playNow(src); else queueSource(src, r.title, false); }),
+        );
         row.appendChild(q);
       }
       els.searchResults.appendChild(row);
@@ -229,15 +252,30 @@
     els.overlayMsg.hidden = true;
   }
 
+  // A pasted link asks what to do with it (unless nothing is playing yet, when there is nothing to ask).
+  let pendingSrc = null;
+  const KIND_WORD = { song: 'a song', album: 'an album', list: 'a playlist' };
+  function hideChoice() { pendingSrc = null; els.linkChoice.hidden = true; }
+  function offerLink(src) {
+    if (!state.currentVideoId) { els.urlInput.value = ''; loadSource(src); return; }
+    pendingSrc = src;
+    els.choiceText.textContent = `That link is ${KIND_WORD[src.kind] || 'music'}. What should happen?`;
+    els.linkChoice.hidden = false;
+    els.overlayMsg.hidden = true;
+    setTimeout(() => els.chPlayNow.focus(), 0);
+  }
   function submitUrl(text) {
     const src = L.extractSource(text);
     if (!src) {
       showOverlay("That doesn't look like a YouTube Music link. Paste a playlist, album or song link.");
       return;
     }
-    els.urlInput.value = '';
-    loadSource(src);
+    offerLink(src);
   }
+  els.chPlayNow.addEventListener('click', () => { const s = pendingSrc; hideChoice(); els.urlInput.value = ''; if (s) playNow(s); });
+  els.chPlayNext.addEventListener('click', async () => { const s = pendingSrc; if (!s) return; if (await queueSource(s, '', true)) { hideChoice(); els.urlInput.value = ''; } });
+  els.chQueue.addEventListener('click', async () => { const s = pendingSrc; if (!s) return; if (await queueSource(s, '', false)) { hideChoice(); els.urlInput.value = ''; } });
+  els.chCancel.addEventListener('click', () => { hideChoice(); els.urlInput.focus(); });
 
   // Playlist, album or single song: whatever the link points at.
   function loadSource(src) {
@@ -325,9 +363,26 @@
     loadPlaylist(listId, true);
   }
 
+  // The tiny "Up next" line at the bottom: cover, title and artist of the song that plays after this one.
+  let upNextId = '';
+  function paintNext(s) {
+    const n = s && s.hasMedia && !s.ad ? s.next : null;
+    if (!n || (!n.title && !n.thumb)) { els.upNext.hidden = true; upNextId = ''; return; }
+    els.upNext.hidden = false;
+    els.upNextText.textContent = n.title ? (n.sub ? `${n.title} · ${n.sub}` : n.title) : '…';
+    if (n.id !== upNextId || els.upNextImg.dataset.src !== n.thumb) {
+      upNextId = n.id;
+      els.upNextImg.dataset.src = n.thumb || '';
+      els.upNextImg.hidden = !/^https:/.test(n.thumb || '');
+      if (!els.upNextImg.hidden) els.upNextImg.src = n.thumb;
+    }
+    els.upNext.title = n.queued ? 'Next in your queue' : 'Next in the playlist';
+  }
+
   function onPlayerState(s) {
     if (!s) return;
     state.snap = s;
+    paintNext(s);
     if (!s.hasMedia) return;
 
     // An ad is playing: don't treat it as a song. (With ad block on it is muted and skipped by the app.)
@@ -990,7 +1045,7 @@
     els.dragVeil.hidden = true;
     for (const text of textFromDrop(event.dataTransfer)) {
       const src = L.extractSource(text);
-      if (src) return loadSource(src);
+      if (src) { showOverlay(); return offerLink(src); }
     }
     toast("Couldn't find a playlist, album or song link in what you dropped. Try pasting the link instead.");
     showOverlay();

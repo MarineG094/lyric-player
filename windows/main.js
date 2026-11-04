@@ -254,7 +254,7 @@ function createYtView() {
 const PICK_VIDEO = `const pickVideo = () => { const a = [...document.querySelectorAll('video')]; return a.find((v) => v.readyState > 0 && !v.paused) || a.find((v) => v.readyState > 0) || a[0] || null; };`;
 
 // Runs inside the YouTube Music page. Returns plain JSON.
-const probeScript = (desiredVolume, blockAds) => `(() => {
+const probeScript = (desiredVolume, blockAds, wantId) => `(() => {
   ${PICK_VIDEO}
   try {
     const q = (s) => document.querySelector(s);
@@ -299,9 +299,20 @@ const probeScript = (desiredVolume, blockAds) => `(() => {
       qc.t = tNow;
       queueIds = items.length < 600 ? items.map((i) => (i.data && i.data.videoId) || '').filter(Boolean) : [];
     }
+    const metaOf = (it) => {
+      const d = it && it.data;
+      if (!d || !d.videoId) return null;
+      const runs = (x) => ((x && x.runs) || []).map((r) => r.text);
+      const th = (d.thumbnail && d.thumbnail.thumbnails) || [];
+      return { id: d.videoId, title: runs(d.title).join(''), sub: runs(d.shortBylineText).join('').split(' \u2022 ')[0].trim(), thumb: th.length ? th[th.length - 1].url : '' };
+    };
+    const want = ${JSON.stringify(wantId || '')};
+    const wantMeta = want ? metaOf(items.find((i) => i.data && i.data.videoId === want)) : null;
     let curIdx = vid ? items.findIndex((i) => i.data && i.data.videoId === vid) : -1;
     if (curIdx < 0) curIdx = items.findIndex((i) => i.hasAttribute('selected') || i.hasAttribute('is-playing') || i.getAttribute('play-button-state') === 'playing');
+    const nextMeta = curIdx >= 0 ? metaOf(items[curIdx + 1]) : null;
     return {
+      wantMeta, nextMeta,
       hasMedia: !!(v && title),
       ad: adNow,
       videoId: new URL(location.href).searchParams.get('v') || '',
@@ -330,7 +341,7 @@ async function pollYt() {
   }
   ytPolling = true;
   try {
-    const state = await ytView.webContents.executeJavaScript(probeScript(ytDesiredVolume, adBlock), true);
+    const state = await ytView.webContents.executeJavaScript(probeScript(ytDesiredVolume, adBlock, ctl.wantId), true);
     if (state && state.hasMedia && !state.ad && state.videoId) {
       if (ytHistory[ytHistory.length - 1] !== state.videoId) {
         ytHistory.push(state.videoId);
@@ -341,6 +352,7 @@ async function pollYt() {
     ctl.snap = state;
     if (state && Array.isArray(state.queueIds)) ctl.qids = state.queueIds;
     if (state && state.hasMedia) controllerTick(state);
+    if (state) { learnMeta(state); state.next = computeNext(state); }
     if (win && !win.isDestroyed()) win.webContents.send('player:state', state);
   } catch (_) {
     /* page is navigating; try again next tick */
@@ -514,6 +526,97 @@ ipcMain.handle('player:enqueue', (_e, item, front) => {
   return ctl.queue.slice();
 });
 ipcMain.handle('player:queue', () => ctl.queue.slice());
+ipcMain.handle('player:enqueueMany', (_e, items, front) => {
+  const room = 200 - ctl.queue.length;
+  const clean = (Array.isArray(items) ? items : []).filter((x) => x && /^[A-Za-z0-9_-]{11}$/.test(String(x.id || ''))).slice(0, Math.max(0, room)).map((x) => ({
+    id: String(x.id), title: String(x.title || '').slice(0, 200), sub: String(x.sub || '').slice(0, 200), thumb: /^https:/.test(String(x.thumb || '')) ? String(x.thumb) : '',
+  }));
+  if (front) { ctl.queue.splice(ctl.nextN, 0, ...clean); ctl.nextN += clean.length; } else ctl.queue.push(...clean);
+  return { queue: ctl.queue.slice(), added: clean.length, skipped: (Array.isArray(items) ? items.length : 0) - clean.length };
+});
+
+// Runs in the page: the songs behind a link (one song, or every song of a playlist), with titles and covers.
+const itemsScript = (kind, id) => `(async () => {
+  try {
+    const cfg = window.ytcfg;
+    const get = (k) => (cfg && typeof cfg.get === 'function' ? cfg.get(k) : cfg && cfg.data_ ? cfg.data_[k] : undefined);
+    const key = get('INNERTUBE_API_KEY');
+    const context = get('INNERTUBE_CONTEXT');
+    if (!key || !context) return JSON.stringify({ wait: true });
+    const post = async (path, body) => {
+      const res = await fetch('/youtubei/v1/' + path + '?prettyPrint=false&key=' + encodeURIComponent(key), { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify(Object.assign({ context }, body)) });
+      return res.ok ? res.json() : null;
+    };
+    const runs = (x) => ((x && x.runs) || []).map((r) => r.text);
+    const out = [];
+    if (${JSON.stringify(kind)} === 'song') {
+      const data = await post('next', { videoId: ${JSON.stringify(id)} });
+      const walk = (o) => {
+        if (!o || typeof o !== 'object' || out.length) return;
+        if (o.playlistPanelVideoRenderer && o.playlistPanelVideoRenderer.videoId === ${JSON.stringify(id)}) {
+          const d = o.playlistPanelVideoRenderer; const th = (d.thumbnail && d.thumbnail.thumbnails) || [];
+          out.push({ id: d.videoId, title: runs(d.title).join(''), sub: runs(d.shortBylineText).join('').split(' \u2022 ')[0].trim(), thumb: th.length ? th[th.length - 1].url : '' });
+          return;
+        }
+        for (const k in o) walk(o[k]);
+      };
+      walk(data);
+      if (!out.length) out.push({ id: ${JSON.stringify(id)}, title: '', sub: '', thumb: '' });
+      return JSON.stringify({ items: out });
+    }
+    let body = { browseId: 'VL' + ${JSON.stringify(id)} };
+    for (let page = 0; page < 8 && out.length < 200; page++) {
+      const data = await post('browse', body);
+      if (!data) break;
+      let token = null;
+      const walk = (o) => {
+        if (!o || typeof o !== 'object') return;
+        const it = o.musicResponsiveListItemRenderer;
+        if (it && it.playlistItemData && it.playlistItemData.videoId) {
+          const cols = it.flexColumns || [];
+          const col = (c) => runs(c && c.musicResponsiveListItemFlexColumnRenderer && c.musicResponsiveListItemFlexColumnRenderer.text);
+          let thumb = '';
+          try { const th = it.thumbnail.musicThumbnailRenderer.thumbnail.thumbnails; thumb = th[th.length - 1].url; } catch (e) { /* none */ }
+          out.push({ id: it.playlistItemData.videoId, title: (col(cols[0])[0] || '').trim(), sub: (col(cols[1])[0] || '').trim(), thumb });
+          return;
+        }
+        if (!token && o.continuationCommand && o.continuationCommand.token) token = o.continuationCommand.token;
+        for (const k in o) walk(o[k]);
+      };
+      walk(data);
+      if (!token) break;
+      body = { continuation: token };
+    }
+    const seen = new Set();
+    return JSON.stringify({ items: out.filter((x) => (seen.has(x.id) ? false : seen.add(x.id))).slice(0, 200) });
+  } catch (e) { return JSON.stringify({ error: String(e && e.message || e) }); }
+})()`;
+
+// The songs behind a pasted or searched link, without interrupting what is playing.
+ipcMain.handle('player:resolveItems', async (_e, src) => {
+  if (!ytView || !src) return { items: [], error: 'not ready' };
+  const wc = ytView.webContents;
+  let kind = src.kind === 'song' ? 'song' : 'list';
+  let id = String(src.id || '');
+  try {
+    if (src.kind === 'album') {
+      if (!/^MPREb_[A-Za-z0-9_-]{4,60}$/.test(id)) return { items: [] };
+      id = await wc.executeJavaScript(albumPlaylistScript(id), true);
+      if (!id) return { items: [], error: "couldn't open that album" };
+    }
+    if (!/^[A-Za-z0-9_-]{2,80}$/.test(id)) return { items: [] };
+    for (let i = 0; i < 12; i++) {
+      const r = JSON.parse((await wc.executeJavaScript(itemsScript(kind, id), true)) || '{}');
+      if (r.items) {
+        r.items.forEach((x) => { if (x.title) ctl.meta.set(x.id, x); });
+        return { items: r.items };
+      }
+      if (r.error) return { items: [], error: r.error };
+      await wait(700); // the page is still starting
+    }
+  } catch (err) { return { items: [], error: err && err.message ? err.message : 'failed' }; }
+  return { items: [], error: 'YouTube Music is still loading' };
+});
 ipcMain.handle('player:dequeue', (_e, index) => {
   const i = Number(index);
   if (Number.isInteger(i) && i >= 0 && i < ctl.queue.length) { ctl.queue.splice(i, 1); if (i < ctl.nextN) ctl.nextN -= 1; }
@@ -537,7 +640,7 @@ const playerApi = (method) => `(() => { const p = document.querySelector('#movie
 
 /* ---------- shuffle and repeat (handled here, not by clicking the page's buttons) ---------- */
 
-const ctl = { queue: [], nextN: 0, divert: null, trace: [], solo: false, shuffle: false, repeat: 'off', order: [], pos: 0, lastJump: 0, snap: null, spaWorks: null, spaFails: 0, ids: [], idsFor: '', idsAt: 0, idsTries: 0, idsBusy: false };
+const ctl = { meta: new Map(), wantId: '', queue: [], nextN: 0, divert: null, trace: [], solo: false, shuffle: false, repeat: 'off', order: [], pos: 0, lastJump: 0, snap: null, spaWorks: null, spaFails: 0, ids: [], idsFor: '', idsAt: 0, idsTries: 0, idsBusy: false };
 const enc = encodeURIComponent;
 
 function shuffled(list) {
@@ -623,6 +726,22 @@ function nextShuffleId(forceNewRound) {
   let id = ctl.order[ctl.pos++];
   if (id === current && ctl.pos < ctl.order.length) id = ctl.order[ctl.pos++]; // don't "shuffle" to the song already playing
   return id;
+}
+
+// Which song the shuffle will pick next, without using it up.
+function peekShuffleId() {
+  const ids = trackIds();
+  if (ids.length < 2) return null;
+  const current = ctl.snap && ctl.snap.videoId;
+  if (ctl.orderLen !== ids.length || ctl.orderList !== ids[0]) {
+    ctl.order = shuffled(ids.filter((x) => x !== current));
+    ctl.orderLen = ids.length;
+    ctl.orderList = ids[0];
+    ctl.pos = 0;
+  }
+  let id = ctl.order[ctl.pos];
+  if (id === current) id = ctl.order[ctl.pos + 1];
+  return id || null;
 }
 
 // Runs in the page: switch to a song inside YouTube Music without reloading the page, if the site lets us.
@@ -719,6 +838,39 @@ async function resumeAfterDivert() {
 }
 
 const onQueuedSong = (s) => ctl.divert && s && ctl.divert.playing === s.videoId;
+
+// Remembers the title / artist / cover of songs the page has told us about.
+function learnMeta(s) {
+  for (const mm of [s.wantMeta, s.nextMeta]) if (mm && mm.id) { ctl.meta.set(mm.id, mm); if (ctl.meta.size > 800) ctl.meta.delete(ctl.meta.keys().next().value); }
+  if (s.videoId && s.title) ctl.meta.set(s.videoId, { id: s.videoId, title: s.title, sub: s.artist || '', thumb: s.art || '' });
+}
+
+// What will play after this song, for the "Up next" line: { id, title, sub, thumb } or null.
+function computeNext(s) {
+  if (!s || !s.hasMedia || s.ad) return null;
+  let id = '';
+  let item = null;
+  if (ctl.repeat === 'one') return null;
+  if (ctl.queue.length) item = ctl.queue[0];
+  else if (onQueuedSong(s) && ctl.divert) {
+    const d = ctl.divert;
+    if (d.wasSolo || !d.listId) return null;
+    if (ctl.shuffle) id = peekShuffleId() || '';
+    else { const ids = trackIds(); const i = ids.indexOf(d.afterId); id = i >= 0 ? (ids[i + 1] || (ctl.repeat === 'all' ? ids[0] : '')) : ''; }
+  } else if (!ctl.solo) {
+    if (ctl.shuffle) id = peekShuffleId() || '';
+    else {
+      const ids = trackIds();
+      const i = ids.indexOf(s.videoId);
+      if (i >= 0) id = ids[i + 1] || (ctl.repeat === 'all' ? ids[0] : '');
+      else if (s.nextMeta) item = s.nextMeta;
+    }
+  }
+  if (!item && id) item = ctl.meta.get(id) || { id, title: '', sub: '', thumb: '' };
+  ctl.wantId = item && !item.title ? item.id : ''; // ask the page for this song's details on the next look
+  if (!item) return null;
+  return { id: item.id, title: item.title || '', sub: item.sub || '', thumb: item.thumb || (item.id ? `https://i.ytimg.com/vi/${item.id}/mqdefault.jpg` : ''), queued: item === ctl.queue[0] };
+}
 
 // Called after every poll. Handles what should happen when a song reaches its end.
 function controllerTick(s) {

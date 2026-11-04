@@ -187,6 +187,8 @@
       search: (query) => handlers['player:search'](null, query),
       enqueue: (item, front) => handlers['player:enqueue'](null, item, front),
       queue: () => handlers['player:queue'](),
+      enqueueMany: (items, front) => handlers['player:enqueueMany'](null, items, front),
+      resolveItems: (src) => handlers['player:resolveItems'](null, src),
       dequeue: (index) => handlers['player:dequeue'](null, index),
       clearQueue: () => handlers['player:clearQueue'](),
       // The phone's own volume buttons set the loudness; the page's volume stays at full.

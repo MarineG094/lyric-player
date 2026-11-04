@@ -107,6 +107,11 @@
           <input id="vol" type="range" min="0" max="100" step="1" value="80" aria-label="Volume">
         </div>
       </div>
+      <div id="upNext" class="upnext" hidden>
+        <img id="upNextImg" class="un-img" alt="">
+        <span class="un-label">Up next</span>
+        <span id="upNextText" class="un-text"></span>
+      </div>
     </footer>
 
     <div id="overlay" class="overlay" hidden>
@@ -127,6 +132,15 @@
         <div class="paste-row">
           <input id="urlInput" type="text" spellcheck="false" placeholder="https://music.youtube.com/..." aria-label="Playlist, album or song link">
           <button id="btnLoad" class="solid" type="button">Load</button>
+        </div>
+        <div id="linkChoice" class="choice" hidden>
+          <p id="choiceText" class="choice-text"></p>
+          <div class="choice-btns">
+            <button id="chPlayNow" class="solid small" type="button">Play now</button>
+            <button id="chPlayNext" class="ghost small" type="button">Play next</button>
+            <button id="chQueue" class="ghost small" type="button">Add to queue</button>
+            <button id="chCancel" class="ghost small" type="button">Cancel</button>
+          </div>
         </div>
         <p id="overlayMsg" class="msg" hidden></p>
         <p class="fine">Playlists must be <strong>Public</strong> or <strong>Unlisted</strong>. Private ones can't be played here. Albums and single songs work with their normal share links.</p>
