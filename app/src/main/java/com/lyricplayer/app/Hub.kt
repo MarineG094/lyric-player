@@ -48,6 +48,8 @@ object Hub {
     @Volatile var last: NowPlaying? = null
     @Volatile var browsing = false
     @Volatile var lyric = ""
+    /** Two letters: shuffle on (1) / off (0), then repeat off (x) / playlist (a) / one song (o). */
+    @Volatile var modes = "0x"
 
     var ui: WebView? = null
         private set
@@ -104,6 +106,11 @@ object Hub {
             val a = if (arg == null) "undefined" else arg.toString()
             ui?.evaluateJavascript("window.__lpCmd && window.__lpCmd('$name', $a)", null)
         }
+    }
+
+    /** Presses one of the page's own buttons (shuffle / repeat), so the app and the car stay in step. */
+    fun click(id: String) {
+        main.post { ui?.evaluateJavascript("(document.getElementById('$id')||{click(){}}).click()", null) }
     }
 
     fun nowPlaying(json: String) {

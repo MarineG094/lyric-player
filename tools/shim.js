@@ -90,12 +90,17 @@
 
   // The native side calls this a few times a second (a web page's own timers get slowed down in the background).
   let lastLine = null;
+  let lastModes = '';
   window.__lpTick = () => {
     pollYt();
     try {
       const el = document.querySelector('.lyrics .line.active');
       const text = el ? el.textContent.trim() : '';
       if (text !== lastLine) { lastLine = text; N.lyricLine(text); }
+      const sb = document.getElementById('btnShuffle');
+      const rb = document.getElementById('btnRepeat');
+      const modes = (sb && sb.classList.contains('on') ? '1' : '0') + ((rb && rb.title.indexOf('this song') >= 0) ? 'o' : (rb && rb.classList.contains('on')) ? 'a' : 'x');
+      if (modes !== lastModes) { lastModes = modes; N.modes(modes); }
     } catch (_) { /* ignore */ }
   };
   window.__lpCmd = (name, arg) => handlers['player:cmd'](null, name, arg);

@@ -44,6 +44,12 @@ class PlaybackService : MediaBrowserServiceCompat() {
             override fun onSkipToNext() = Hub.command("next")
             override fun onSkipToPrevious() = Hub.command("prev")
             override fun onSeekTo(pos: Long) = Hub.command("seek", pos / 1000.0)
+            override fun onCustomAction(action: String?, extras: Bundle?) {
+                when (action) {
+                    "lp.shuffle" -> Hub.click("btnShuffle")
+                    "lp.repeat" -> Hub.click("btnRepeat")
+                }
+            }
             override fun onPlayFromMediaId(mediaId: String?, extras: Bundle?) = Hub.command("play")
         })
         session.isActive = true
@@ -139,6 +145,8 @@ class PlaybackService : MediaBrowserServiceCompat() {
         return b.build()
     }
 
+    fun modesChanged() { setState(Hub.last) }
+
     private fun setState(np: NowPlaying?) {
         val actions = PlaybackStateCompat.ACTION_PLAY or PlaybackStateCompat.ACTION_PAUSE or PlaybackStateCompat.ACTION_PLAY_PAUSE or
             PlaybackStateCompat.ACTION_SKIP_TO_NEXT or PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS or PlaybackStateCompat.ACTION_SEEK_TO or
@@ -148,10 +156,21 @@ class PlaybackService : MediaBrowserServiceCompat() {
             np.playing -> PlaybackStateCompat.STATE_PLAYING
             else -> PlaybackStateCompat.STATE_PAUSED
         }
+        val shuffleOn = Hub.modes.startsWith("1")
+        val repeat = Hub.modes.getOrElse(1) { 'x' }
         session.setPlaybackState(
             PlaybackStateCompat.Builder()
                 .setActions(actions)
                 .setState(state, np?.posMs ?: 0L, if (np?.playing == true) 1f else 0f)
+                .addCustomAction(
+                    "lp.shuffle", if (shuffleOn) "Shuffle: on" else "Shuffle: off",
+                    if (shuffleOn) R.drawable.ic_shuffle_on else R.drawable.ic_shuffle_off,
+                )
+                .addCustomAction(
+                    "lp.repeat",
+                    when (repeat) { 'a' -> "Repeat: playlist"; 'o' -> "Repeat: this song"; else -> "Repeat: off" },
+                    when (repeat) { 'a' -> R.drawable.ic_repeat_all; 'o' -> R.drawable.ic_repeat_one; else -> R.drawable.ic_repeat_off },
+                )
                 .build(),
         )
     }
