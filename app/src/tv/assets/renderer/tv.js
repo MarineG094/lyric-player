@@ -32,6 +32,13 @@
     actions.insertBefore(b, actions.firstChild);
   }
 
+  // Height of the control bar, so full screen can centre the content while the bar is hidden.
+  const dock = document.querySelector('.dock');
+  const paintDock = () => { if (dock) document.documentElement.style.setProperty('--dockH', dock.offsetHeight + 'px'); };
+  paintDock();
+  window.addEventListener('resize', paintDock);
+  setInterval(paintDock, 2000);
+
   /* ---- send a link from the phone ---- */
   const card = document.querySelector('#overlay .card');
   const hint = document.createElement('p');
