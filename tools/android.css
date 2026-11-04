@@ -68,3 +68,7 @@ button.icon:hover { background: transparent; }
 /* In full screen the controls float over the content (fading out when idle), so the cover and lyrics use the whole screen. */
 #app.immersive { position: relative; grid-template-rows: minmax(0, 1fr); }
 #app.immersive .dock { position: absolute; left: 0; right: 0; bottom: 0; padding-top: 28px; background: linear-gradient(to top, rgba(0, 0, 0, 0.62), transparent); z-index: 5; }
+
+/* Search results on a narrow screen: the Play next / Queue buttons drop under the title. */
+.result-row { flex-wrap: wrap; }
+.result-row .qbtns { width: 100%; padding: 0 0 6px 66px; }

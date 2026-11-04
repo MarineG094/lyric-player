@@ -204,6 +204,7 @@ ipcMain.handle('player:open', (_e, id, videoId) => {
   if (!ytView) return false;
   if (!/^[A-Za-z0-9_-]{6,80}$/.test(String(id || ''))) return false;
   ytHistory = [];
+  ctl.divert = null;
   ytListId = String(id);
   ctl.solo = false;
   ctl.order = [];
@@ -222,6 +223,7 @@ ipcMain.handle('player:openSong', (_e, videoId) => {
   if (!ytView) return false;
   if (!/^[A-Za-z0-9_-]{2,20}$/.test(String(videoId || ''))) return false;
   ytHistory = [];
+  ctl.divert = null;
   ytListId = '';
   ctl.solo = true;
   ctl.order = [];
@@ -343,6 +345,22 @@ ipcMain.handle('player:search', async (_e, query) => {
   return { results: [], error: last };
 });
 
+ipcMain.handle('player:enqueue', (_e, item, front) => {
+  const id = String(item && item.id || '');
+  if (!/^[A-Za-z0-9_-]{11}$/.test(id) || ctl.queue.length >= 200) return ctl.queue.slice();
+  const entry = { id, title: String(item.title || '').slice(0, 200), sub: String(item.sub || '').slice(0, 200), thumb: /^https:/.test(String(item.thumb || '')) ? String(item.thumb) : '' };
+  if (front) { ctl.queue.splice(ctl.nextN, 0, entry); ctl.nextN += 1; } // after earlier "play next" songs, before the rest
+  else ctl.queue.push(entry);
+  return ctl.queue.slice();
+});
+ipcMain.handle('player:queue', () => ctl.queue.slice());
+ipcMain.handle('player:dequeue', (_e, index) => {
+  const i = Number(index);
+  if (Number.isInteger(i) && i >= 0 && i < ctl.queue.length) { ctl.queue.splice(i, 1); if (i < ctl.nextN) ctl.nextN -= 1; }
+  return ctl.queue.slice();
+});
+ipcMain.handle('player:clearQueue', () => { ctl.queue = []; ctl.nextN = 0; return []; });
+
 ipcMain.handle('player:browse', (_e, show, top) => {
   ytBrowse = !!show;
   if (Number.isFinite(top)) ytTop = Math.max(0, Math.min(300, Math.round(top)));
@@ -359,7 +377,7 @@ const playerApi = (method) => `(() => { const p = document.querySelector('#movie
 
 /* ---------- shuffle and repeat (handled here, not by clicking the page's buttons) ---------- */
 
-const ctl = { trace: [], solo: false, shuffle: false, repeat: 'off', order: [], pos: 0, lastJump: 0, snap: null, spaWorks: null, spaFails: 0, ids: [], idsFor: '', idsAt: 0, idsTries: 0, idsBusy: false };
+const ctl = { queue: [], nextN: 0, divert: null, trace: [], solo: false, shuffle: false, repeat: 'off', order: [], pos: 0, lastJump: 0, snap: null, spaWorks: null, spaFails: 0, ids: [], idsFor: '', idsAt: 0, idsTries: 0, idsBusy: false };
 const enc = encodeURIComponent;
 
 function shuffled(list) {
@@ -450,7 +468,7 @@ function nextShuffleId(forceNewRound) {
 // Runs in the page: switch to a song inside YouTube Music without reloading the page, if the site lets us.
 const spaNavigateScript = (videoId, listId) => `(async () => {
   const app = document.querySelector('ytmusic-app');
-  const endpoint = { watchEndpoint: { videoId: ${JSON.stringify(videoId)}, playlistId: ${JSON.stringify(listId)} } };
+  const endpoint = { watchEndpoint: Object.assign({ videoId: ${JSON.stringify(videoId)} }, ${JSON.stringify(listId || '')} ? { playlistId: ${JSON.stringify(listId || '')} } : {}) };
   const arrived = () => new URL(location.href).searchParams.get('v') === ${JSON.stringify(videoId)};
   const wait = (ms) => native('sleep', { ms }).then(() => undefined);
   const settle = async () => { for (let i = 0; i < 9 && !arrived(); i++) await wait(150); return arrived(); };
@@ -467,18 +485,19 @@ const spaNavigateScript = (videoId, listId) => `(async () => {
 })()`;
 
 // Play one specific song of the playlist: inside the page if possible, otherwise by loading its address.
-async function playTrack(id) {
+async function playTrack(id, listOverride) {
   if (!ytView) return false;
+  const lid = listOverride === undefined ? ytListId : listOverride; // '' plays the song on its own, outside the playlist
   ctl.lastJump = Date.now();
   const wc = ytView.webContents;
   let ok = false;
   // Once switching inside the page has failed, don't waste time on it again: load the song's address straight away.
   if (ctl.spaWorks !== false) {
-    try { ok = await wc.executeJavaScript(spaNavigateScript(id, ytListId), true); } catch (_) { ok = false; }
+    try { ok = await wc.executeJavaScript(spaNavigateScript(id, lid), true); } catch (_) { ok = false; }
     ctl.spaFails = ok ? 0 : ctl.spaFails + 1;
     ctl.spaWorks = ok ? true : ctl.spaFails >= 2 ? false : null; // two misses in a row: stop trying
   }
-  if (!ok && ytView) wc.loadURL(`${YT_URL}watch?v=${enc(id)}${ytListId ? `&list=${enc(ytListId)}` : ''}`);
+  if (!ok && ytView) wc.loadURL(`${YT_URL}watch?v=${enc(id)}${lid ? `&list=${enc(lid)}` : ''}`);
   ctl.lastJump = Date.now();
   return true;
 }
@@ -488,6 +507,58 @@ function openInList(query) {
   ctl.lastJump = Date.now();
   ytView.webContents.loadURL(`${YT_URL}watch?${query}`);
 }
+
+/* ---------- the "play next" queue ----------
+   Songs the person adds play before the playlist carries on. A queued song plays on its own; when the queue is
+   empty the playlist resumes with the song that would have come next. */
+
+function takeQueued() {
+  const it = ctl.queue.shift();
+  if (it && ctl.nextN > 0) ctl.nextN -= 1;
+  return it || null;
+}
+
+async function playQueued(fromId) {
+  const it = takeQueued();
+  if (!it) return false;
+  if (!ctl.divert) ctl.divert = { afterId: fromId, listId: ytListId, wasSolo: ctl.solo };
+  ctl.divert.playing = it.id;
+  await playTrackVerified(it.id, '');
+  return true;
+}
+
+// The queue ran out: go on with the playlist (or stop, if the person was only playing one song).
+async function resumeAfterDivert() {
+  const d = ctl.divert;
+  ctl.divert = null;
+  if (!d || !ytView) return;
+  const wc = ytView.webContents;
+  ctl.lastJump = Date.now();
+  if (d.wasSolo || !d.listId) {
+    wc.executeJavaScript(videoDo('v.pause(); v.currentTime = 0;'), true).catch(() => {});
+    return;
+  }
+  let id = null;
+  if (ctl.shuffle) {
+    id = nextShuffleId();
+    if (!id && ctl.repeat !== 'off') id = nextShuffleId(true);
+  } else {
+    const ids = trackIds();
+    const i = ids.indexOf(d.afterId);
+    if (i >= 0 && i + 1 < ids.length) id = ids[i + 1];
+    else if (ids.length && (i < 0 || ctl.repeat === 'all')) id = ids[0];
+  }
+  if (id) { playTrackVerified(id, d.listId); return; }
+  if (!trackIds().length) { // the playlist's song list isn't known: reopen where we were and step forward
+    openInList(`v=${enc(d.afterId)}&list=${enc(d.listId)}`);
+    await wait(4500);
+    advanceOnce(wc);
+    return;
+  }
+  wc.executeJavaScript(videoDo('v.pause(); v.currentTime = 0;'), true).catch(() => {}); // end of the playlist
+}
+
+const onQueuedSong = (s) => ctl.divert && s && ctl.divert.playing === s.videoId;
 
 // Called after every poll. Handles what should happen when a song reaches its end.
 function controllerTick(s) {
@@ -501,6 +572,10 @@ function controllerTick(s) {
   ctl.trace.push('end? id=' + s.videoId + ' cur=' + (s.cur || 0).toFixed(1) + ' dur=' + (s.dur || 0).toFixed(1) + ' ended=' + s.ended + ' playing=' + s.playing);
   if (ctl.trace.length > 40) ctl.trace.shift();
 
+  if (ctl.repeat !== 'one') {
+    if (ctl.queue.length) { playQueued(s.videoId); return; }
+    if (onQueuedSong(s)) { resumeAfterDivert(); return; }
+  }
   if (ctl.solo) {
     // A single song: repeat plays it again, otherwise it stops and waits at the start.
     ctl.lastJump = now;
@@ -556,8 +631,9 @@ async function trackChanged(wc, before) {
 
 // Plays one specific song and makes sure it really started. If the page didn't switch, it escalates:
 // load the song's address, and as a last resort just skip the current song to its end.
-async function playTrackVerified(id) {
+async function playTrackVerified(id, listOverride) {
   if (!ytView) return false;
+  const lid = listOverride === undefined ? ytListId : listOverride;
   const wc = ytView.webContents;
   const t0 = Date.now();
   const tr = (msg) => { ctl.trace.push(`+${Date.now() - t0}ms ${msg}`); if (ctl.trace.length > 40) ctl.trace.shift(); };
@@ -566,7 +642,7 @@ async function playTrackVerified(id) {
   try { before = JSON.parse(await wc.executeJavaScript(songKey, true)); } catch (_) { /* ignore */ }
   tr('got current song');
 
-  await playTrack(id);
+  await playTrack(id, lid);
   tr('in-page navigation done (spaWorks=' + ctl.spaWorks + ')');
   (async () => {
     try {
@@ -577,7 +653,7 @@ async function playTrackVerified(id) {
       ctl.spaWorks = false; // switching inside the page didn't really work
       ctl.lastJump = Date.now();
       tr('no change after 2s, reloading the page');
-      wc.loadURL(`${YT_URL}watch?v=${enc(id)}${ytListId ? `&list=${enc(ytListId)}` : ''}`);
+      wc.loadURL(`${YT_URL}watch?v=${enc(id)}${lid ? `&list=${enc(lid)}` : ''}`);
       for (let i = 0; i < 22; i++) {
         await wait(250);
         if (await trackChanged(wc, before)) { tr('song changed after reload'); return; }
@@ -618,6 +694,10 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 async function stepTrack(wc, name) {
   let before = null;
   try { before = JSON.parse(await wc.executeJavaScript(songKey, true)); } catch (_) { /* ignore */ }
+
+  // Next goes to the queue first; at the end of the queue it picks the playlist up again.
+  if (name === 'next' && ctl.queue.length) { await playQueued(ctl.snap && ctl.snap.videoId); return true; }
+  if (name === 'next' && onQueuedSong(ctl.snap)) { await resumeAfterDivert(); return true; }
 
   // A single song has nothing to move to: Next / Back just start it over.
   if (ctl.solo) {
@@ -1017,6 +1097,10 @@ ipcMain.handle('lyrics:fetch', async (_event, { title, track, artist, author, du
       openSong: (videoId) => handlers['player:openSong'](null, videoId),
       resolveAlbum: (browseId) => handlers['player:resolveAlbum'](null, browseId),
       search: (query) => handlers['player:search'](null, query),
+      enqueue: (item, front) => handlers['player:enqueue'](null, item, front),
+      queue: () => handlers['player:queue'](),
+      dequeue: (index) => handlers['player:dequeue'](null, index),
+      clearQueue: () => handlers['player:clearQueue'](),
       // The phone's own volume buttons set the loudness; the page's volume stays at full.
       cmd: (name, arg) => (name === 'volume' ? Promise.resolve(true) : handlers['player:cmd'](null, name, arg)),
       browse: (show, top) => handlers['player:browse'](null, show, top),

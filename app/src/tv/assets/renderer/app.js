@@ -50,6 +50,9 @@
     btnSearch: $('#btnSearch'),
     searchResults: $('#searchResults'),
     searchMsg: $('#searchMsg'),
+    queueBox: $('#queueBox'),
+    queueList: $('#queueList'),
+    btnClearQueue: $('#btnClearQueue'),
     btnLoad: $('#btnLoad'),
     btnCloseOverlay: $('#btnCloseOverlay'),
     btnPlaylist: $('#btnPlaylist'),
@@ -133,6 +136,7 @@
     } else {
       els.overlayMsg.hidden = true;
     }
+    refreshQueue();
     setTimeout(() => (els.searchInput || els.urlInput).focus(), 0);
   }
 
@@ -146,10 +150,34 @@
     els.searchMsg.hidden = !text;
   }
 
+  function renderQueue(items) {
+    els.queueList.textContent = '';
+    els.queueBox.hidden = !items.length;
+    items.forEach((it, i) => {
+      const row = document.createElement('div'); row.className = 'queue-item';
+      const n = document.createElement('span'); n.className = 'qn'; n.textContent = String(i + 1);
+      const t = document.createElement('span'); t.className = 'qt'; t.textContent = it.title + (it.sub ? ' · ' + it.sub : '');
+      const x = document.createElement('button'); x.type = 'button'; x.textContent = '✕'; x.title = 'Remove from the queue'; x.setAttribute('aria-label', 'Remove ' + it.title);
+      x.addEventListener('click', async () => renderQueue(await P.dequeue(i)));
+      row.append(n, t, x);
+      els.queueList.appendChild(row);
+    });
+  }
+  async function refreshQueue() { try { renderQueue(await P.queue()); } catch (_) { /* ignore */ } }
+  els.btnClearQueue.addEventListener('click', async () => renderQueue(await P.clearQueue()));
+
+  async function queueSong(r, front) {
+    if (!state.currentVideoId) { loadSource({ kind: 'song', id: r.id }); return; } // nothing playing yet: just play it
+    try { renderQueue(await P.enqueue({ id: r.id, title: r.title, sub: r.sub, thumb: r.thumb }, front)); } catch (_) { return; }
+    toast(front ? `Playing next: ${r.title}` : `Added to the queue: ${r.title}`);
+  }
+
   function renderResults(results) {
     els.searchResults.textContent = '';
     els.searchResults.hidden = !results.length;
     for (const r of results) {
+      const row = document.createElement('div');
+      row.className = 'result-row';
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'result';
@@ -167,7 +195,17 @@
       const chip = document.createElement('span'); chip.className = 'chip'; chip.textContent = KIND_LABEL[r.kind] || '';
       b.append(rt, chip);
       b.addEventListener('click', () => { els.searchInput.value = ''; renderResults([]); searchNote(''); loadSource({ kind: r.kind, id: r.id }); });
-      els.searchResults.appendChild(b);
+      row.appendChild(b);
+      if (r.kind === 'song') {
+        const q = document.createElement('div'); q.className = 'qbtns';
+        const next = document.createElement('button'); next.type = 'button'; next.className = 'qbtn'; next.textContent = 'Play next'; next.title = 'Play this right after the current song';
+        const add = document.createElement('button'); add.type = 'button'; add.className = 'qbtn'; add.textContent = '+ Queue'; add.title = 'Add this to the end of the queue';
+        next.addEventListener('click', () => queueSong(r, true));
+        add.addEventListener('click', () => queueSong(r, false));
+        q.append(next, add);
+        row.appendChild(q);
+      }
+      els.searchResults.appendChild(row);
     }
   }
 

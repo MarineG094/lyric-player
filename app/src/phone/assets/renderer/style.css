@@ -432,3 +432,20 @@ button.icon.play svg { width: 26px; height: 26px; }
 .result .rt b { display: block; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .result .rt span { display: block; font-size: 12.5px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .result .chip { flex: none; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
+
+/* Result rows with Play next / Add to queue, and the queue list */
+.result-row { display: flex; align-items: center; gap: 6px; border-radius: 12px; }
+.result-row .result { flex: 1; min-width: 0; }
+.qbtns { display: flex; gap: 6px; flex: none; padding-right: 6px; }
+.qbtn { font: inherit; font-size: 12px; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--text); cursor: pointer; white-space: nowrap; }
+.qbtn:hover, .qbtn:focus-visible { background: color-mix(in srgb, var(--accent) 22%, transparent); outline: none; }
+.queue { margin: 10px 0 2px; padding: 8px 4px 0; border-top: 1px solid var(--line); text-align: left; }
+.queue[hidden] { display: none; }
+.queue-head { display: flex; justify-content: space-between; align-items: center; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); }
+.queue-head .ghost { margin: 0; padding: 4px 10px; }
+.queue-list { max-height: 18vh; overflow-y: auto; margin-top: 4px; scrollbar-width: thin; }
+.queue-item { display: flex; align-items: center; gap: 8px; padding: 4px 6px; font-size: 13.5px; }
+.queue-item .qn { color: var(--dim); width: 1.6em; flex: none; }
+.queue-item .qt { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.queue-item button { font: inherit; border: 0; background: transparent; color: var(--dim); cursor: pointer; padding: 2px 8px; border-radius: 8px; }
+.queue-item button:hover, .queue-item button:focus-visible { color: var(--text); background: color-mix(in srgb, var(--text) 10%, transparent); outline: none; }
