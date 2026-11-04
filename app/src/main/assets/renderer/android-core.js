@@ -401,8 +401,12 @@ function controllerTick(s) {
   if (s.ad || !ytView) return;
   ensureTrackIds();
   const now = Date.now();
-  const atEnd = s.dur > 5 && (s.ended || s.cur >= s.dur - 0.9);
+  if (!ctl.guard || ctl.guard.id !== s.videoId) ctl.guard = { id: s.videoId, mid: false };
+  if (s.dur > 5 && s.cur > 0.5 && s.cur < s.dur - 3) ctl.guard.mid = true;
+  const atEnd = ctl.guard.mid && s.dur > 5 && (s.ended || s.cur >= s.dur - 0.9);
   if (!atEnd || now - ctl.lastJump < 3000) return;
+  ctl.trace.push('end? id=' + s.videoId + ' cur=' + (s.cur || 0).toFixed(1) + ' dur=' + (s.dur || 0).toFixed(1) + ' ended=' + s.ended + ' playing=' + s.playing);
+  if (ctl.trace.length > 40) ctl.trace.shift();
 
   if (ctl.solo) {
     // A single song: repeat plays it again, otherwise it stops and waits at the start.

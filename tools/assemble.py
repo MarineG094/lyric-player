@@ -42,6 +42,18 @@ fallback = (
 )
 core_body = core_body.replace(anchor, fallback + anchor, 1)
 
+# Safeguard (phone only): a song only counts as finished once it has been seen playing mid-song, and every
+# "ended" decision is written to the trace so a Diagnose report shows what the page looked like.
+old = "  const atEnd = s.dur > 5 && (s.ended || s.cur >= s.dur - 0.9);\n  if (!atEnd || now - ctl.lastJump < 3000) return;\n"
+assert old in core_body
+new = ("  if (!ctl.guard || ctl.guard.id !== s.videoId) ctl.guard = { id: s.videoId, mid: false };\n"
+       "  if (s.dur > 5 && s.cur > 0.5 && s.cur < s.dur - 3) ctl.guard.mid = true;\n"
+       "  const atEnd = ctl.guard.mid && s.dur > 5 && (s.ended || s.cur >= s.dur - 0.9);\n"
+       "  if (!atEnd || now - ctl.lastJump < 3000) return;\n"
+       "  ctl.trace.push('end? id=' + s.videoId + ' cur=' + (s.cur || 0).toFixed(1) + ' dur=' + (s.dur || 0).toFixed(1) + ' ended=' + s.ended + ' playing=' + s.playing);\n"
+       "  if (ctl.trace.length > 40) ctl.trace.shift();\n")
+core_body = core_body.replace(old, new, 1)
+
 # The desktop code asks the main process for settings; here they come from the native side.
 shim = (root / 'tools/shim.js').read_text(encoding='utf8')
 core = shim.replace('/*__CORE__*/', core_body)
