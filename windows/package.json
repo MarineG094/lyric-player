@@ -6,7 +6,7 @@
   "private": true,
   "scripts": {
     "start": "electron .",
-    "test": "node --test test/lyrics.test.js test/quran.test.js test/romanize.test.js",
+    "test": "node --test test/lyrics.test.js test/quran.test.js test/romanize.test.js test/probe.test.js",
     "dist": "electron-builder --win portable"
   },
   "devDependencies": {

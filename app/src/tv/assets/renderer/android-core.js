@@ -145,8 +145,8 @@ const probeScript = (desiredVolume, blockAds, wantId) => `(() => {
       const th = (d.thumbnail && d.thumbnail.thumbnails) || [];
       return { id: d.videoId, title: runs(d.title).join(''), sub: runs(d.shortBylineText).join('').split(' \u2022 ')[0].trim(), thumb: th.length ? th[th.length - 1].url : '' };
     };
-    const want = ${JSON.stringify(wantId || '')};
-    const wantMeta = want ? metaOf(items.find((i) => i.data && i.data.videoId === want)) : null;
+    const wantVid = ${JSON.stringify(wantId || '')};
+    const wantMeta = wantVid ? metaOf(items.find((i) => i.data && i.data.videoId === wantVid)) : null;
     let curIdx = vid ? items.findIndex((i) => i.data && i.data.videoId === vid) : -1;
     if (curIdx < 0) curIdx = items.findIndex((i) => i.hasAttribute('selected') || i.hasAttribute('is-playing') || i.getAttribute('play-button-state') === 'playing');
     const nextMeta = curIdx >= 0 ? metaOf(items[curIdx + 1]) : null;
