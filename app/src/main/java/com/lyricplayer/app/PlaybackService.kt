@@ -123,10 +123,16 @@ class PlaybackService : MediaBrowserServiceCompat() {
         }
     }
 
+    /** The line being sung moves into the title slot, so it shows on the car screen and lock screen. */
+    fun lyricChanged() {
+        Hub.last?.let { session.setMetadata(metadata(it)) }
+    }
+
     private fun metadata(np: NowPlaying): MediaMetadataCompat {
+        val line = Hub.lyric
         val b = MediaMetadataCompat.Builder()
-            .putString(MediaMetadataCompat.METADATA_KEY_TITLE, np.title)
-            .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, np.artist)
+            .putString(MediaMetadataCompat.METADATA_KEY_TITLE, if (line.isNotEmpty()) line else np.title)
+            .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, if (line.isNotEmpty()) "${np.title} · ${np.artist}" else np.artist)
             .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, np.album)
             .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, np.durMs)
         art?.let { b.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, it) }

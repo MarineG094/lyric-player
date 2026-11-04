@@ -47,6 +47,7 @@ object Hub {
     @Volatile var activity: MainActivity? = null
     @Volatile var last: NowPlaying? = null
     @Volatile var browsing = false
+    @Volatile var lyric = ""
 
     var ui: WebView? = null
         private set

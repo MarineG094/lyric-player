@@ -789,7 +789,15 @@ ipcMain.handle('lyrics:fetch', async (_event, { title, track, artist, duration }
   adBlock = settings.adBlock !== false;
 
   // The native side calls this a few times a second (a web page's own timers get slowed down in the background).
-  window.__lpTick = () => { pollYt(); };
+  let lastLine = null;
+  window.__lpTick = () => {
+    pollYt();
+    try {
+      const el = document.querySelector('.lyrics .line.active');
+      const text = el ? el.textContent.trim() : '';
+      if (text !== lastLine) { lastLine = text; N.lyricLine(text); }
+    } catch (_) { /* ignore */ }
+  };
   window.__lpCmd = (name, arg) => handlers['player:cmd'](null, name, arg);
 
   const decode64 = (b64) => {

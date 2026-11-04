@@ -22,6 +22,7 @@ class Bridge {
     }
     @JavascriptInterface fun writeLyrics(name: String, content: String) { Hub.store.writeLyrics(name, content) }
     @JavascriptInterface fun nowPlaying(json: String) { Hub.nowPlaying(json) }
+    @JavascriptInterface fun lyricLine(text: String) { Hub.lyric = text; Hub.main.post { Hub.service?.lyricChanged() } }
 
     // ----- calls that finish later: the answer goes back through window.__lpResolve(id, json) -----
     @JavascriptInterface
