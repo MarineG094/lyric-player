@@ -8,10 +8,10 @@
 
 // Surah names, 1 to 114: a few common English spellings each, written without the leading "al-/an-/ar-...".
 const NAMES = [
-  ['fatiha', 'fatihah', 'fateha', 'fatehah'], ['baqarah', 'baqara', 'bakara', 'bakarah'], ['imran', 'aliimran', 'ale imran'],
+  ['fatiha', 'fatihah', 'fateha', 'fatehah'], ['baqarah', 'baqara', 'bakara', 'bakarah', 'bakrah', 'baqrah'], ['imran', 'aliimran', 'ale imran'],
   ['nisa', 'nisaa', 'nissa'], ['maidah', 'maida', 'maaidah', 'maeda'], ['anam', 'anaam'], ['araf', 'aaraf'], ['anfal'],
   ['tawbah', 'tawba', 'taubah', 'tauba', 'barah', 'baraah'], ['yunus', 'yunus', 'younus'], ['hud', 'hood'], ['yusuf', 'yousuf', 'yusif', 'yousef'],
-  ['rad', 'raad'], ['ibrahim', 'ibraheem'], ['hijr'], ['nahl'], ['isra', 'israa', 'bani israil', 'bani israeel'], ['kahf'],
+  ['rad', 'raad'], ['ibrahim', 'ibraheem'], ['hijr'], ['nahl'], ['isra', 'israa', 'bani israil', 'bani israeel', 'bani israel'], ['kahf'],
   ['maryam', 'mariam', 'meryem'], ['taha', 'ta ha'], ['anbiya', 'anbiyaa', 'anbiyaa'], ['hajj', 'haj'], ['muminun', 'muminoon', 'mominoon', 'mominun'],
   ['nur', 'noor'], ['furqan', 'furqaan'], ['shuara', 'shuaraa'], ['naml'], ['qasas'], ['ankabut', 'ankaboot'], ['rum', 'room'],
   ['luqman', 'luqmaan'], ['sajdah', 'sajda', 'sajadah'], ['ahzab', 'ahzaab'], ['saba', 'sabaa'], ['fatir', 'faatir'], ['yasin', 'yaseen', 'yaaseen', 'ya sin', 'ya seen'],
@@ -54,14 +54,50 @@ const ARTICLES = ['adh', 'ath', 'ash', 'al', 'an', 'ar', 'as', 'at', 'ad', 'az',
 const INDEX = new Map(); // key -> surah number
 NAMES.forEach((variants, i) => variants.forEach((v) => { if (!INDEX.has(key(v))) INDEX.set(key(v), i + 1); }));
 
+// Edit distance, giving up early once it passes `max`.
+function dist(a, b, max) {
+  if (Math.abs(a.length - b.length) > max) return max + 1;
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i]; let best = i;
+    for (let j = 1; j <= b.length; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      if (cur[j] < best) best = cur[j];
+    }
+    if (best > max) return max + 1;
+    prev = cur;
+  }
+  return prev[b.length];
+}
+
+// Closest known spelling: 1 slip allowed from 4 letters, 2 from 8. The winner must be unique and clearly closest.
+function fuzzy(k, short) {
+  const max = k.length >= 8 ? 2 : k.length >= 4 ? 1 : 0;
+  if (!max) return 0;
+  let best = max + 1, num = 0, tie = false;
+  for (const [name, n] of INDEX) {
+    if (name.length < (short ? 3 : 4)) continue;
+    const d = dist(k, name, max);
+    if (d < best) { best = d; num = n; tie = false; }
+    else if (d === best && n !== num) tie = true;
+  }
+  return best <= max && !tie ? num : 0;
+}
+
 function lookup(words) {
   const k = key(words.join(''));
   if (!k) return 0;
   if (INDEX.has(k)) return INDEX.get(k);
+  // "Al Baqarah" / "An-Nas": drop a leading article word, or one glued to the name ("Albaqarah").
+  const rests = [];
+  if (words.length > 1 && ARTICLES.includes(key(words[0]))) rests.push(key(words.slice(1).join('')));
   for (const a of ARTICLES) {
-    if (k.startsWith(key(a)) && INDEX.has(k.slice(key(a).length))) return INDEX.get(k.slice(key(a).length));
+    const p = key(a);
+    if (k.startsWith(p) && k.length > p.length) rests.push(k.slice(p.length));
   }
-  return 0;
+  for (const r of rests) if (INDEX.has(r)) return INDEX.get(r);
+  for (const r of rests) { const n = fuzzy(r, true); if (n) return n; }
+  return fuzzy(k, false);
 }
 
 /* Which surah is this? Returns { surah } or null when the title doesn't look like a Quran
