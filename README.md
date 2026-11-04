@@ -94,7 +94,7 @@ Two web views sit in one app. The **player screen** (lyrics, controls, shuffle l
        └──▶ Kotlin service ──▶ notification · lock screen · Android Auto
 ```
 
-The player code is copied from the desktop app by `tools/assemble.py`, so both apps behave the same.
+The player code is copied from the Windows app (the `windows/` folder) by `tools/assemble.py`, so both apps behave the same.
 
 ---
 
@@ -103,8 +103,10 @@ The player code is copied from the desktop app by `tools/assemble.py`, so both a
 Every push to `main` builds the APK on GitHub Actions and publishes it as the **latest** release. No local Android setup needed. To rebuild the web assets from the desktop app:
 
 ```bash
-python3 tools/assemble.py /path/to/lyric-player
+python3 tools/assemble.py windows
 ```
+
+The Windows app lives in `windows/` (Electron). Run it with `npm install` then `npm start` inside that folder, or package it with `Build-EXE.bat`. Tests: `npm test`.
 
 ---
 

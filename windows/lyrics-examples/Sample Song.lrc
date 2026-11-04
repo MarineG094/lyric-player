@@ -1,0 +1,10 @@
+[ti:Sample Song]
+[ar:Sample Artist]
+[00:04.00]This is a made-up sample so you can see how timing works
+[00:09.00]Each line starts glowing when its timestamp arrives
+[00:14.00]The list scrolls so the current line stays in the middle
+[00:19.00]Click any line to jump the song to that spot
+[00:24.00]
+[00:26.00]Save your own file with the same name as the song
+[00:31.00]Put it in the lyrics folder and it shows up on its own
+[00:36.00]Or skip the timestamps and paste plain text instead

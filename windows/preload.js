@@ -1,0 +1,28 @@
+const { contextBridge, ipcRenderer } = require('electron');
+
+contextBridge.exposeInMainWorld('api', {
+  getSettings: () => ipcRenderer.invoke('settings:get'),
+  setSettings: (patch) => ipcRenderer.invoke('settings:set', patch),
+  getLyricsDir: () => ipcRenderer.invoke('lyrics:dir'),
+  listLyrics: () => ipcRenderer.invoke('lyrics:list'),
+  readLyrics: (file) => ipcRenderer.invoke('lyrics:read', file),
+  writeLyrics: (payload) => ipcRenderer.invoke('lyrics:write', payload),
+  fetchLyrics: (payload) => ipcRenderer.invoke('lyrics:fetch', payload),
+  chooseLyricsFolder: () => ipcRenderer.invoke('lyrics:chooseFolder'),
+  setAdBlock: (on) => ipcRenderer.invoke('adblock:set', on),
+  getThumb: (url) => ipcRenderer.invoke('art:thumb', url),
+  getPalette: (url) => ipcRenderer.invoke('art:palette', url),
+  fullscreen: (on) => ipcRenderer.invoke('app:fullscreen', on),
+  onFullscreen: (cb) => ipcRenderer.on('app:fullscreen', (_e, on) => cb(on)),
+  player: {
+    diagnose: () => ipcRenderer.invoke('player:diagnose'),
+    open: (id, videoId) => ipcRenderer.invoke('player:open', id, videoId),
+    openSong: (videoId) => ipcRenderer.invoke('player:openSong', videoId),
+    resolveAlbum: (browseId) => ipcRenderer.invoke('player:resolveAlbum', browseId),
+    search: (query) => ipcRenderer.invoke('player:search', query),
+    cmd: (name, arg) => ipcRenderer.invoke('player:cmd', name, arg),
+    browse: (show, top) => ipcRenderer.invoke('player:browse', show, top),
+    onState: (cb) => ipcRenderer.on('player:state', (_e, state) => cb(state)),
+  },
+  openLyricsFolder: () => ipcRenderer.invoke('lyrics:openFolder'),
+});

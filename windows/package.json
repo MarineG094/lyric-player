@@ -1,0 +1,37 @@
+{
+  "name": "lyric-player",
+  "version": "1.0.0",
+  "description": "Drop in a YouTube Music playlist and play it with lyrics and album art in a clean player.",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test test/lyrics.test.js test/quran.test.js test/romanize.test.js",
+    "dist": "electron-builder --win portable"
+  },
+  "devDependencies": {
+    "electron": "^45.2.1",
+    "electron-builder": "^26.18.0"
+  },
+  "build": {
+    "appId": "com.lyricplayer.app",
+    "productName": "Lyric Player",
+    "files": [
+      "main.js",
+      "quran.js",
+      "preload.js",
+      "ytm-preload.js",
+      "renderer/**/*",
+      "package.json",
+      "icon.png",
+      "icon.ico"
+    ],
+    "win": {
+      "target": "portable",
+      "icon": "icon.ico"
+    },
+    "portable": {
+      "artifactName": "Lyric-Player-${version}.exe"
+    }
+  }
+}
