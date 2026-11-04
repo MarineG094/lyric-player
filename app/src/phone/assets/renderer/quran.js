@@ -36,7 +36,7 @@ const NOISE = new Set([
   'audio', 'video', 'the', 'of', 'tilawat', 'tilawah', 'complete', 'emotional', 'heart', 'touching', 'sheikh', 'shaykh', 'qari', 'imam', 'new', 'and',
 ]);
 const KEYWORDS = new Set(['surah', 'sura', 'surat', 'soorah', 'soora', 'surahs', 'ayat', 'ayah', 'ayaat', 'ayatul', 'verse', 'verses']);
-const RECITERS = /alafasy|afasy|mishary|mishari|sudais|sudays|shuraim|shuraym|shureim|husary|hussary|minshawi|abdul\s?basit|abdulbasit|ghamdi|ghamidi|dosari|dossary|dosary|shatri|shaatree|ajmi|ajamy|qatami|luhaidan|lahidan|tablawi|rifai|hudhaify|huzaify|juhany|juhani|muaiqly|muaiqli|mueaqly|maher al|saad al ?ghamdi|ayyub|bandar|baleela|yasser al|qari|quran|qur'?an/i;
+const RECITERS = /alafasy|afasy|afasi|el\s?afasi|m[ia]shar[iy]|mishary|mishari|sheikh|shaykh|sheik\b|الشيخ|القارئ|قارئ|عفاسي|العفاسي|العفاسى|مشاري|مشارى|السديس|الشريم|الحصري|المنشاوي|عبد الباسط|الغامدي|المعيقلي|العجمي|الدوسري|sudais|sudays|shuraim|shuraym|shureim|husary|hussary|minshawi|abdul\s?basit|abdulbasit|ghamdi|ghamidi|dosari|dossary|dosary|shatri|shaatree|ajmi|ajamy|qatami|luhaidan|lahidan|tablawi|rifai|hudhaify|huzaify|juhany|juhani|muaiqly|muaiqli|mueaqly|maher al|saad al ?ghamdi|ayyub|bandar|baleela|yasser al|qari|quran|qur'?an/i;
 
 // Letter key that ignores spelling variation: "Al-Baqarah", "Baqara", "baqaraa" all collapse to the same thing.
 function key(s) {
@@ -100,6 +100,24 @@ function lookup(words) {
   return fuzzy(k, false);
 }
 
+
+// Arabic surah names (without the leading "ال"), 1 to 114, for titles written in Arabic: "سورة البقرة".
+const ARABIC = 'الفاتحة,البقرة,آل عمران,النساء,المائدة,الأنعام,الأعراف,الأنفال,التوبة,يونس,هود,يوسف,الرعد,إبراهيم,الحجر,النحل,الإسراء,الكهف,مريم,طه,الأنبياء,الحج,المؤمنون,النور,الفرقان,الشعراء,النمل,القصص,العنكبوت,الروم,لقمان,السجدة,الأحزاب,سبأ,فاطر,يس,الصافات,ص,الزمر,غافر,فصلت,الشورى,الزخرف,الدخان,الجاثية,الأحقاف,محمد,الفتح,الحجرات,ق,الذاريات,الطور,النجم,القمر,الرحمن,الواقعة,الحديد,المجادلة,الحشر,الممتحنة,الصف,الجمعة,المنافقون,التغابن,الطلاق,التحريم,الملك,القلم,الحاقة,المعارج,نوح,الجن,المزمل,المدثر,القيامة,الإنسان,المرسلات,النبأ,النازعات,عبس,التكوير,الانفطار,المطففين,الانشقاق,البروج,الطارق,الأعلى,الغاشية,الفجر,البلد,الشمس,الليل,الضحى,الشرح,التين,العلق,القدر,البينة,الزلزلة,العاديات,القارعة,التكاثر,العصر,الهمزة,الفيل,قريش,الماعون,الكوثر,الكافرون,النصر,المسد,الإخلاص,الفلق,الناس'.split(',');
+const arKey = (w) => String(w || '').replace(/[\u064B-\u065F\u0670\u0640]/g, '').replace(/[أإآٱ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه').replace(/^ال/, '').replace(/\s+/g, '');
+const AR_INDEX = new Map(ARABIC.map((n, i) => [arKey(n), i + 1]));
+// Arabic words in a title that name a surah. Two-letter names (ص, ق, يس) only count right after "سورة".
+function arabicSurah(title) {
+  const words = (String(title || '').match(/[\u0600-\u06FF]+/g) || []);
+  for (let i = 0; i < words.length; i++) {
+    const k = arKey(words[i]);
+    if (!AR_INDEX.has(k)) continue;
+    const afterKw = i > 0 && /^(سوره|سورة)$/.test(words[i - 1].replace(/[\u064B-\u065F]/g, '').replace(/ة/g, 'ه') ) || (i > 0 && /سور[ةه]/.test(words[i - 1]));
+    if (k.length <= 2 && !afterKw) continue;
+    return AR_INDEX.get(k);
+  }
+  return 0;
+}
+
 /* Which surah is this? Returns { surah } or null when the title doesn't look like a Quran
    recitation. Deliberately cautious: a normal song never matches. */
 function detectRecitation(title, artist) {
@@ -112,9 +130,11 @@ function detectRecitation(title, artist) {
   const words = t.toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/['’`]/g, '').split(/[^a-z0-9]+/).filter(Boolean);
   const kwAt = words.findIndex((w) => KEYWORDS.has(w));
   const hasKeyword = kwAt >= 0;
-  const hintedByTitle = hasKeyword || words.some((w) => w === 'quran' || w === 'quraan' || w === 'tilawat' || w === 'tilawah' || w === 'recitation');
+  const arKw = /سور[ةه]/.test(t);
+  const hintedByTitle = hasKeyword || arKw || words.some((w) => w === 'quran' || w === 'quraan' || w === 'tilawat' || w === 'tilawah' || w === 'recitation');
   if (!hintedByTitle && !RECITERS.test(a)) return null; // "Ya Rahman" by a pop nasheed artist is not a recitation
 
+  const arN = arabicSurah(t);
   const start = hasKeyword ? kwAt + 1 : 0;
   const rest = words.slice(start);
 
@@ -132,7 +152,7 @@ function detectRecitation(title, artist) {
       if (n) return { surah: n };
     }
   }
-  return null;
+  return arN ? { surah: arN } : null;
 }
 
 // Adds an ayah range if the title has one: "(1-10)", "1 to 10", "ayah 255".
@@ -165,9 +185,9 @@ function buildText(arabic, english, from, to) {
 
 // Reciter as written in a title/artist -> how Quran.com spells the name.
 const RECITER_MAP = [
-  [/mishar|afasy/i, /afasy|mishar/i], [/sudais|sudays/i, /sudais|sudays/i], [/shuraim|shuraym|shureim|saud\s*(al|ash)/i, /shuraim|shuraym|saud/i],
-  [/husary|hussary|husari/i, /husar/i], [/minshawi|minshawy/i, /minshaw/i], [/abdul\s?basit|abdulbasit|abdel\s?basit|abd\s?al[\s-]?basit/i, /basit|baset/i],
-  [/ghamdi|ghamidi/i, /ghamd|ghamid/i], [/maher|muaiqly|mueaqly|muaiqli/i, /maher|muaiqly|mueaqly/i], [/ajmi|ajamy/i, /ajm/i],
+  [/m[ia]shar[iy]|afas[iy]|العفاسي|العفاسى|مشاري|مشارى/i, /afas[iy]|mishar/i], [/sudais|sudays|السديس/i, /sudais|sudays/i], [/shuraim|shuraym|shureim|saud\s*(al|ash)|الشريم/i, /shuraim|shuraym|saud/i],
+  [/husary|hussary|husari|الحصري/i, /husar/i], [/minshawi|minshawy/i, /minshaw/i], [/abdul\s?basit|abdulbasit|abdel\s?basit|abd\s?al[\s-]?basit/i, /basit|baset/i],
+  [/ghamdi|ghamidi|الغامدي/i, /ghamd|ghamid/i], [/maher|muaiqly|mueaqly|muaiqli/i, /maher|muaiqly|mueaqly/i], [/ajmi|ajamy/i, /ajm/i],
   [/dosari|dossary|dosary|yasser/i, /dossar|dosar|yasser/i], [/hudhaify|huzaify|hudhayfi/i, /hudhaif|huzaif|hudhayf/i], [/juhany|juhani/i, /juhan/i],
   [/shatri|shaatree/i, /shatri|shaatr/i], [/tablawi/i, /tablaw/i], [/ayyub/i, /ayyub|ayub/i], [/bandar|baleela/i, /bandar|balila|baleela/i],
 ];
