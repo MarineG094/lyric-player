@@ -1,5 +1,16 @@
 (() => {
     if (window.__lpAdPrune) return;
+    // Ask for the computer-sized page (the phone-sized one has no player bar to read from).
+    try {
+      const fixVp = () => {
+        let m = document.querySelector('meta[name=viewport]');
+        if (!m) { m = document.createElement('meta'); m.name = 'viewport'; (document.head || document.documentElement).appendChild(m); }
+        if (m.content !== 'width=1280') m.content = 'width=1280';
+      };
+      fixVp();
+      new MutationObserver(fixVp).observe(document.documentElement, { childList: true, subtree: true });
+    } catch (_) {}
+
     // Remember the page's own media-key handlers (next / previous / play / pause), so the app can call them directly.
     window.__lpActions = {};
     try {

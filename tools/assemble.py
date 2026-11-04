@@ -32,6 +32,16 @@ parts.append(between('const SELECTORS = {', "ipcMain.on('adblock:testhost'"))
 parts.append(between('const LRCLIB = ', "ipcMain.handle('lyrics:chooseFolder'"))
 core_body = '\n'.join(parts)
 
+# Phone-width pages have no player bar: fall back to the player's own data for title / artist / cover.
+anchor = "    if (art) art = art.replace("
+assert anchor in core_body
+fallback = (
+  "    if (!title) { try { const pm = q('#movie_player'); const pr = pm && pm.getPlayerResponse && pm.getPlayerResponse(); const d = pr && pr.videoDetails;"
+  " if (d) { title = d.title || ''; if (!artist) artist = String(d.author || '').replace(/ - Topic$/, ''); const th = d.thumbnail && d.thumbnail.thumbnails;"
+  " if (!art && th && th.length) art = th[th.length - 1].url; } } catch (e) { /* keep empty */ } }\n"
+)
+core_body = core_body.replace(anchor, fallback + anchor, 1)
+
 # The desktop code asks the main process for settings; here they come from the native side.
 shim = (root / 'tools/shim.js').read_text(encoding='utf8')
 core = shim.replace('/*__CORE__*/', core_body)
@@ -60,5 +70,18 @@ assert 'android-core.js' in html and 'android.css' in html
 pre = (src / 'ytm-preload.js').read_text(encoding='utf8')
 m = re.search(r'const code = `(.*?)`;\n  try \{ webFrame', pre, re.S)
 code = m.group(1).replace('${enabled ? \'true\' : \'false\'}', '__ENABLED__')
+viewport = '''
+    // Ask for the computer-sized page (the phone-sized one has no player bar to read from).
+    try {
+      const fixVp = () => {
+        let m = document.querySelector('meta[name=viewport]');
+        if (!m) { m = document.createElement('meta'); m.name = 'viewport'; (document.head || document.documentElement).appendChild(m); }
+        if (m.content !== 'width=1280') m.content = 'width=1280';
+      };
+      fixVp();
+      new MutationObserver(fixVp).observe(document.documentElement, { childList: true, subtree: true });
+    } catch (_) {}
+'''
+code = code.replace("if (window.__lpAdPrune) return;", "if (window.__lpAdPrune) return;" + viewport, 1)
 (out / 'ytm-inject.js').write_text(code, encoding='utf8')
 print('ok:', sorted(p.name for p in out.iterdir()))

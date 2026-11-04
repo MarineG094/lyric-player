@@ -99,6 +99,7 @@ const probeScript = (desiredVolume, blockAds) => `(() => {
     if (!title) { const t = q('ytmusic-player-bar .title'); title = t ? t.textContent.trim() : ''; }
     if (!artist) { const b = q('ytmusic-player-bar .byline'); artist = b ? b.textContent.split('\\u2022')[0].trim() : ''; }
     if (!art) { const im = q('ytmusic-player-bar img.image'); art = im ? im.src : ''; }
+    if (!title) { try { const pm = q('#movie_player'); const pr = pm && pm.getPlayerResponse && pm.getPlayerResponse(); const d = pr && pr.videoDetails; if (d) { title = d.title || ''; if (!artist) artist = String(d.author || '').replace(/ - Topic$/, ''); const th = d.thumbnail && d.thumbnail.thumbnails; if (!art && th && th.length) art = th[th.length - 1].url; } } catch (e) { /* keep empty */ } }
     if (art) art = art.replace(/=w\\d+-h\\d+[^"']*$/, '=w800-h800');
     const adNow = !!q('.ad-showing, .ad-interrupting');
     if (adNow && ${blockAds ? 'true' : 'false'}) {
