@@ -142,7 +142,6 @@ button.solid.small { padding: 6px 14px; font-size: 12px; }
   opacity: 0.32;
   transition: opacity 0.45s ease, color 0.45s ease, transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), text-shadow 0.55s ease;
   transform-origin: left center;
-  will-change: transform;
 }
 .synced .line { max-width: 86%; } /* leaves room for the line to grow without running off the edge */
 .line.past { opacity: 0.2; transform: scale(1); }

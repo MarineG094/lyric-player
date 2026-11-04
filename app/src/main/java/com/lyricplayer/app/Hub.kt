@@ -31,6 +31,7 @@ data class NowPlaying(
     val durMs: Long,
     val posMs: Long,
     val playing: Boolean,
+    val cover: String = "s",
 )
 
 /**
@@ -47,6 +48,8 @@ object Hub {
     @Volatile var activity: MainActivity? = null
     @Volatile var last: NowPlaying? = null
     @Volatile var browsing = false
+    /** True while the screen is showing the app; the page is then polled less often to save battery. */
+    @Volatile var visible = true
     @Volatile var lyric = ""
     /** Two letters: shuffle on (1) / off (0), then repeat off (x) / playlist (a) / one song (o). */
     @Volatile var modes = "0x"
@@ -65,7 +68,17 @@ object Hub {
     private val tick = object : Runnable {
         override fun run() {
             ui?.evaluateJavascript("window.__lpTick && window.__lpTick()", null)
-            main.postDelayed(this, 300)
+            // Watching: 3 times a second. In the background: once a second (a bit slower again while paused),
+            // but speeding up near the end of a song so the next one still starts on time.
+            val np = last
+            val remaining = if (np != null && np.durMs > 0) np.durMs - np.posMs else Long.MAX_VALUE
+            val next = when {
+                visible -> 300L
+                remaining < 6000 -> 250L
+                np != null && !np.playing -> 1500L
+                else -> 1000L
+            }
+            main.postDelayed(this, next)
         }
     }
 
@@ -118,7 +131,7 @@ object Hub {
         val o = try { JSONObject(json) } catch (e: Exception) { return }
         val np = NowPlaying(
             o.optString("title"), o.optString("artist"), o.optString("album"), o.optString("art"),
-            (o.optDouble("dur", 0.0) * 1000).toLong(), (o.optDouble("cur", 0.0) * 1000).toLong(), o.optBoolean("playing"),
+            (o.optDouble("dur", 0.0) * 1000).toLong(), (o.optDouble("cur", 0.0) * 1000).toLong(), o.optBoolean("playing"), o.optString("cover", "s"),
         )
         last = np
         main.post { service?.update(np) }

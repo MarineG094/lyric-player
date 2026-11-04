@@ -51,11 +51,15 @@
     for (const cb of stateCallbacks) { try { cb(s); } catch (_) { /* ignore */ } }
     try {
       if (s && s.hasMedia && !s.ad) {
-        N.nowPlaying(JSON.stringify({ title: s.title, artist: s.artist, album: s.album, art: s.art, dur: s.dur, cur: s.cur, playing: !!s.playing }));
+        // Cover filter verdict for this song's cover: s = fine to show, c = still checking, h = hidden.
+        const box = document.getElementById('albumBox');
+        const veil = document.getElementById('coverVeil');
+        const cover = !(box && box.classList.contains('cover-hidden')) ? 's' : (veil && !veil.hidden ? 'h' : 'c');
+        N.nowPlaying(JSON.stringify({ title: s.title, artist: s.artist, album: s.album, art: s.art, dur: s.dur, cur: s.cur, playing: !!s.playing, cover }));
       }
     } catch (_) { /* ignore */ }
   }
-  const win = { isDestroyed: () => false, webContents: { send: (channel, s) => { if (channel === 'player:state') emit(s); } } };
+  const win = { isDestroyed: () => false, isMinimized: () => false, isVisible: () => true, webContents: { send: (channel, s) => { if (channel === 'player:state') emit(s); } } };
 
   // The YouTube Music page lives in a second WebView; scripts are run there by the native side.
   const ytContents = {
@@ -77,6 +81,7 @@ let adBlock = true;
 let ytHistory = []; // video ids in play order, so Back can return to them even if the page ignores its own button
 let ytListId = '';
 let ytPolling = false;
+let ytTick = 0;
 let ytTimer = null;
 
 
@@ -121,6 +126,15 @@ const probeScript = (desiredVolume, blockAds) => `(() => {
     if (v && want != null && Math.abs(v.volume * 100 - want) > 1.5) v.volume = Math.max(0, Math.min(1, want / 100));
     const vid = new URL(location.href).searchParams.get('v') || '';
     const items = [...document.querySelectorAll('ytmusic-player-queue-item')];
+    // The queue's song ids only change when the queue does, so they are rebuilt (and sent) only then, or every 5 seconds.
+    const qc = window.__lpQ || (window.__lpQ = { n: -1, t: 0 });
+    const tNow = Date.now();
+    let queueIds;
+    if (items.length !== qc.n || tNow - qc.t > 5000) {
+      qc.n = items.length;
+      qc.t = tNow;
+      queueIds = items.length < 600 ? items.map((i) => (i.data && i.data.videoId) || '').filter(Boolean) : [];
+    }
     let curIdx = vid ? items.findIndex((i) => i.data && i.data.videoId === vid) : -1;
     if (curIdx < 0) curIdx = items.findIndex((i) => i.hasAttribute('selected') || i.hasAttribute('is-playing') || i.getAttribute('play-button-state') === 'playing');
     return {
@@ -133,7 +147,7 @@ const probeScript = (desiredVolume, blockAds) => `(() => {
       playing: !!(v && !v.paused && !v.ended),
       ended: !!(v && v.ended),
       queueCount: items.length,
-      queueIds: items.length < 600 ? items.map((i) => (i.data && i.data.videoId) || '').filter(Boolean) : [],
+      queueIds,
       curIdx,
       volume: v ? Math.round(v.volume * 100) : null,
       listId: new URL(location.href).searchParams.get('list') || '',
@@ -144,6 +158,12 @@ const probeScript = (desiredVolume, blockAds) => `(() => {
 
 async function pollYt() {
   if (ytPolling || !ytView || !win || ytView.webContents.isDestroyed()) return;
+  // Minimised or hidden: look a quarter as often, except near the end of a song so the next one still starts on time.
+  if (win.isMinimized() || !win.isVisible()) {
+    ytTick = (ytTick + 1) % 4;
+    const near = ctl.snap && ctl.snap.dur > 0 && ctl.snap.dur - ctl.snap.cur < 6;
+    if (ytTick && !near) return;
+  }
   ytPolling = true;
   try {
     const state = await ytView.webContents.executeJavaScript(probeScript(ytDesiredVolume, adBlock), true);
@@ -155,6 +175,7 @@ async function pollYt() {
       if (state.listId && !ctl.solo) ytListId = state.listId;
     }
     ctl.snap = state;
+    if (state && Array.isArray(state.queueIds)) ctl.qids = state.queueIds;
     if (state && state.hasMedia) controllerTick(state);
     if (win && !win.isDestroyed()) win.webContents.send('player:state', state);
   } catch (_) {
@@ -281,7 +302,7 @@ function shuffled(list) {
 // The playlist's song ids, in order: from YouTube Music's own playlist data, or failing that from the page's queue list.
 function trackIds() {
   if (ctl.ids.length > 1) return ctl.ids;
-  return (ctl.snap && ctl.snap.queueIds) || [];
+  return ctl.qids || [];
 }
 
 // Runs in the page: asks YouTube Music for the playlist's songs (the same request the site makes when you open a playlist).
@@ -627,7 +648,7 @@ ipcMain.handle('player:diagnose', async () => {
   let report;
   try { report = await ytView.webContents.executeJavaScript(diagnoseScript, true); } catch (err) { report = { error: String(err) }; }
   report.nextTrace = ctl.trace.slice();
-  report.app = { shuffle: ctl.shuffle, repeat: ctl.repeat, history: ytHistory.length, listId: ytListId, snap: ctl.snap && { title: ctl.snap.title, queueCount: ctl.snap.queueCount, curIdx: ctl.snap.curIdx }, playlistSongsKnown: ctl.ids.length, queueSongsKnown: ((ctl.snap && ctl.snap.queueIds) || []).length };
+  report.app = { shuffle: ctl.shuffle, repeat: ctl.repeat, history: ytHistory.length, listId: ytListId, snap: ctl.snap && { title: ctl.snap.title, queueCount: ctl.snap.queueCount, curIdx: ctl.snap.curIdx }, playlistSongsKnown: ctl.ids.length, queueSongsKnown: (ctl.qids || []).length };
   const text = JSON.stringify(report, null, 1);
   clipboard.writeText(text);
   return text.length;

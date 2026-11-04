@@ -51,11 +51,15 @@
     for (const cb of stateCallbacks) { try { cb(s); } catch (_) { /* ignore */ } }
     try {
       if (s && s.hasMedia && !s.ad) {
-        N.nowPlaying(JSON.stringify({ title: s.title, artist: s.artist, album: s.album, art: s.art, dur: s.dur, cur: s.cur, playing: !!s.playing }));
+        // Cover filter verdict for this song's cover: s = fine to show, c = still checking, h = hidden.
+        const box = document.getElementById('albumBox');
+        const veil = document.getElementById('coverVeil');
+        const cover = !(box && box.classList.contains('cover-hidden')) ? 's' : (veil && !veil.hidden ? 'h' : 'c');
+        N.nowPlaying(JSON.stringify({ title: s.title, artist: s.artist, album: s.album, art: s.art, dur: s.dur, cur: s.cur, playing: !!s.playing, cover }));
       }
     } catch (_) { /* ignore */ }
   }
-  const win = { isDestroyed: () => false, webContents: { send: (channel, s) => { if (channel === 'player:state') emit(s); } } };
+  const win = { isDestroyed: () => false, isMinimized: () => false, isVisible: () => true, webContents: { send: (channel, s) => { if (channel === 'player:state') emit(s); } } };
 
   // The YouTube Music page lives in a second WebView; scripts are run there by the native side.
   const ytContents = {

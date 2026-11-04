@@ -97,6 +97,16 @@ class MainActivity : Activity() {
         moveTaskToBack(true) // leave the music playing
     }
 
+    override fun onStart() {
+        super.onStart()
+        Hub.visible = true
+    }
+
+    override fun onStop() {
+        Hub.visible = false
+        super.onStop()
+    }
+
     override fun onDestroy() {
         if (Hub.activity === this) Hub.activity = null
         Hub.detach()

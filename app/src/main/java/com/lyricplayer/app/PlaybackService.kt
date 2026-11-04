@@ -94,10 +94,11 @@ class PlaybackService : MediaBrowserServiceCompat() {
 
     // ----- updates from the page (main thread) -----
     fun update(np: NowPlaying) {
-        val key = "${np.title}|${np.artist}|${np.durMs / 1000}|${np.art}"
+        val key = "${np.title}|${np.artist}|${np.durMs / 1000}|${np.art}|${np.cover}"
         if (key != shownKey) {
             shownKey = key
-            loadArt(np.art)
+            // The cover only goes to the car, lock screen and notification once the cover filter has cleared it.
+            if (np.cover == "s") loadArt(np.art) else clearArt()
             session.setMetadata(metadata(np))
         }
         val now = System.currentTimeMillis()
@@ -114,13 +115,20 @@ class PlaybackService : MediaBrowserServiceCompat() {
 
     private var notifKey = ""
 
+    private fun clearArt() {
+        art = null
+        artFor = ""
+    }
+
     private fun loadArt(url: String) {
-        if (url.isEmpty() || url == artFor) return
+        if (url.isEmpty()) { clearArt(); return }
+        if (url == artFor) return
         artFor = url
+        art = null // never show the previous song's cover on the new song
         worker.execute {
             val bmp = Art.bitmap(url) ?: return@execute
             Hub.main.post {
-                if (artFor == url) {
+                if (artFor == url && Hub.last?.cover == "s") {
                     art = bmp
                     Hub.last?.let { session.setMetadata(metadata(it)) }
                     refreshNotification()

@@ -2,14 +2,6 @@
 (() => {
   const N = window.LPNative;
 
-  // The cover filter is heavy for a TV box: off unless the person has turned it on before.
-  const getSettings = window.api.getSettings;
-  window.api.getSettings = async () => {
-    const s = (await getSettings()) || {};
-    if (s.coverFilter === undefined) s.coverFilter = false;
-    return s;
-  };
-
   /* ---- full screen: the menu and the player controls go away, lyrics and cover fill the TV ---- */
   let fsCb = null;
   let fsOn = false;
