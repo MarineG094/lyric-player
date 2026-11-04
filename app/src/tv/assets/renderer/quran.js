@@ -160,6 +160,76 @@ function buildText(arabic, english, from, to) {
   return rows.join('\n\n');
 }
 
-return { detect, buildText, key, NAMES };
+
+/* ---------- reciter timing (Quran.com) ---------- */
+
+// Reciter as written in a title/artist -> how Quran.com spells the name.
+const RECITER_MAP = [
+  [/mishar|afasy/i, /afasy|mishar/i], [/sudais|sudays/i, /sudais|sudays/i], [/shuraim|shuraym|shureim|saud\s*(al|ash)/i, /shuraim|shuraym|saud/i],
+  [/husary|hussary|husari/i, /husar/i], [/minshawi|minshawy/i, /minshaw/i], [/abdul\s?basit|abdulbasit|abdel\s?basit|abd\s?al[\s-]?basit/i, /basit|baset/i],
+  [/ghamdi|ghamidi/i, /ghamd|ghamid/i], [/maher|muaiqly|mueaqly|muaiqli/i, /maher|muaiqly|mueaqly/i], [/ajmi|ajamy/i, /ajm/i],
+  [/dosari|dossary|dosary|yasser/i, /dossar|dosar|yasser/i], [/hudhaify|huzaify|hudhayfi/i, /hudhaif|huzaif|hudhayf/i], [/juhany|juhani/i, /juhan/i],
+  [/shatri|shaatree/i, /shatri|shaatr/i], [/tablawi/i, /tablaw/i], [/ayyub/i, /ayyub|ayub/i], [/bandar|baleela/i, /bandar|balila|baleela/i],
+];
+
+/* Picks the Quran.com reciter id for a title/artist, or 0. `list` is the API's reciter list. */
+function pickReciter(list, text) {
+  const t = String(text || '');
+  const wantsMujawwad = /mujawwad|mujawad/i.test(t);
+  for (const [inRe, apiRe] of RECITER_MAP) {
+    if (!inRe.test(t)) continue;
+    const hits = (list || []).filter((r) => apiRe.test(`${r.name || ''} ${(r.translated_name && r.translated_name.name) || ''}`));
+    if (!hits.length) continue;
+    const score = (r) => {
+      const n = `${r.name || ''} ${r.style || ''}`;
+      let v = 0;
+      if (/mujawwad|mujawad/i.test(n)) v += wantsMujawwad ? -2 : 2;
+      if (/warsh|qalon|qaloon|douri|duri|shu.?ba/i.test(n)) v += 3;
+      return v;
+    };
+    return hits.slice().sort((a, b) => score(a) - score(b))[0].id;
+  }
+  return 0;
+}
+
+const clock = (sec) => {
+  const t = Math.max(0, sec);
+  const m = Math.floor(t / 60);
+  return `${String(m).padStart(2, '0')}:${(t - m * 60).toFixed(2).padStart(5, '0')}`;
+};
+
+/* Builds a timed .lrc: one entry per ayah (Arabic, then the translation on a second line inside the same entry).
+   `stamps` are Quran.com timestamps ({ verse_key, timestamp_from, timestamp_to } in ms, relative to their own audio).
+   `seconds` is the length of the track being played: it decides how to line the two recordings up. Returns null
+   when too few ayahs have timing. */
+function buildTimed(arabic, english, stamps, from, to, seconds) {
+  const st = new Map();
+  for (const x of stamps || []) {
+    const n = Number(String(x.verse_key || '').split(':')[1]);
+    if (n && x.timestamp_to > x.timestamp_from) st.set(n, x);
+  }
+  const en = new Map((english || []).map((x) => [x.numberInSurah, x.text]));
+  const rows = (arabic || []).filter((x) => (!from || x.numberInSurah >= from) && (!to || x.numberInSurah <= to));
+  const have = rows.filter((x) => st.has(x.numberInSurah));
+  if (!have.length || have.length < rows.length * 0.6) return null;
+
+  const base = st.get(have[0].numberInSurah).timestamp_from / 1000;
+  const span = st.get(have[have.length - 1].numberInSurah).timestamp_to / 1000 - base;
+  let shift = 0, scale = 1;
+  const d = (Number(seconds) || 0) - span;
+  if (Number(seconds) > 0 && span > 0) {
+    if (d > 1.5 && d <= 45) shift = d;                         // the upload has an intro (opening words, silence)
+    else if (Math.abs(d) / span >= 0.02 && Math.abs(d) / span <= 0.12) scale = seconds / span; // a slightly different pace
+  }
+  const lines = ['[by:Quran.com timing]'];
+  for (const x of have) {
+    const t = shift + ((st.get(x.numberInSurah).timestamp_from / 1000) - base) * scale;
+    const text = [`${x.text} ﴿${x.numberInSurah}﴾`, en.get(x.numberInSurah)].filter(Boolean).join('\u2028'); // one timed entry, shown on two lines
+    lines.push(`[${clock(t)}]${text}`);
+  }
+  return lines.join('\n');
+}
+
+return { detect, buildText, buildTimed, pickReciter, key, NAMES };
 
 });

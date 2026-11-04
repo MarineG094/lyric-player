@@ -408,3 +408,10 @@ button.icon.play svg { width: 26px; height: 26px; }
 
 /* Arabic text (Quran recitations): centred so Arabic and its translation line up */
 .lyrics.centered .line { text-align: center; }
+
+/* Sync nudge (Quran timing) */
+.nudge { display: flex; align-items: center; gap: 6px; justify-content: center; padding-top: 8px; flex-wrap: wrap; }
+.nudge[hidden] { display: none; }
+.nudge-label { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); margin-right: 4px; }
+.nudge-val { font-size: 12px; opacity: 0.7; min-width: 3em; }
+.line { white-space: pre-line; }

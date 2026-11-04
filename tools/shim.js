@@ -99,7 +99,7 @@
     pollYt();
     try {
       const el = document.querySelector('.lyrics .line.active');
-      const text = el ? el.textContent.trim() : '';
+      const text = el ? el.textContent.trim().replace(/\s*\n\s*/g, ' — ') : '';
       if (text !== lastLine) { lastLine = text; N.lyricLine(text); }
       const sb = document.getElementById('btnShuffle');
       const rb = document.getElementById('btnRepeat');

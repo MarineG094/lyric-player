@@ -10,6 +10,8 @@
     lyrics: $('#lyrics'),
     lines: $('#lyricsLines'),
     btnEdit: $('#btnEdit'),
+    nudge: $('#syncNudge'),
+    nudgeVal: $('#nudgeVal'),
     editor: $('#editor'),
     editorText: $('#editorText'),
     editorHint: $('#editorHint'),
@@ -66,6 +68,7 @@
     currentArtist: '',
     lyricsFile: null,
     lyricsRaw: '',
+    upgraded: new Set(),
     romanize: true,
     lyricsData: null,
     activeIdx: -1,
@@ -545,6 +548,12 @@
     }
 
     const vid = state.currentVideoId;
+    // A Quran file saved earlier as plain text gets one try at being replaced by a version timed to the reciter.
+    const vid0 = state.currentVideoId;
+    if (match && state.autoFetch && /\.txt$/i.test(match.file) && state.lyricsRaw.includes('\uFD3E') && !state.upgraded.has(vid0) && !state.fetching.has(vid0)) {
+      state.upgraded.add(vid0);
+      fetchOnline(vid0, state.currentTitle, state.currentArtist, true);
+    }
     const shouldLookUp =
       !state.lyricsData && state.autoFetch && state.currentTitle && !state.notFound.has(vid) && !state.fetching.has(vid);
     if (shouldLookUp) state.lyricsStatus = 'searching';
@@ -554,7 +563,7 @@
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  async function fetchOnline(vid, title, author) {
+  async function fetchOnline(vid, title, author, timedOnly) {
     const query = L.queryFor(title, author);
     if (!query.track) return;
     state.fetching.add(vid);
@@ -568,7 +577,7 @@
 
     let res;
     try {
-      res = await window.api.fetchLyrics({ title, track: query.track, artist: query.artist, duration });
+      res = await window.api.fetchLyrics({ title, track: query.track, artist: query.artist, duration, timedOnly: !!timedOnly });
     } catch (_) {
       res = { status: 'error' };
     }
@@ -582,6 +591,7 @@
       }
       return;
     }
+    if (timedOnly) return; // the plain text already on screen stays
     if (res.status === 'notfound' || res.status === 'instrumental') state.notFound.add(vid);
     if (state.currentVideoId === vid) {
       state.lyricsStatus = res.status === 'disabled' ? 'idle' : res.status;
@@ -619,6 +629,8 @@
     els.lyrics.classList.toggle('centered', !!(data && data.lines.some((l) => /[\u0600-\u06FF]/.test(l.text))));
     els.lyrics.classList.toggle('plain', !!(data && !data.synced));
     els.btnEdit.textContent = data ? 'Edit lyrics' : 'Add lyrics';
+    els.nudge.hidden = !(data && els.editor.hidden && /^\s*\[by:Quran\.com timing\]/im.test(state.lyricsRaw));
+    { const off = (state.lyricsRaw.match(/^\s*\[offset:\s*(-?\d+)\s*\]/im) || [0, '0'])[1] | 0; els.nudgeVal.textContent = off ? `${off > 0 ? '+' : ''}${(off / 1000).toFixed(1)}s` : ''; }
 
     if (!data || !data.lines.length) {
       const box = document.createElement('div');
@@ -656,7 +668,7 @@
       p.className = line.text === '' ? 'line gap' : 'line';
       p.dataset.i = String(i);
       p.dir = 'auto'; // Arabic lines read right-to-left
-      p.textContent = line.text;
+      p.textContent = line.text.replace(/\u2028/g, '\n'); // an ayah's Arabic and its translation share one timed entry
       els.lines.appendChild(p);
     });
     els.lyrics.scrollTop = 0;
@@ -728,6 +740,28 @@
       toast("Couldn't save the lyrics: " + (err && err.message ? err.message : 'unknown error'));
     }
   }
+
+  // Quran timing comes from another recording of the reciter, so the text can be a little early or late: nudge it.
+  async function nudgeLyrics(ms) {
+    if (!state.lyricsFile || !state.lyricsRaw) return;
+    const cur = (state.lyricsRaw.match(/^\s*\[offset:\s*(-?\d+)\s*\]/im) || [0, '0'])[1] | 0;
+    const next = ms === null ? 0 : cur + ms;
+    const tag = `[offset:${next}]`;
+    const content = /^\s*\[offset:/im.test(state.lyricsRaw) ? state.lyricsRaw.replace(/^\s*\[offset:\s*-?\d+\s*\]/im, tag) : tag + '\n' + state.lyricsRaw;
+    try {
+      await window.api.writeLyrics({ title: state.currentTitle, content, existingFile: state.lyricsFile });
+      state.lyricsRaw = content;
+      state.lyricsData = L.parse(shown(content));
+      state.activeIdx = -1;
+      renderLyrics();
+      els.nudgeVal.textContent = next ? `${next > 0 ? '+' : ''}${(next / 1000).toFixed(1)}s` : '';
+    } catch (_) { toast("Couldn't save the sync change."); }
+  }
+  els.nudge.addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    nudgeLyrics(b.dataset.ms === 'reset' ? null : Number(b.dataset.ms));
+  });
 
   els.btnEdit.addEventListener('click', openEditor);
   els.btnCancel.addEventListener('click', closeEditor);

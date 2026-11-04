@@ -42,6 +42,15 @@
             <button id="btnSave" class="solid small" type="button">Save lyrics</button>
           </div>
         </div>
+        <div id="syncNudge" class="nudge" hidden>
+          <span class="nudge-label">Sync</span>
+          <button type="button" class="ghost small" data-ms="-3000" title="Show the text 3 seconds earlier">−3s</button>
+          <button type="button" class="ghost small" data-ms="-500" title="Show the text half a second earlier">−0.5s</button>
+          <button type="button" class="ghost small" data-ms="500" title="Show the text half a second later">+0.5s</button>
+          <button type="button" class="ghost small" data-ms="3000" title="Show the text 3 seconds later">+3s</button>
+          <button type="button" class="ghost small" data-ms="reset" title="Back to the automatic timing">Reset</button>
+          <span id="nudgeVal" class="nudge-val"></span>
+        </div>
       </section>
 
       <section class="album-col" aria-label="Now playing">

@@ -659,6 +659,7 @@ const LRCLIB = (process.env.LRCLIB_BASE || 'https://lrclib.net') + '/api';
 const NETEASE = process.env.NETEASE_BASE || 'https://music.163.com';
 const LYRICS_OVH = process.env.LYRICS_OVH_BASE || 'https://api.lyrics.ovh';
 const QURAN_API = process.env.QURAN_BASE || 'https://api.alquran.cloud';
+const QURAN_COM = process.env.QURAN_COM_BASE || 'https://api.quran.com/api/v4';
 
 async function jsonGet(label, url, headers) {
   const controller = new AbortController();
@@ -735,33 +736,60 @@ async function fromLyricsOvh(track, artist) {
   return text.length > 20 ? { plainLyrics: text } : null;
 }
 
-// Quran recitations: the surah's Arabic text with an English translation (Al-Quran Cloud). Plain text, not timed.
-async function fromQuran(title, artist) {
+// Quran recitations: the surah's Arabic text with an English translation (Al-Quran Cloud). When the reciter is one
+// Quran.com has ayah timings for, the text is timed so it follows the recitation; otherwise it is plain text.
+let reciterList = null;
+async function quranReciters() {
+  if (reciterList) return reciterList;
+  const data = await jsonGet('Quran.com', `${QURAN_COM}/resources/chapter_reciters`);
+  const list = data && Array.isArray(data.reciters) ? data.reciters : [];
+  if (list.length) reciterList = list;
+  return list;
+}
+
+async function quranTimes(hit, title, artist) {
+  try {
+    const id = Quran.pickReciter(await quranReciters(), `${title || ''} ${artist || ''}`);
+    if (!id) return null;
+    const data = await jsonGet('Quran.com', `${QURAN_COM}/chapter_recitations/${id}/${hit.surah}`);
+    const stamps = data && data.audio_file && data.audio_file.timestamps;
+    return Array.isArray(stamps) && stamps.length ? stamps : null;
+  } catch (_) { return null; } // timing is a bonus; the plain text still works
+}
+
+async function fromQuran(title, artist, seconds, timedOnly) {
   const hit = Quran.detect(title, artist);
   if (!hit) return null;
+  const stamps = await quranTimes(hit, title, artist);
+  if (timedOnly && !stamps) return null;
   const data = await jsonGet('Al-Quran Cloud', `${QURAN_API}/v1/surah/${hit.surah}/editions/quran-uthmani,en.sahih`);
   const editions = data && Array.isArray(data.data) ? data.data : [];
   const arabic = editions[0] && editions[0].ayahs;
   const english = editions[1] && editions[1].ayahs;
   if (!Array.isArray(arabic) || !arabic.length) return null;
-  return { plainLyrics: Quran.buildText(arabic, english, hit.from, hit.to) };
+  const timed = stamps && Quran.buildTimed(arabic, english, stamps, hit.from, hit.to, seconds);
+  if (timed) return { syncedLyrics: timed };
+  return timedOnly ? null : { plainLyrics: Quran.buildText(arabic, english, hit.from, hit.to) };
 }
 
-ipcMain.handle('lyrics:fetch', async (_event, { title, track, artist, duration }) => {
+ipcMain.handle('lyrics:fetch', async (_event, { title, track, artist, duration, timedOnly }) => {
   if (loadSettings().autoFetch === false) return { status: 'disabled' };
   if (!track) return { status: 'notfound' };
+  const seconds = Math.round(Number(duration) || 0);
 
   // A Quran recitation gets the Quran text; if that service can't be reached we carry on to the normal sources.
   try {
-    const quran = await fromQuran(title || track, artist);
+    const quran = await fromQuran(title || track, artist, seconds, timedOnly);
     if (quran) {
-      const file = Lyrics.sanitizeFileName(title || track) + '.txt';
-      fs.writeFileSync(safeLyricsFile(file), quran.plainLyrics, 'utf8');
-      return { status: 'ok', file, synced: false, source: 'Al-Quran Cloud' };
+      const synced = !!quran.syncedLyrics;
+      const base = Lyrics.sanitizeFileName(title || track);
+      fs.writeFileSync(safeLyricsFile(base + (synced ? '.lrc' : '.txt')), quran.syncedLyrics || quran.plainLyrics, 'utf8');
+      if (synced) { try { fs.unlinkSync(safeLyricsFile(base + '.txt')); } catch (_) { /* no old plain copy */ } }
+      return { status: 'ok', file: base + (synced ? '.lrc' : '.txt'), synced, source: synced ? 'Al-Quran Cloud + Quran.com timing' : 'Al-Quran Cloud' };
     }
   } catch (_) { /* fall through */ }
 
-  const seconds = Math.round(Number(duration) || 0);
+  if (timedOnly) return { status: 'notfound' };
   const sources = [
     ['LRCLIB', () => fromLrclib(track, artist, seconds)],
     ['NetEase', () => fromNetease(track, artist, seconds)],
@@ -820,7 +848,7 @@ ipcMain.handle('lyrics:fetch', async (_event, { title, track, artist, duration }
     pollYt();
     try {
       const el = document.querySelector('.lyrics .line.active');
-      const text = el ? el.textContent.trim() : '';
+      const text = el ? el.textContent.trim().replace(/\s*\n\s*/g, ' — ') : '';
       if (text !== lastLine) { lastLine = text; N.lyricLine(text); }
       const sb = document.getElementById('btnShuffle');
       const rb = document.getElementById('btnRepeat');
