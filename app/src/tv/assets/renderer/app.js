@@ -49,6 +49,7 @@
     btnPlaylist: $('#btnPlaylist'),
     btnFolder: $('#btnFolder'),
     btnAuto: $('#btnAuto'),
+    btnRoman: $('#btnRoman'),
     btnSide: $('#btnSide'),
     dragVeil: $('#dragVeil'),
     toast: $('#toast'),
@@ -65,6 +66,7 @@
     currentArtist: '',
     lyricsFile: null,
     lyricsRaw: '',
+    romanize: true,
     lyricsData: null,
     activeIdx: -1,
     seeking: false,
@@ -520,6 +522,11 @@
     await showLyricsForCurrent();
   }
 
+  // Songs in other scripts are shown in English letters (the saved file keeps the original text).
+  function shown(raw) {
+    return state.romanize && window.Romanize ? window.Romanize.text(raw) : raw;
+  }
+
   async function showLyricsForCurrent() {
     const match = L.matchFile(state.currentTitle, state.currentArtist, state.lyricFiles);
     state.lyricsFile = match ? match.file : null;
@@ -531,7 +538,7 @@
     if (match) {
       try {
         state.lyricsRaw = await window.api.readLyrics(match.file);
-        state.lyricsData = L.parse(state.lyricsRaw);
+        state.lyricsData = L.parse(shown(state.lyricsRaw));
       } catch (_) {
         state.lyricsData = null;
       }
@@ -894,6 +901,21 @@
     window.api.setSettings({ albumSide: state.albumSide });
   });
 
+  function applyRoman() {
+    els.btnRoman.textContent = state.romanize ? 'English letters: on' : 'English letters: off';
+  }
+  els.btnRoman.addEventListener('click', () => {
+    state.romanize = !state.romanize;
+    applyRoman();
+    window.api.setSettings({ romanize: state.romanize });
+    if (state.lyricsRaw) {
+      state.lyricsData = L.parse(shown(state.lyricsRaw));
+      state.activeIdx = -1;
+      renderLyrics();
+    }
+    toast(state.romanize ? 'Lyrics in other scripts now show in English letters.' : 'Lyrics show in their original script.');
+  });
+
   function applyAuto() {
     els.btnAuto.textContent = state.autoFetch ? 'Auto lyrics: on' : 'Auto lyrics: off';
   }
@@ -926,6 +948,8 @@
     applyCoverFilterButton();
     applyAds();
     applyAuto();
+    state.romanize = settings.romanize !== false;
+    applyRoman();
     // Shuffle, repeat and the album side come back the way they were left.
     state.shuffle = settings.shuffle === true;
     state.repeat = ['off', 'all', 'one'].includes(settings.repeat) ? settings.repeat : 'off';
