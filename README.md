@@ -101,6 +101,8 @@ Lyric Player is a sideloaded app, so Android Auto hides it until you allow that:
 
 <img src="docs/android-auto.jpg" width="560" alt="Lyric Player on the Android Auto screen: the current lyric line as the title, with the song and artist beneath">
 
+> **Album cover:** on the car screen the cover doesn't appear until about **50 seconds** into each song, because the cover filter is checking it first.
+
 > Lyrics appear only for songs with **timed** lyrics. A full scrolling lyrics page on the car display would need a separate car-app screen and Google's approval, so it isn't included.
 
 ---
