@@ -3,7 +3,7 @@
 (() => {
   const api = window.mini;
   const $ = (id) => document.getElementById(id);
-  const el = { pill: $('pill'), cover: $('cover'), title: $('title'), artist: $('artist'), roll: $('roll'), note: $('note'), prog: $('prog') };
+  const el = { nextbox: $('nextbox'), nt: $('nt'), na: $('na'), pill: $('pill'), cover: $('cover'), title: $('title'), artist: $('artist'), roll: $('roll'), note: $('note'), prog: $('prog') };
   const LH = 22;
   let lyr = null;            // { status, synced, lines: [{ time, text }] }
   let nodes = [];
@@ -53,7 +53,7 @@
       const d = k - i;
       const n = nodes[k];
       n.className = d === 0 ? 'l cur' : d === 1 ? 'l nx' : d === -1 ? 'l pv' : 'l';
-      if (d === 0 || d === 1) fit(n);
+      if (d >= 0 && d <= 1) fit(n);
     }
     // Before the first line, the first lines wait in view; afterwards the active one sits on the top row.
     el.roll.style.transform = `translateY(${-Math.max(0, i) * LH}px)`;
@@ -61,10 +61,12 @@
     idx = i;
   }
 
+  // A line too wide for the pill shrinks until it fits (down to a small minimum). Done once per line.
   function fit(n) {
-    n.style.fontSize = '';
+    if (n.dataset.fit) return;
+    n.dataset.fit = '1';
     const over = n.scrollWidth / Math.max(1, n.clientWidth);
-    if (over > 1) n.style.fontSize = Math.max(10.5, Math.floor(14.5 / over * 10) / 10) + 'px';
+    if (over > 1) n.style.fontSize = Math.max(9.5, Math.floor(14.5 / over * 10) / 10) + 'px';
   }
 
   function lineAt(t) {
@@ -84,8 +86,16 @@
     }
   }
 
+  function setNext(n) {
+    el.nextbox.hidden = !n;
+    if (!n) return;
+    if (el.nt.textContent !== n.title) el.nt.textContent = n.title;
+    if (el.na.textContent !== n.artist) el.na.textContent = n.artist;
+  }
+
   function setState(s) {
     if (!s) return;
+    setNext(s.hasMedia && !s.ad ? s.next : null);
     const had = st.hasMedia;
     st = s;
     stamp = performance.now();
@@ -113,11 +123,6 @@
     if (d.state) setState(d.state);
     if (d.lyrics) { lyr = d.lyrics; buildLyrics(); }
   });
-  // Resting: the cover and names sit in the middle; on hover they slide left to make room for the buttons.
-  const idBox = $('idBox');
-  const centre = () => { const top = idBox.parentElement; const free = top.clientWidth - idBox.offsetWidth; el.pill.style.setProperty('--shift', Math.max(0, free / 2) + 'px'); };
-  if (window.ResizeObserver) new ResizeObserver(centre).observe(idBox);
-  centre();
   setInterval(tick, 100);
 
   $('bPlay').addEventListener('click', () => { st.playing = !st.playing; stamp = performance.now(); el.pill.classList.toggle('playing', st.playing); api.cmd('toggle'); });

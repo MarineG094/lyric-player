@@ -1328,7 +1328,8 @@ function openMini() {
   miniWin.once('ready-to-show', () => { if (miniWin && !miniWin.isDestroyed()) miniWin.showInactive(); });
   stateHook = (s) => {
     if (!miniWin || miniWin.isDestroyed()) return;
-    const st = { hasMedia: !!s.hasMedia, ad: !!s.ad, title: s.title || '', artist: s.artist || '', art: s.art || '', cur: s.cur || 0, dur: s.dur || 0, playing: !!s.playing };
+    const st = { hasMedia: !!s.hasMedia, ad: !!s.ad, title: s.title || '', artist: s.artist || '', art: s.art || '', cur: s.cur || 0, dur: s.dur || 0, playing: !!s.playing,
+      next: s.next && s.next.title ? { title: String(s.next.title).slice(0, 120), artist: String(s.next.sub || '').split(' • ')[0].slice(0, 80) } : null };
     miniData.state = st;
     miniWin.webContents.send('mini:state', st);
   };

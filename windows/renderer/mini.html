@@ -9,7 +9,7 @@
   @property --bg2 { syntax: '<color>'; inherits: true; initial-value: #1a1512; }
   @property --glow{ syntax: '<color>'; inherits: true; initial-value: #c08a5e; }
   @property --acc { syntax: '<color>'; inherits: true; initial-value: #e0b48a; }
-  :root { --bg: #120f0d; --bg2: #1a1512; --glow: #c08a5e; --acc: #e0b48a; --lh: 22px; --shift: 0px; transition: --bg .9s ease, --bg2 .9s ease, --glow .9s ease, --acc .9s ease; }
+  :root { --bg: #120f0d; --bg2: #1a1512; --glow: #c08a5e; --acc: #e0b48a; --lh: 22px; transition: --bg .9s ease, --bg2 .9s ease, --glow .9s ease, --acc .9s ease; }
   * { box-sizing: border-box; margin: 0; user-select: none; -webkit-user-select: none; }
   html, body { width: 100%; height: 100%; background: transparent; overflow: hidden; font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; color: #fff; }
   .pill {
@@ -21,15 +21,20 @@
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .09);
     cursor: default;
   }
-  .top { height: 44px; }
-  .id { display: flex; align-items: center; gap: 11px; width: max-content; max-width: 100%; height: 44px; transform: translateX(var(--shift)); transition: transform .35s cubic-bezier(.22, 1, .36, 1); }
-  .pill:hover .id { transform: none; }
+  .top { display: flex; align-items: center; gap: 11px; height: 44px; }
   .cover { flex: none; width: 44px; height: 44px; border-radius: 12px; background: rgba(255, 255, 255, .08) center / cover no-repeat; box-shadow: 0 4px 14px rgba(0, 0, 0, .35); transition: filter .3s; }
   .cover.hide { filter: blur(14px) brightness(.6); }
-  .meta { min-width: 0; display: flex; flex-direction: column; gap: 1px; transition: max-width .35s cubic-bezier(.22, 1, .36, 1); }
-  .pill:hover .meta { max-width: 150px; }
+  .meta { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 1px; }
   .title { font-size: 14px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: .1px; }
   .artist { font-size: 12px; opacity: .7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* top right: "up next" while idle; the controls take its place while the mouse is over the pill */
+  .nextbox { flex: none; width: 108px; display: flex; flex-direction: column; text-align: right; transition: opacity .2s ease; }
+  .nextbox[hidden] { display: none; }
+  .nextbox small { font-size: 9px; letter-spacing: .9px; text-transform: uppercase; opacity: .55; }
+  .nextbox .nt { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nextbox .na { font-size: 11px; opacity: .6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pill:hover .nextbox { opacity: 0; }
 
   .ctl { position: absolute; top: 0; right: 0; height: 74px; display: flex; align-items: flex-start; gap: 2px; padding: 12px 14px 0 40px; opacity: 0; transform: translateX(8px); pointer-events: none; transition: opacity .18s ease, transform .18s ease; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--bg) 85%, transparent) 45%); -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent); mask-image: linear-gradient(to bottom, #000 55%, transparent); }
   .pill:hover .ctl { opacity: 1; transform: none; pointer-events: auto; }
@@ -47,9 +52,9 @@
 
   .lyr { position: relative; height: calc(var(--lh) * 2); margin-top: 5px; overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 22%, #000 100%); mask-image: linear-gradient(to bottom, transparent 0, #000 22%, #000 100%); }
   .roll { position: absolute; inset: 0 0 auto 0; transition: transform .5s cubic-bezier(.22, 1, .36, 1); will-change: transform; }
-  .l { height: var(--lh); line-height: var(--lh); font-size: 14.5px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0; transition: opacity .45s ease, font-size .3s ease; }
+  .l { height: var(--lh); line-height: var(--lh); font-size: 14.5px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0; transition: opacity .45s ease; }
   .l.cur { opacity: 1; }
-  .l.nx { opacity: .45; font-weight: 550; }
+  .l.nx { opacity: .45; }
   .l.pv { opacity: .0; }
   .note { position: absolute; inset: 0; display: flex; align-items: center; font-size: 13.5px; opacity: .6; }
   .note[hidden] { display: none; }
@@ -60,10 +65,9 @@
 <body>
   <div class="pill" id="pill">
     <div class="top">
-      <div class="id" id="idBox">
-        <div class="cover" id="cover"></div>
-        <div class="meta"><div class="title" id="title">Nothing playing</div><div class="artist" id="artist"></div></div>
-      </div>
+      <div class="cover" id="cover"></div>
+      <div class="meta"><div class="title" id="title">Nothing playing</div><div class="artist" id="artist"></div></div>
+      <div class="nextbox" id="nextbox" hidden><small>Up next</small><div class="nt" id="nt"></div><div class="na" id="na"></div></div>
     </div>
     <div class="ctl" id="ctl">
       <button id="bPrev" type="button" aria-label="Previous song"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9.5 12z"/></svg></button>
