@@ -700,7 +700,7 @@
     }
 
     // TV stick: one thing at a time, in this order, with a pause between each, and the music starts last:
-    // 1) the cover loads  2) the cover slides over  3) the colours  4) the lyrics  5) the song plays.
+    // 1) the cover loads  2) the cover check  3) the cover slides over  4) the colours  5) the lyrics  6) the song plays.
     const mine = (state.stageId = (state.stageId || 0) + 1);
     const stale = () => state.currentVideoId !== vid || state.stageId !== mine;
     state.staging = true;
@@ -714,21 +714,27 @@
     renderLyrics(); // clears the last song's lyrics; cheap
     if (state.snap && state.snap.playing) { state.heldByUs = true; P.cmd('pause'); }
     try {
-      // 1) cover
+      // 1) the cover loads
       const t0 = Date.now();
       while (!stale() && !(els.artImg.complete || els.artImg.hidden) && Date.now() - t0 < 3000) await idle(150);
-      await idle(900);
+      await idle(700);
       if (stale()) return;
-      // 2) slide
+      // 2) the cover check: if the filter is on, it decides now, and an explicit cover is hidden before anything else happens
+      if (state.artUrl && state.coverFilter) {
+        await Promise.race([evaluateCover(state.artUrl), idle(20000)]); // a slow first start of the filter can't hold things up for ever
+        await idle(700);
+        if (stale()) return;
+      }
+      // 3) the cover slides over
       clearTimeout(state.introTimer);
       els.stage.classList.remove('intro');
       await idle(1700);
       if (stale()) return;
-      // 3) colours (and the cover check, when it is on)
-      if (state.artUrl) { await applyPalette(state.artUrl); await idle(900); if (stale()) return; evaluateCover(state.artUrl); }
+      // 4) colours
+      if (state.artUrl) { await applyPalette(state.artUrl); }
       await idle(900);
       if (stale()) return;
-      // 4) lyrics, waiting for the online search to finish
+      // 5) lyrics, waiting for the online search to finish
       await refreshLyricFiles();
       if (stale()) return;
       await showLyricsForCurrent();
@@ -739,7 +745,7 @@
     } finally {
       if (state.stageId === mine) state.staging = false;
     }
-    // 5) the song
+    // 6) the song
     if (state.heldByUs) { state.heldByUs = false; P.cmd('play'); }
   }
 
