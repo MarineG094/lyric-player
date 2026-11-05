@@ -24,6 +24,10 @@ class Store(private val ctx: Context) {
         return out
     }
 
+    /** Saved playlists live apart from the settings, so the frequent playback-position saves stay tiny. */
+    fun saved(): String = prefs.getString("saved", "[]") ?: "[]"
+    fun setSaved(json: String) { prefs.edit().putString("saved", json).apply() }
+
     fun adBlock(): Boolean = try { JSONObject(settings()).optBoolean("adBlock", true) } catch (e: Exception) { true }
 
     val lyricsDir: File

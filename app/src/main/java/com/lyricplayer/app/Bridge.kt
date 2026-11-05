@@ -14,6 +14,8 @@ class Bridge {
     // ----- quick, direct calls -----
     @JavascriptInterface fun settings(): String = Hub.store.settings()
     @JavascriptInterface fun mergeSettings(json: String) { Hub.store.merge(json) }
+    @JavascriptInterface fun saved(): String = Hub.store.saved()
+    @JavascriptInterface fun setSaved(json: String) { Hub.store.setSaved(json) }
     @JavascriptInterface fun lyricsDir(): String = Hub.store.lyricsDir.absolutePath
     @JavascriptInterface fun listLyrics(): String = Hub.store.listLyrics()
     @JavascriptInterface fun readLyrics(name: String): String? {

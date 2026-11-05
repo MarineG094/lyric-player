@@ -3,6 +3,8 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('api', {
   getSettings: () => ipcRenderer.invoke('settings:get'),
   setSettings: (patch) => ipcRenderer.invoke('settings:set', patch),
+  getSaved: () => ipcRenderer.invoke('saved:get'),
+  setSaved: (list) => ipcRenderer.invoke('saved:set', list),
   getLyricsDir: () => ipcRenderer.invoke('lyrics:dir'),
   listLyrics: () => ipcRenderer.invoke('lyrics:list'),
   readLyrics: (file) => ipcRenderer.invoke('lyrics:read', file),

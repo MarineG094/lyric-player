@@ -1283,6 +1283,20 @@ function safeLyricsFile(name) {
   return full;
 }
 
+// Saved playlists live in their own file (read only when asked for, written only when they change),
+// so the settings file that is rewritten every few seconds stays small.
+const savedPath = () => path.join(app.getPath('userData'), 'saved-playlists.json');
+let savedCache = null;
+ipcMain.handle('saved:get', () => {
+  if (!savedCache) { try { const v = JSON.parse(fs.readFileSync(savedPath(), 'utf8')); savedCache = Array.isArray(v) ? v : []; } catch { savedCache = []; } }
+  return savedCache;
+});
+ipcMain.handle('saved:set', (_e, list) => {
+  savedCache = (Array.isArray(list) ? list : []).slice(0, 30);
+  try { fs.mkdirSync(path.dirname(savedPath()), { recursive: true }); fs.writeFileSync(savedPath(), JSON.stringify(savedCache)); } catch { /* ignore */ }
+  return true;
+});
+
 ipcMain.handle('settings:get', () => loadSettings());
 
 ipcMain.handle('settings:set', (_event, patch) => {

@@ -225,8 +225,22 @@
   els.importClose.addEventListener('click', () => { els.importNote.hidden = true; });
 
   /* Saved playlists: the matched songs are kept, so opening one again needs no new searching. */
-  async function loadSaved() { try { const st = await window.api.getSettings(); return Array.isArray(st && st.savedPlaylists) ? st.savedPlaylists : []; } catch (_) { return []; } }
-  async function storeSaved(list) { try { await window.api.setSettings({ savedPlaylists: list.slice(0, 30) }); } catch (_) { /* ignore */ } }
+  let migrated = false;
+  async function loadSaved() {
+    try {
+      let list = await window.api.getSaved();
+      if (!migrated) { // earlier versions kept them in the settings file: move them over once
+        migrated = true;
+        const st = await window.api.getSettings();
+        if (st && Array.isArray(st.savedPlaylists)) {
+          if (!list.length && st.savedPlaylists.length) { list = st.savedPlaylists; await window.api.setSaved(list); }
+          await window.api.setSettings({ savedPlaylists: null });
+        }
+      }
+      return Array.isArray(list) ? list : [];
+    } catch (_) { return []; }
+  }
+  async function storeSaved(list) { try { await window.api.setSaved(list.slice(0, 30)); } catch (_) { /* ignore */ } }
 
   async function rememberYt(id, name) {
     const url = 'yt:' + id;
