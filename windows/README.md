@@ -23,6 +23,8 @@ The app remembers what you were playing (playlist, album or song), the exact spo
 | Drag and drop | In YouTube Music (browser), drag the playlist's link or card onto the app window. |
 | Paste | In YouTube Music: playlist, album or song > **Share** > **Copy link**, then paste in the box. A single song plays on its own and stops at the end (Repeat plays it again). |
 | Accepted links | Anything containing `list=...` (music.youtube.com or youtube.com). A bare ID like `PLxxxxxxxx` also works. |
+| Spotify, Deezer, SoundCloud | Paste a public playlist (or album) link. Each song is matched on YouTube Music one by one (it takes a moment), the matches go into the queue, and you're told "Found X of Y" with a list of the songs that weren't found. Playback is always YouTube Music. Spotify may only list the first ~100 songs, at most 200 are imported, and SoundCloud is best-effort. |
+| Saved playlists | Imported playlists, and any YouTube Music playlist or album you start, are remembered in **Change music > Saved playlists** (up to 30), each with Play, + Queue and ✕. Imported ones open instantly with no new searching; **Update** re-imports. |
 
 **No sign-in needed** for Public or Unlisted playlists. A Private playlist needs you to sign in: click **YouTube Music** at the top, sign in there once, and the app remembers it. (Google sometimes refuses sign-ins inside apps. If so, set the playlist to Unlisted instead: YouTube Music > your playlist > **Edit** > **Privacy** > **Unlisted**.)
 
@@ -70,6 +72,7 @@ Timestamp format: `[minutes:seconds.hundredths] line`, for example `[01:12.50] y
 | Repeat | Cycles: off > repeat playlist > repeat this song (badge shows 1). Both Shuffle and Repeat are handled by this app, not by YouTube Music's own buttons, and are remembered next time. |
 | Fullscreen | The corner button on the bottom left, or **F11**. Hides the top buttons; the controls fade out when the mouse is still. **Esc** exits. |
 | YouTube Music | Shows the YouTube Music page (browse, sign in). Click again to go back to lyrics. |
+| Mini player | A small always-on-top pill with the cover, song, artist and one rolling lyric line, in the cover's colours. Drag it anywhere (it remembers where). Hover for previous / play / next; otherwise it shows what plays next. Double-click it, or press the expand button, to bring back the full window. |
 
 ## 5. Make a standalone .exe (optional)
 

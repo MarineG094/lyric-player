@@ -23,6 +23,9 @@
 | 🎤 **Synced lyrics** | The line being sung grows and glows. Click or tap a line to jump there. |
 | 🖼 **Album art + colours** | The whole screen takes on the colours of the cover. |
 | 🔍 **Search or paste** | Search YouTube Music for songs, albums and playlists, or paste any link. |
+| 📥 **Bring your Spotify playlists** | Paste a Spotify, Deezer or SoundCloud playlist link: each song is matched on YouTube Music and queued, with a "found X of Y" report. |
+| 💾 **Saved playlists** | Imported and YouTube Music playlists are remembered, so they open again without waiting. |
+| 🪟 **Mini player (Windows)** | A small always-on-top pill with the cover, song and one rolling lyric line. |
 | 🔀 **Shuffle & repeat** | Real shuffle: no repeats until every song has played. |
 | 🌐 **Four lyric sources** | LRCLIB, then NetEase, then lyrics.ovh, plus Quran text for recitations. |
 | 🔤 **English letters** | Songs in Hindi, Arabic, Korean and more can show in Latin letters. |
@@ -105,7 +108,8 @@ A separate app, **`LyricPlayer-TV.apk`** (installs as *Lyric Player TV*, next to
 | Do this | To get this |
 |---|---|
 | Search or paste a link in **Change music** | Plays a song, album or playlist. Playlists must be **Public** or **Unlisted**. |
-| Paste a **Spotify, Deezer or SoundCloud** playlist link in **Change music** | Each song is matched on YouTube Music and queued. You're told how many were found and which weren't. Playlists must be public; SoundCloud is best-effort. |
+| Paste a **Spotify, Deezer or SoundCloud** playlist link in **Change music** | Each song is matched on YouTube Music and queued. You're told how many were found and which weren't. Playlists must be public; SoundCloud is best-effort. Up to 200 songs are imported. |
+| **Saved playlists** (in **Change music**) | Imported and YouTube Music playlists you've played. **Play**, **+ Queue**, **Update** (re-import) or ✕. Imported ones open instantly. |
 | Tap **YouTube Music** | Shows the real site (accept cookies, sign in). Tap **Back to lyrics** to return. |
 | **Add lyrics** | Paste your own. Plain text works; `[00:12.50] line` timestamps make it scroll. |
 | **Auto lyrics** | Looks up lyrics online when a song has none. |
