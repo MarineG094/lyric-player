@@ -901,6 +901,29 @@
     els.lyrics.scrollTop = 0;
   }
 
+  // A very long entry (a long Quran verse with its translation) would run past the lyrics area. It is shrunk until it
+  // fits, once per line and screen height. (The line grows a little when it is the one being sung, so that is allowed for.)
+  function fitLine(el) {
+    const avail = els.lyrics.clientHeight;
+    if (!avail || el.classList.contains('gap')) return;
+    const key = String(avail);
+    if (el.dataset.fit === key) return;
+    el.style.fontSize = '';
+    const limit = avail * 0.8;
+    const grow = 1.14;
+    let h = el.offsetHeight * grow;
+    if (h > limit) {
+      let px = parseFloat(getComputedStyle(el).fontSize) || 24;
+      const floor = Math.max(14, px * 0.45);
+      for (let i = 0; i < 8 && h > limit && px > floor; i++) {
+        px = Math.max(floor, Math.floor(px * Math.max(0.6, Math.sqrt(limit / h)) * 0.97));
+        el.style.fontSize = px + 'px';
+        h = el.offsetHeight * grow;
+      }
+    }
+    el.dataset.fit = key;
+  }
+
   function syncLyrics(currentTime) {
     const data = state.lyricsData;
     if (!data || !data.synced) return;
@@ -923,6 +946,7 @@
     state.paintedFor = data;
     const el = nodes[idx];
     if (el) {
+      fitLine(el);
       const top = el.offsetTop - els.lyrics.clientHeight / 2 + el.offsetHeight / 2;
       els.lyrics.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
     }
