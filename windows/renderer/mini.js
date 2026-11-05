@@ -4,7 +4,7 @@
   const api = window.mini;
   const $ = (id) => document.getElementById(id);
   const el = { nextbox: $('nextbox'), nt: $('nt'), na: $('na'), pill: $('pill'), cover: $('cover'), title: $('title'), artist: $('artist'), roll: $('roll'), note: $('note'), prog: $('prog') };
-  const LH = 22;
+  const LH = 28;
   let lyr = null;            // { status, synced, lines: [{ time, text }] }
   let nodes = [];
   let idx = -2;
@@ -45,28 +45,28 @@
     paintRoll(-1);
   }
 
-  // Classes by distance from the active line: current, next (dim), previous (fading out), everything else hidden.
+  // One line shows at a time: the current one. The one before fades up and out, the ones after wait below.
   function paintRoll(i) {
     const from = Math.max(0, Math.min(idx, i) - 2);
-    const to = Math.min(nodes.length - 1, Math.max(idx, i) + 3);
+    const to = Math.min(nodes.length - 1, Math.max(idx, i) + 2);
     for (let k = from; k <= to; k++) {
-      const d = k - i;
       const n = nodes[k];
-      n.className = d === 0 ? 'l cur' : d === 1 ? 'l nx' : d === -1 ? 'l pv' : 'l';
-      if (d >= 0 && d <= 1) fit(n);
+      n.className = (k === i ? 'l cur' : k < i ? 'l pv' : 'l') + (n.dataset.wrap ? ' wrap' : '');
+      if (k === i) fit(n);
     }
-    // Before the first line, the first lines wait in view; afterwards the active one sits on the top row.
     el.roll.style.transform = `translateY(${-Math.max(0, i) * LH}px)`;
-    if (i < 0 && nodes[0]) nodes[0].className = 'l nx';
     idx = i;
   }
 
-  // A line too wide for the pill shrinks until it fits (down to a small minimum). Done once per line.
+  // A line too wide for the pill shrinks to fit; if it is still too long it goes onto two small lines. Done once per line.
   function fit(n) {
     if (n.dataset.fit) return;
     n.dataset.fit = '1';
-    const over = n.scrollWidth / Math.max(1, n.clientWidth);
-    if (over > 1) n.style.fontSize = Math.max(9.5, Math.floor(14.5 / over * 10) / 10) + 'px';
+    const w = Math.max(1, n.clientWidth);
+    const over = n.scrollWidth / w;
+    if (over <= 1) return;
+    n.style.fontSize = Math.max(12, Math.floor(15 / over * 10) / 10) + 'px';
+    if (n.scrollWidth > w + 1) { n.style.fontSize = '12px'; n.dataset.wrap = '1'; n.classList.add('wrap'); }
   }
 
   function lineAt(t) {
