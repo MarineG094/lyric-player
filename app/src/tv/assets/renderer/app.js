@@ -634,8 +634,14 @@
 
   function setArt(url) {
     state.artUrl = url;
-    applyPalette(url);
-    evaluateCover(url);
+    if (window.__lpTv) {
+      // TV stick: the picture shows at once; the colours and the cover check wait until the song and its lyrics have settled.
+      clearTimeout(state.artTimer);
+      state.artTimer = setTimeout(() => { if (state.artUrl === url) { applyPalette(url); evaluateCover(url); } }, 3500);
+    } else {
+      applyPalette(url);
+      evaluateCover(url);
+    }
     if (url) {
       artFallbacks = artChain(url);
       els.artImg.src = url;
@@ -659,8 +665,23 @@
     }
   }
 
+  const idle = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  // TV: wait until this song is really playing (or 6 seconds), so the music gets the processor first.
+  async function waitForPlayback(vid) {
+    const t0 = Date.now();
+    while (state.currentVideoId === vid && Date.now() - t0 < 6000) {
+      const sn = state.snap;
+      if (sn && sn.playing && (sn.cur || 0) >= 1) break;
+      if (sn && !sn.playing && Date.now() - t0 > 1500) break; // paused (a resumed session): don't wait for sound
+      await idle(250);
+    }
+    return state.currentVideoId === vid;
+  }
+
   async function onTrackChange(videoData) {
-    state.currentVideoId = videoData.video_id;
+    const vid = videoData.video_id;
+    state.currentVideoId = vid;
     state.currentTitle = videoData.title || '';
     state.currentArtist = cleanArtist(videoData.author);
     els.title.textContent = state.currentTitle || 'Unknown title';
@@ -670,10 +691,34 @@
     // Intro: the cover shows in the middle for a moment, then slides over to make room for the lyrics.
     els.stage.classList.add('intro');
     clearTimeout(state.introTimer);
-    state.introTimer = setTimeout(() => els.stage.classList.remove('intro'), 2600);
     closeEditor();
+
+    if (!window.__lpTv) {
+      state.introTimer = setTimeout(() => els.stage.classList.remove('intro'), 2600);
+      await refreshLyricFiles();
+      await showLyricsForCurrent();
+      return;
+    }
+
+    // TV stick: one thing at a time. 1) the song starts, 2) its lyrics are found and drawn, 3) the cover slides over,
+    // 4) (later, see setArt) colours and cover check. Skipping quickly through songs does none of the later steps.
+    state.introTimer = setTimeout(() => els.stage.classList.remove('intro'), 12000); // safety net
+    state.lyricsData = null;
+    state.lyricsFile = null;
+    state.lyricsRaw = '';
+    state.activeIdx = -1;
+    state.lyricsStatus = 'searching';
+    renderLyrics(); // clears the last song's lyrics; cheap
+    if (!(await waitForPlayback(vid))) return;
+    await idle(300);
+    if (state.currentVideoId !== vid) return;
     await refreshLyricFiles();
+    if (state.currentVideoId !== vid) return;
     await showLyricsForCurrent();
+    await idle(500);
+    if (state.currentVideoId !== vid) return;
+    clearTimeout(state.introTimer);
+    els.stage.classList.remove('intro');
   }
 
   // Songs in other scripts are shown in English letters (the saved file keeps the original text).
@@ -1175,6 +1220,7 @@
     P.cmd('volume', state.volume);
     renderLyrics();
     await refreshLyricFiles();
+    if (window.__lpTv) await idle(700); // let the first screen draw before YouTube Music starts loading
 
     if (settings.lastPlaylist) {
       // Pick up where the last session ended: same song, same spot (it opens paused).

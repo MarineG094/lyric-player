@@ -74,6 +74,7 @@ object Hub {
             val np = last
             val remaining = if (np != null && np.durMs > 0) np.durMs - np.posMs else Long.MAX_VALUE
             val next = when {
+                visible && last == null && isTv -> 1000L // nothing playing yet: the page is still loading, leave it the processor
                 visible -> if (isTv) 400L else 300L
                 remaining < 6000 -> 250L
                 np != null && !np.playing -> 1500L
