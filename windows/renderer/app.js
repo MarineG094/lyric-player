@@ -572,9 +572,12 @@
       if (verdict === null || verdict === undefined) {
         // The filter itself failed: show the cover rather than hiding every cover, and say so once.
         if (!nsfwFailedToastShown) { nsfwFailedToastShown = true; toast("The cover filter couldn't start, so covers are shown normally. Use Hide cover on any cover you want hidden.", 7000); }
+        state.coverFailed = true; // the button says so, so a filter that is quietly not running can be seen
+        applyCoverFilterButton();
         verdict = false;
       } else {
         coverVerdicts.set(key, verdict);
+        if (state.coverFailed) { state.coverFailed = false; applyCoverFilterButton(); }
       }
     }
     if (state.coverKey !== key) return; // a newer song already replaced this one
@@ -592,7 +595,7 @@
   });
 
   function applyCoverFilterButton() {
-    els.btnCover.textContent = state.coverFilter ? 'Cover filter: on' : 'Cover filter: off';
+    els.btnCover.textContent = state.coverFilter ? (state.coverFailed ? 'Cover filter: on (not working)' : 'Cover filter: on') : 'Cover filter: off';
   }
   els.btnCover.addEventListener('click', () => {
     state.coverFilter = !state.coverFilter;

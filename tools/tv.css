@@ -1,5 +1,5 @@
 /* Big-screen layout for the TV app (loaded after style.css). Everything is sized to read from a sofa and to be reachable with a remote. */
-#btnFull, #btnPhoneFull, #btnFolder, #btnBrowse, .cover-toggle, .side.left, .side.right { display: none; }
+#btnFull, #btnPhoneFull, #btnFolder, #btnBrowse, .side.left, .side.right { display: none; }
 #app { height: 100vh; padding: 0 clamp(16px, 3vw, 56px); }
 .topbar { padding: 26px 0 0; }
 .top-actions { gap: 12px; flex-wrap: wrap; }
@@ -44,3 +44,8 @@ input[type="range"]::-webkit-slider-thumb { width: 24px; height: 24px; margin-to
 /* Lighter on TV hardware: colours change at once instead of fading (the fade repaints the whole screen's gradients every frame). */
 :root { transition: none; }
 
+
+/* Hide / Show cover works with the remote on TV: always visible, and big enough to read. */
+.cover-toggle { opacity: 1; font-size: 17px; padding: 10px 20px; }
+.cover-toggle[hidden] { display: none; }
+.cover-toggle:focus { outline: 4px solid var(--accent-2); outline-offset: 3px; }
