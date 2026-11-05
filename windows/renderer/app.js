@@ -219,9 +219,14 @@
   /* ---------- the Menu button: the less-used settings live in a dropdown ---------- */
   function openMenu() {
     const r = els.btnMenu.getBoundingClientRect();
-    els.menuPanel.hidden = false;
-    els.menuPanel.style.top = `${Math.round(r.bottom + 8)}px`;
-    els.menuPanel.style.right = `${Math.max(10, Math.round(window.innerWidth - r.right))}px`;
+    const m = els.menuPanel;
+    m.hidden = false;
+    m.style.right = 'auto';
+    const w = m.offsetWidth;
+    const vw = document.documentElement.clientWidth || window.innerWidth;
+    // Line up with the Menu button's right edge, but never run off either side of the screen.
+    m.style.left = `${Math.round(Math.max(10, Math.min(r.right - w, vw - w - 10)))}px`;
+    m.style.top = `${Math.round(r.bottom + 8)}px`;
     els.btnMenu.setAttribute('aria-expanded', 'true');
   }
   function closeMenu(refocus) {
