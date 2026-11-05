@@ -75,6 +75,8 @@
     btnCloseOverlay: $('#btnCloseOverlay'),
     btnPlaylist: $('#btnPlaylist'),
     btnMini: $('#btnMini'),
+    btnMenu: $('#btnMenu'),
+    menuPanel: $('#menuPanel'),
     btnUpdate: $('#btnUpdate'),
     btnFolder: $('#btnFolder'),
     btnAuto: $('#btnAuto'),
@@ -212,6 +214,31 @@
     return true;
   }
 
+
+  /* ---------- the Menu button: the less-used settings live in a dropdown ---------- */
+  function openMenu() {
+    const r = els.btnMenu.getBoundingClientRect();
+    els.menuPanel.hidden = false;
+    els.menuPanel.style.top = `${Math.round(r.bottom + 8)}px`;
+    els.menuPanel.style.right = `${Math.max(10, Math.round(window.innerWidth - r.right))}px`;
+    els.btnMenu.setAttribute('aria-expanded', 'true');
+  }
+  function closeMenu(refocus) {
+    if (els.menuPanel.hidden) return false;
+    els.menuPanel.hidden = true;
+    els.btnMenu.setAttribute('aria-expanded', 'false');
+    if (refocus) els.btnMenu.focus();
+    return true;
+  }
+  els.btnMenu.addEventListener('click', () => { if (els.menuPanel.hidden) { openMenu(); const f = [...els.menuPanel.querySelectorAll('button')].find((b) => b.offsetParent !== null); if (f && window.__lpTv) f.focus(); } else closeMenu(); });
+  els.menuPanel.addEventListener('click', (e) => { // choices that open something close the menu; the on/off switches stay so several can be flipped
+    const b = e.target.closest('button');
+    if (b && !/^(btnAds|btnCover|btnRoman|btnAuto|btnSide)$/.test(b.id)) closeMenu();
+  });
+  document.addEventListener('pointerdown', (e) => { if (!els.menuPanel.hidden && !e.target.closest('.menu-wrap')) closeMenu(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && closeMenu(true)) e.stopPropagation(); }, true);
+  window.addEventListener('resize', () => closeMenu());
+  { const prevBack = window.__lpBack; window.__lpBack = () => (closeMenu(true) ? true : prevBack ? prevBack() : false); } // phone / TV Back button closes it first
 
   /* ---------- update check ----------
      Looks at the app's GitHub release (one small request, at most every 6 hours, a little after start so it

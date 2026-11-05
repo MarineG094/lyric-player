@@ -13,16 +13,21 @@
     <header class="topbar">
       <div class="brand">Lyric Player</div>
       <div class="top-actions">
-        <button id="btnBrowse" class="ghost" type="button" title="Show the YouTube Music page: browse, accept cookies, or sign in">YouTube Music</button>
-        <button id="btnAds" class="ghost" type="button" title="Block and skip YouTube Music ads">Ad block: on</button>
-        <button id="btnCover" class="ghost" type="button" title="Automatically hide explicit album covers">Cover filter: on</button>
-        <button id="btnRoman" class="ghost" type="button" title="Show lyrics in English letters when a song is in another script (Hindi, Arabic, Korean, ...)">English letters: on</button>
-        <button id="btnAuto" class="ghost" type="button" title="Look up lyrics online (LRCLIB) when a song has no lyrics file">Auto lyrics: on</button>
-        <button id="btnSide" class="ghost" type="button" title="Switch the album cover between the right and left side">Album: right</button>
         <button id="btnUpdate" class="solid small" type="button" hidden>Update available</button>
         <button id="btnMini" class="ghost" type="button" title="A small always-on-top player with the lyrics" hidden>Mini player</button>
         <button id="btnPlaylist" class="ghost" type="button">Change music</button>
-        <button id="btnFolder" class="ghost" type="button" title="Open the folder where lyrics files live">Lyrics folder</button>
+        <div class="menu-wrap">
+          <button id="btnMenu" class="ghost" type="button" aria-haspopup="true" aria-expanded="false" title="More options">Menu</button>
+          <div id="menuPanel" class="menu-panel" role="menu" hidden>
+            <button id="btnBrowse" type="button" title="Show the YouTube Music page: browse, accept cookies, or sign in">YouTube Music</button>
+            <button id="btnAds" type="button" title="Block and skip YouTube Music ads">Ad block: on</button>
+            <button id="btnCover" type="button" title="Automatically hide explicit album covers">Cover filter: on</button>
+            <button id="btnRoman" type="button" title="Show lyrics in English letters when a song is in another script (Hindi, Arabic, Korean, ...)">English letters: on</button>
+            <button id="btnAuto" type="button" title="Look up lyrics online (LRCLIB) when a song has no lyrics file">Auto lyrics: on</button>
+            <button id="btnSide" type="button" title="Switch the album cover between the right and left side">Album: right</button>
+            <button id="btnFolder" type="button" title="Open the folder where lyrics files live">Lyrics folder</button>
+          </div>
+        </div>
       </div>
     </header>
 
