@@ -109,6 +109,8 @@ Lyric Player is a sideloaded app, so Android Auto hides it until you allow that:
 
 A separate app, **`LyricPlayer-TV.apk`** (installs as *Lyric Player TV*, next to the phone app). It is tuned for small TV sticks: on each song change it works one step at a time (cover, then lyrics, then the song plays), so there is a short pause before the music starts.
 
+<img src="docs/tv.jpg" width="640" alt="Lyric Player on a Google TV: cover and song on the left, synced lyrics on the right, and what plays next along the bottom">
+
 - **Remote:** arrows move between buttons, OK presses, left/right on the progress bar skips 10 s, and the media keys (play/pause, next, previous, rewind, fast-forward) work.
 - **No typing:** the "choose music" card shows an address like `http://192.168.1.20:8080`. Open it on your phone (same Wi-Fi), paste a link and press **Play**.
 - **Install:** put the APK on a USB stick or use the **Downloader** app with a link to it, then allow unknown apps. Or use `adb install LyricPlayer-TV.apk`.
