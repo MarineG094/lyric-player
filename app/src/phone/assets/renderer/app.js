@@ -430,12 +430,16 @@
     if (key !== state.currentVideoId) {
       if (key !== state.pendingKey) { state.pendingKey = key; state.pendingCount = 0; }
       state.pendingCount += 1;
+      // TV: the music waits until the cover, colours and lyrics are ready, so hold the new song straight away.
+      if (window.__lpTv && state.pendingCount === 1 && s.playing) { state.heldByUs = true; P.cmd('pause'); }
       if (state.pendingCount >= 2) {
         state.pendingKey = null;
         onTrackChange({ video_id: key, title: s.title, author: s.artist });
       }
     } else {
       state.pendingKey = null;
+      // A false alarm (the id and title just updated at different moments): nothing changed, so carry on playing.
+      if (window.__lpTv && state.heldByUs && !state.staging) { state.heldByUs = false; P.cmd('play'); }
     }
     if (s.art !== state.artUrl) setArt(s.art);
 
@@ -637,8 +641,8 @@
     if (window.__lpTv) {
       // TV stick: the picture shows at once; the colours and the cover check wait until the song and its lyrics have settled.
       clearTimeout(state.artTimer);
-      state.artTimer = setTimeout(() => {
-        if (state.artUrl !== url) return;
+      if (!state.staging) state.artTimer = setTimeout(() => {
+        if (state.artUrl !== url || state.staging) return;
         applyPalette(url);
         state.artTimer = setTimeout(() => { if (state.artUrl === url) evaluateCover(url); }, 2500); // the cover check is a separate, later step
       }, 9000);
@@ -671,18 +675,6 @@
 
   const idle = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  // TV: wait until this song is really playing (or 6 seconds), so the music gets the processor first.
-  async function waitForPlayback(vid) {
-    const t0 = Date.now();
-    while (state.currentVideoId === vid && Date.now() - t0 < 10000) {
-      const sn = state.snap;
-      if (sn && sn.playing && (sn.cur || 0) >= 3) break;
-      if (sn && !sn.playing && Date.now() - t0 > 2500) break; // paused (a resumed session): don't wait for sound
-      await idle(250);
-    }
-    return state.currentVideoId === vid;
-  }
-
   async function onTrackChange(videoData) {
     const vid = videoData.video_id;
     state.currentVideoId = vid;
@@ -704,27 +696,48 @@
       return;
     }
 
-    // TV stick: one thing at a time. 1) the song starts and plays a few seconds, 2) its lyrics are found and drawn, 3) the cover slides over,
-    // 4) (much later, see setArt) colours, then the cover check, each with a pause between. Skipping quickly through songs does none of the later steps.
-    state.introTimer = setTimeout(() => els.stage.classList.remove('intro'), 20000); // safety net
+    // TV stick: one thing at a time, in this order, with a pause between each, and the music starts last:
+    // 1) the cover loads  2) the cover slides over  3) the colours  4) the lyrics  5) the song plays.
+    const mine = (state.stageId = (state.stageId || 0) + 1);
+    const stale = () => state.currentVideoId !== vid || state.stageId !== mine;
+    state.staging = true;
+    clearTimeout(state.artTimer);
+    state.introTimer = setTimeout(() => els.stage.classList.remove('intro'), 30000); // safety net
     state.lyricsData = null;
     state.lyricsFile = null;
     state.lyricsRaw = '';
     state.activeIdx = -1;
     state.lyricsStatus = 'searching';
     renderLyrics(); // clears the last song's lyrics; cheap
-    if (!(await waitForPlayback(vid))) return;
-    await idle(1200);
-    if (state.currentVideoId !== vid) return;
-    await refreshLyricFiles();
-    await idle(600);
-    if (state.currentVideoId !== vid) return;
-    if (state.currentVideoId !== vid) return;
-    await showLyricsForCurrent();
-    await idle(2000);
-    if (state.currentVideoId !== vid) return;
-    clearTimeout(state.introTimer);
-    els.stage.classList.remove('intro');
+    if (state.snap && state.snap.playing) { state.heldByUs = true; P.cmd('pause'); }
+    try {
+      // 1) cover
+      const t0 = Date.now();
+      while (!stale() && !(els.artImg.complete || els.artImg.hidden) && Date.now() - t0 < 3000) await idle(150);
+      await idle(900);
+      if (stale()) return;
+      // 2) slide
+      clearTimeout(state.introTimer);
+      els.stage.classList.remove('intro');
+      await idle(1700);
+      if (stale()) return;
+      // 3) colours (and the cover check, when it is on)
+      if (state.artUrl) { await applyPalette(state.artUrl); await idle(900); if (stale()) return; evaluateCover(state.artUrl); }
+      await idle(900);
+      if (stale()) return;
+      // 4) lyrics, waiting for the online search to finish
+      await refreshLyricFiles();
+      if (stale()) return;
+      await showLyricsForCurrent();
+      const t1 = Date.now();
+      while (!stale() && state.fetching.has(vid) && Date.now() - t1 < 9000) await idle(250);
+      await idle(900);
+      if (stale()) return;
+    } finally {
+      if (state.stageId === mine) state.staging = false;
+    }
+    // 5) the song
+    if (state.heldByUs) { state.heldByUs = false; P.cmd('play'); }
   }
 
   // Songs in other scripts are shown in English letters (the saved file keeps the original text).
@@ -1018,7 +1031,7 @@
     toast({ off: 'Repeat off.', all: 'Repeat playlist on.', one: 'Repeating this song.' }[state.repeat]);
   }
 
-  els.btnPlay.addEventListener('click', () => P.cmd('toggle'));
+  els.btnPlay.addEventListener('click', () => { state.heldByUs = false; P.cmd('toggle'); });
   els.btnNext.addEventListener('click', () => P.cmd('next'));
   els.btnPrev.addEventListener('click', () => {
     // Like most players: restart the song if we're past the first few seconds.
