@@ -228,6 +228,14 @@
   async function loadSaved() { try { const st = await window.api.getSettings(); return Array.isArray(st && st.savedPlaylists) ? st.savedPlaylists : []; } catch (_) { return []; } }
   async function storeSaved(list) { try { await window.api.setSettings({ savedPlaylists: list.slice(0, 30) }); } catch (_) { /* ignore */ } }
 
+  async function rememberYt(id, name) {
+    const url = 'yt:' + id;
+    const old = await loadSaved();
+    const prev = old.find((x) => x.url === url);
+    await storeSaved([{ url, service: 'youtube', kind: 'list', id, name: prev ? prev.name : name, savedAt: Date.now() }, ...old.filter((x) => x.url !== url)]);
+    renderSaved();
+  }
+
   async function renderSaved() {
     const list = await loadSaved();
     els.savedBox.hidden = !list.length;
@@ -238,13 +246,14 @@
       const info = document.createElement('div');
       info.className = 'saved-info';
       const nm = document.createElement('strong'); nm.textContent = pl.name;
-      const sub = document.createElement('span'); sub.textContent = `${pl.items.length} songs` + (pl.missing && pl.missing.length ? `, ${pl.missing.length} not found` : '') + ` · ${L.SERVICE_NAME[pl.service] || ''}`;
+      const yt = pl.service === 'youtube';
+      const sub = document.createElement('span'); sub.textContent = yt ? 'YouTube Music playlist' : `${pl.items.length} songs` + (pl.missing && pl.missing.length ? `, ${pl.missing.length} not found` : '') + ` · ${L.SERVICE_NAME[pl.service] || ''}`;
       info.append(nm, sub);
       const mk = (label, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'ghost small'; b.textContent = label; b.addEventListener('click', fn); return b; };
       row.append(info,
-        mk('Play', () => applyImported(pl, false, true)),
-        mk('+ Queue', () => applyImported(pl, false, false)),
-        mk('Update', () => importAndQueue({ service: pl.service, kind: pl.kind, url: pl.url }, false, false, true)),
+        mk('Play', () => (yt ? loadPlaylist(pl.id, true, undefined, pl.name) : applyImported(pl, false, true))),
+        mk('+ Queue', () => (yt ? (state.currentVideoId ? queueSource({ kind: 'list', id: pl.id }, pl.name, false) : loadPlaylist(pl.id, true, undefined, pl.name)) : applyImported(pl, false, false))),
+        ...(yt ? [] : [mk('Update', () => importAndQueue({ service: pl.service, kind: pl.kind, url: pl.url }, false, false, true))]),
         mk('✕', async () => { await storeSaved((await loadSaved()).filter((x) => x.url !== pl.url)); renderSaved(); }));
       els.savedList.appendChild(row);
     });
@@ -302,7 +311,7 @@
   }
 
   // Play now / Play next / Add to queue, for a result or a pasted link. With nothing playing, there is nothing to queue behind.
-  function playNow(src) { loadSource(src); }
+  function playNow(src, title) { loadSource(src, title); }
 
   function renderResults(results) {
     els.searchResults.textContent = '';
@@ -326,16 +335,16 @@
       rt.append(t, sub);
       const chip = document.createElement('span'); chip.className = 'chip'; chip.textContent = KIND_LABEL[r.kind] || '';
       b.append(rt, chip);
-      b.addEventListener('click', () => { els.searchInput.value = ''; renderResults([]); searchNote(''); loadSource({ kind: r.kind, id: r.id }); });
+      b.addEventListener('click', () => { els.searchInput.value = ''; renderResults([]); searchNote(''); loadSource({ kind: r.kind, id: r.id }, r.title); });
       row.appendChild(b);
       {
         const q = document.createElement('div'); q.className = 'qbtns';
         const src = { kind: r.kind, id: r.id };
         const mk = (label, title, fn) => { const x = document.createElement('button'); x.type = 'button'; x.className = 'qbtn'; x.textContent = label; x.title = title; x.addEventListener('click', fn); return x; };
         q.append(
-          mk('Play now', 'Play this now', () => { els.searchInput.value = ''; renderResults([]); searchNote(''); playNow(src); }),
-          mk('Play next', 'Play this right after the current song', () => { if (!state.currentVideoId) playNow(src); else queueSource(src, r.title, true); }),
-          mk('+ Queue', 'Add this to the end of the queue', () => { if (!state.currentVideoId) playNow(src); else queueSource(src, r.title, false); }),
+          mk('Play now', 'Play this now', () => { els.searchInput.value = ''; renderResults([]); searchNote(''); playNow(src, r.title); }),
+          mk('Play next', 'Play this right after the current song', () => { if (!state.currentVideoId) playNow(src, r.title); else queueSource(src, r.title, true); }),
+          mk('+ Queue', 'Add this to the end of the queue', () => { if (!state.currentVideoId) playNow(src, r.title); else queueSource(src, r.title, false); }),
         );
         row.appendChild(q);
       }
@@ -391,11 +400,11 @@
   els.chCancel.addEventListener('click', () => { hideChoice(); els.urlInput.focus(); });
 
   // Playlist, album or single song: whatever the link points at.
-  function loadSource(src) {
+  function loadSource(src, title) {
     if (src.kind === 'import') importAndQueue(src.ext, false, true);
     else if (src.kind === 'song') loadSong(src.id, true);
-    else if (src.kind === 'album') loadAlbum(src.id);
-    else loadPlaylist(src.id, true, src.video);
+    else if (src.kind === 'album') loadAlbum(src.id, title);
+    else loadPlaylist(src.id, true, src.video, title);
   }
 
   /* ---------- status line ---------- */
@@ -430,8 +439,9 @@
 
   function stopWatchdog() { clearTimeout(state.watchdog); }
 
-  function loadPlaylist(id, userInitiated, startVideo) {
+  function loadPlaylist(id, userInitiated, startVideo, name) {
     state.playlistId = id;
+    state.saveYt = userInitiated && /^[A-Za-z0-9_-]{10,}$/.test(id) && !/^RD/.test(id) ? { id, name: name || '' } : null; // remembered once the first song plays
     state.holdFirst = !userInitiated;
     state.currentVideoId = null;
     state.currentTitle = '';
@@ -462,7 +472,7 @@
   }
 
   // An album page: find its playlist, then play that.
-  async function loadAlbum(browseId) {
+  async function loadAlbum(browseId, name) {
     hideOverlay();
     setBrowse(false);
     setStatus('Looking up the album…', 'info');
@@ -474,7 +484,7 @@
       showOverlay("Couldn't open that album. Try the album's playlist link instead (open the album, then Share).");
       return;
     }
-    loadPlaylist(listId, true);
+    loadPlaylist(listId, true, undefined, name);
   }
 
   // The tiny "Up next" line at the bottom: cover, title and artist of the song that plays after this one.
@@ -513,6 +523,7 @@
       state.gotMedia = true;
       stopWatchdog();
       setStatus('');
+      if (state.saveYt) { const y = state.saveYt; state.saveYt = null; rememberYt(y.id, y.name || (s.title ? `Playlist with “${s.title}”` : 'YouTube Music playlist')); }
     }
 
     const playing = !!s.playing;
