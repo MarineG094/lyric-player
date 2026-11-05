@@ -1070,6 +1070,16 @@ async function jsonGet(label, url, headers, timeoutMs) {
 
 const lrclibRequest = (pathAndQuery) => jsonGet('LRCLIB', LRCLIB + pathAndQuery);
 
+// The newest published build of this app (for the update button). Only the two release tags are ever asked for.
+ipcMain.handle('app:latestRelease', async (_e, tag) => {
+  if (tag !== 'latest' && tag !== 'windows-latest') return null;
+  try {
+    const r = await jsonGet('GitHub', `https://api.github.com/repos/NaqibC/lyric-player/releases/tags/${tag}`, { Accept: 'application/vnd.github+json' });
+    if (!r) return null;
+    return { sha: String(r.target_commitish || ''), assets: (r.assets || []).map((x) => ({ name: String(x.name || ''), url: String(x.browser_download_url || '') })) };
+  } catch (_) { return null; }
+});
+
 function hasLyrics(r) {
   return r && !r.instrumental && (r.syncedLyrics || r.plainLyrics);
 }
@@ -1311,6 +1321,8 @@ ipcMain.handle('lyrics:fetched', () => loadSettings().fetchedLyrics || []);
   window.api = {
     getSettings: async () => loadSettings(),
     setSettings: async (patch) => handlers['settings:set'](null, patch),
+    latestRelease: (tag) => handlers['app:latestRelease'](null, tag),
+    openUrl: (url) => { try { N.openUrl(String(url)); } catch (_) { /* ignore */ } },
     getSaved: async () => { try { return JSON.parse(N.saved()) || []; } catch (_) { return []; } },
     setSaved: async (list) => { try { N.setSaved(JSON.stringify(list || [])); } catch (_) { /* ignore */ } return true; },
     getLyricsDir: async () => N.lyricsDir(),

@@ -75,6 +75,7 @@
     btnCloseOverlay: $('#btnCloseOverlay'),
     btnPlaylist: $('#btnPlaylist'),
     btnMini: $('#btnMini'),
+    btnUpdate: $('#btnUpdate'),
     btnFolder: $('#btnFolder'),
     btnAuto: $('#btnAuto'),
     btnRoman: $('#btnRoman'),
@@ -211,6 +212,51 @@
     return true;
   }
 
+
+  /* ---------- update check ----------
+     Looks at the app's GitHub release (one small request, at most every 6 hours, a little after start so it
+     never competes with the music loading). A different build there means an update. */
+  const REPO = 'NaqibC/lyric-player';
+  let updateInfo = null;
+  function openLink(url) { if (window.api.openUrl) window.api.openUrl(url); else window.open(url, '_blank'); }
+  function showUpdate(info) {
+    updateInfo = info;
+    els.btnUpdate.hidden = false;
+  }
+  els.btnUpdate.addEventListener('click', () => {
+    if (!updateInfo) return;
+    openLink(updateInfo.url);
+    toast(window.__lpTv
+      ? `New version: open github.com/${REPO}/releases/tag/latest and download LyricPlayer-TV.apk (the Downloader app works well).`
+      : window.api.mini ? 'Downloading the new version. Close this app and run the new file instead.' : 'Downloading the new version. Open the file when it finishes to update.', 9000);
+  });
+  async function checkForUpdate() {
+    const B = window.__build;
+    if (!B || !B.sha || B.sha === 'dev' || !B.platform) return;
+    let st = {};
+    try { st = await window.api.getSettings(); } catch (_) { return; }
+    if (st.updateInfo && st.updateInfo.sha && st.updateInfo.sha !== B.sha && st.updateInfo.platform === B.platform) showUpdate(st.updateInfo); // found earlier, not installed yet
+    const now = Date.now();
+    if (st.updateCheckedAt && now - st.updateCheckedAt < 6 * 3600 * 1000 && now >= st.updateCheckedAt) return;
+    const tag = B.platform === 'windows' ? 'windows-latest' : 'latest';
+    const want = B.platform === 'windows' ? /\.exe$/i : B.platform === 'tv' ? /^LyricPlayer-TV\.apk$/i : /^LyricPlayer\.apk$/i;
+    try {
+      const rel = await window.api.latestRelease(tag);
+      if (!rel) return; // offline, rate-limited, or the release is being rebuilt: try again next time
+      window.api.setSettings({ updateCheckedAt: now });
+      const sha = String(rel.sha || '');
+      const asset = (rel.assets || []).find((x) => want.test(x.name || ''));
+      const url = asset && String(asset.url || '');
+      if (!/^[0-9a-f]{40}$/.test(sha) || !url.startsWith(`https://github.com/${REPO}/releases/`)) return;
+      if (sha !== B.sha) {
+        const info = { sha, url, platform: B.platform };
+        window.api.setSettings({ updateInfo: info });
+        showUpdate(info);
+        if (st.updateToastSha !== sha) { window.api.setSettings({ updateToastSha: sha }); toast('A new version is available. Use the "Update available" button at the top.', 7000); }
+      } else if (st.updateInfo) { window.api.setSettings({ updateInfo: null }); els.btnUpdate.hidden = true; }
+    } catch (_) { /* no network: nothing to do */ }
+  }
+  setTimeout(checkForUpdate, window.__lpTv ? 60000 : 15000);
 
   /* ---------- importing a Spotify / Deezer / SoundCloud playlist ---------- */
   let importTimer = null;

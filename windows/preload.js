@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld('api', {
     onOpened: (cb) => ipcRenderer.on('mini:opened', () => cb(true)),
     onClosed: (cb) => ipcRenderer.on('mini:closed', () => cb(false)),
   },
+  latestRelease: (tag) => ipcRenderer.invoke('app:latestRelease', tag),
   getSaved: () => ipcRenderer.invoke('saved:get'),
   setSaved: (list) => ipcRenderer.invoke('saved:set', list),
   getLyricsDir: () => ipcRenderer.invoke('lyrics:dir'),

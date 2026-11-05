@@ -14,6 +14,14 @@ class Bridge {
     // ----- quick, direct calls -----
     @JavascriptInterface fun settings(): String = Hub.store.settings()
     @JavascriptInterface fun mergeSettings(json: String) { Hub.store.merge(json) }
+    /** Opens a GitHub download link of this app (for the update button) in the browser. Anything else is ignored. */
+    @JavascriptInterface fun openUrl(url: String) {
+        if (!url.startsWith("https://github.com/NaqibC/lyric-player/")) return
+        val act = Hub.activity ?: return
+        act.runOnUiThread {
+            try { act.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))) } catch (_: Exception) { /* no browser on this device */ }
+        }
+    }
     @JavascriptInterface fun saved(): String = Hub.store.saved()
     @JavascriptInterface fun setSaved(json: String) { Hub.store.setSaved(json) }
     @JavascriptInterface fun lyricsDir(): String = Hub.store.lyricsDir.absolutePath

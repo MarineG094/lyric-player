@@ -2,6 +2,7 @@ name: Build APK
 on:
   push:
     branches: [main]
+    paths-ignore: ['**/*.md', 'docs/**']
   workflow_dispatch:
 
 permissions:
@@ -19,6 +20,10 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+      - name: Stamp this build (the apps compare it with the newest release)
+        run: |
+          printf 'window.__build = { sha: "%s", platform: "phone" };\n' "$GITHUB_SHA" > app/src/phone/assets/renderer/build-info.js
+          printf 'window.__build = { sha: "%s", platform: "tv" };\n' "$GITHUB_SHA" > app/src/tv/assets/renderer/build-info.js
       - name: Build debug APK
         run: gradle --no-daemon --stacktrace assemblePhoneDebug assembleTvDebug
       - name: Name the files
@@ -45,6 +50,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Stamp this build (the app compares it with the newest release)
+        shell: bash
+        run: printf 'window.__build = { sha: "%s", platform: "windows" };\n' "$GITHUB_SHA" > windows/renderer/build-info.js
       - name: Install, test, build the portable .exe
         working-directory: windows
         shell: bash

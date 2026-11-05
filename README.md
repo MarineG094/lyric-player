@@ -59,7 +59,7 @@
 
 ## 💻 Windows
 
-1. Open the [**windows-latest release**](https://github.com/NaqibC/lyric-player/releases/tag/windows-latest) (log in to GitHub, the repo is private).
+1. Open the [**windows-latest release**](https://github.com/NaqibC/lyric-player/releases/tag/windows-latest).
 2. Download **`Lyric-Player-1.0.0.exe`** and double-click it. It is portable: no install.
 3. Click **Change music**, then search or paste a link.
 
@@ -69,7 +69,7 @@
 
 ## 📲 Android
 
-1. Open the [**latest release**](https://github.com/NaqibC/lyric-player/releases/tag/latest) on your phone (log in to GitHub, the repo is private).
+1. Open the [**latest release**](https://github.com/NaqibC/lyric-player/releases/tag/latest) on your phone.
 2. Download **`LyricPlayer.apk`**.
 3. Open it and allow **Install unknown apps** for your browser when asked.
 4. Open **Lyric Player**, allow notifications, then search or paste a link.
@@ -121,6 +121,7 @@ A separate app, **`LyricPlayer-TV.apk`** (installs as *Lyric Player TV*, next to
 | **Cover filter** | Blurs explicit covers. |
 | **Album: right / left** | Swaps sides (landscape). |
 | **Diagnose** | Copies a troubleshooting report to paste into a message. |
+| **Update available** (top) | Shows up when a newer build is published. Tap it to download it, then install over the old one (phone/TV) or replace the old file (Windows). The app checks quietly a few seconds after it starts, at most every 6 hours. |
 
 Your phone's volume buttons control the volume.
 

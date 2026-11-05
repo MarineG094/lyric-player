@@ -137,6 +137,8 @@
   window.api = {
     getSettings: async () => loadSettings(),
     setSettings: async (patch) => handlers['settings:set'](null, patch),
+    latestRelease: (tag) => handlers['app:latestRelease'](null, tag),
+    openUrl: (url) => { try { N.openUrl(String(url)); } catch (_) { /* ignore */ } },
     getSaved: async () => { try { return JSON.parse(N.saved()) || []; } catch (_) { return []; } },
     setSaved: async (list) => { try { N.setSaved(JSON.stringify(list || [])); } catch (_) { /* ignore */ } return true; },
     getLyricsDir: async () => N.lyricsDir(),
