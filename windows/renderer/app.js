@@ -60,6 +60,8 @@
     chPlayNext: $('#chPlayNext'),
     chQueue: $('#chQueue'),
     chCancel: $('#chCancel'),
+    savedBox: $('#savedBox'),
+    savedList: $('#savedList'),
     importNote: $('#importNote'),
     importText: $('#importText'),
     importMissing: $('#importMissing'),
@@ -145,6 +147,7 @@
 
   function showOverlay(message) {
     els.overlay.hidden = false;
+    if (els.savedBox) renderSaved();
     els.btnCloseOverlay.hidden = !state.playlistId;
     if (message) {
       els.overlayMsg.textContent = message;
@@ -221,9 +224,58 @@
   els.importCancel.addEventListener('click', () => { P.importCancel(); els.importCancel.hidden = true; els.importText.textContent += ' Stopping…'; });
   els.importClose.addEventListener('click', () => { els.importNote.hidden = true; });
 
-  async function importAndQueue(ext, front, playFirst) {
+  /* Saved playlists: the matched songs are kept, so opening one again needs no new searching. */
+  async function loadSaved() { try { const st = await window.api.getSettings(); return Array.isArray(st && st.savedPlaylists) ? st.savedPlaylists : []; } catch (_) { return []; } }
+  async function storeSaved(list) { try { await window.api.setSettings({ savedPlaylists: list.slice(0, 30) }); } catch (_) { /* ignore */ } }
+
+  async function renderSaved() {
+    const list = await loadSaved();
+    els.savedBox.hidden = !list.length;
+    els.savedList.textContent = '';
+    list.forEach((pl) => {
+      const row = document.createElement('div');
+      row.className = 'saved-row';
+      const info = document.createElement('div');
+      info.className = 'saved-info';
+      const nm = document.createElement('strong'); nm.textContent = pl.name;
+      const sub = document.createElement('span'); sub.textContent = `${pl.items.length} songs` + (pl.missing && pl.missing.length ? `, ${pl.missing.length} not found` : '') + ` · ${L.SERVICE_NAME[pl.service] || ''}`;
+      info.append(nm, sub);
+      const mk = (label, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'ghost small'; b.textContent = label; b.addEventListener('click', fn); return b; };
+      row.append(info,
+        mk('Play', () => applyImported(pl, false, true)),
+        mk('+ Queue', () => applyImported(pl, false, false)),
+        mk('Update', () => importAndQueue({ service: pl.service, kind: pl.kind, url: pl.url }, false, false, true)),
+        mk('✕', async () => { await storeSaved((await loadSaved()).filter((x) => x.url !== pl.url)); renderSaved(); }));
+      els.savedList.appendChild(row);
+    });
+  }
+
+  // Puts the songs of an imported / saved playlist into the queue (or starts the first one), and says what was missing.
+  async function applyImported(pl, front, playFirst, fresh) {
+    const items = pl.items || [];
+    const missing = pl.missing || [];
+    let rest = items;
+    let first = null;
+    if (playFirst && !state.currentVideoId) { first = items[0]; rest = items.slice(1); }
+    else if (playFirst && items.length) { // something is playing: "Play" means play this next
+      front = true;
+    }
+    if (rest.length) { try { const out = await P.enqueueMany(rest, front); renderQueue(out.queue); } catch (_) { /* ignore */ } }
+    const bits = [`${fresh ? 'Found' : 'Saved playlist:'} ${items.length}${fresh ? ' of ' + (pl.total || items.length) : ''} songs${pl.name ? ' from "' + pl.name + '"' : ''}, ${first ? 'started' : playFirst ? 'playing next' : 'added to the queue'}.`];
+    if (missing.length) bits.push(`Not all songs were found. Missing ${missing.length}:`);
+    if (pl.cut) bits.push(`(${pl.cut} more songs in the playlist were left out; at most 200 are imported.)`);
+    if (pl.cancelled) bits.push('(Stopped early.)');
+    showImport(bits.join(' '), { running: false, missing });
+    if (first) loadSong(first.id, true);
+  }
+
+  async function importAndQueue(ext, front, playFirst, refresh) {
     hideChoice();
     els.urlInput.value = '';
+    if (!refresh) { // already imported before? use the saved songs, no searching
+      const hit = (await loadSaved()).find((x) => x.url === ext.url);
+      if (hit) { await applyImported(hit, front, playFirst); return true; }
+    }
     const svc = L.SERVICE_NAME[ext.service];
     showImport(`Reading the ${svc} ${ext.kind}…`, { running: true });
     clearInterval(importTimer);
@@ -239,17 +291,13 @@
     const items = (res && res.items) || [];
     if (res && res.error && !items.length) { showImport("Couldn't import that: " + res.error, { running: false }); return false; }
     if (!items.length) { showImport(`None of the ${res.total || ''} songs could be found on YouTube Music.`.replace('  ', ' '), { running: false, missing: res.missing }); return false; }
-    let rest = items;
-    let first = null;
-    if (playFirst && !state.currentVideoId) { first = items[0]; rest = items.slice(1); }
-    if (rest.length) { try { const out = await P.enqueueMany(rest, front); renderQueue(out.queue); } catch (_) { /* ignore */ } }
-    const missing = (res && res.missing) || [];
-    const bits = [`Found ${items.length} of ${res.total} songs${res.name ? ' from "' + res.name + '"' : ''} and ${first ? 'started them' : 'added them to the queue'}.`];
-    if (missing.length) bits.push(`Not all songs were found. Missing ${missing.length}:`);
-    if (res.cut) bits.push(`(${res.cut} more songs in the playlist were left out; at most 200 are imported.)`);
-    if (res.cancelled) bits.push('(Stopped early.)');
-    showImport(bits.join(' '), { running: false, missing });
-    if (first) loadSong(first.id, true);
+    const name = res.name || `${svc} ${ext.kind} (${new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' })})`;
+    const pl = { url: ext.url, service: ext.service, kind: ext.kind, name, items, missing: res.missing || [], total: res.total, cut: res.cut || 0, cancelled: !!res.cancelled, savedAt: Date.now() };
+    if (!res.cancelled) { // a half-finished import isn't saved: it would look complete next time
+      await storeSaved([pl, ...(await loadSaved()).filter((x) => x.url !== pl.url)]);
+      renderSaved();
+    }
+    await applyImported(pl, front, playFirst, true);
     return true;
   }
 

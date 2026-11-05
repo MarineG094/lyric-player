@@ -1,172 +1,112 @@
-<div align="center">
+# Lyric Player
 
-# 🎵 Lyric Player
+A Windows desktop player for your YouTube Music playlists, albums and single songs.
+Lyrics on the left, the album art on the right, controls along the bottom. The colors follow the album art of the current song.
+Songs play through the real YouTube Music website (kept out of sight inside the app), so songs that can't be played in other apps still work.
 
-**Your YouTube Music, with lyrics that scroll in time. Free, on Windows, Android, Android Auto and Google TV.**
+## 1. Run it (Windows)
 
-[![Build](https://github.com/NaqibC/lyric-player/actions/workflows/build.yml/badge.svg)](https://github.com/NaqibC/lyric-player/actions/workflows/build.yml)
-![Windows](https://img.shields.io/badge/Windows-portable%20.exe-0078d4)
-![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B-3ddc84)
-![Android Auto](https://img.shields.io/badge/Android%20Auto-media%20app-4285f4)
-![Google TV](https://img.shields.io/badge/Google%20TV-remote%20ready-ea4335)
+**Requirement:** Node.js LTS from https://nodejs.org (one-time install).
 
-[**⬇ Windows**](https://github.com/NaqibC/lyric-player/releases/tag/windows-latest) · [**⬇ Android + TV**](https://github.com/NaqibC/lyric-player/releases/tag/latest)
-
-</div>
-
----
-
-## ✨ What you get
-
-| | |
+| Step | What to do |
 |---|---|
-| 🎤 **Synced lyrics** | The line being sung grows and glows. Click or tap a line to jump there. |
-| 🖼 **Album art + colours** | The whole screen takes on the colours of the cover. |
-| 🔍 **Search or paste** | Search YouTube Music for songs, albums and playlists, or paste any link. |
-| 🔀 **Shuffle & repeat** | Real shuffle: no repeats until every song has played. |
-| 🌐 **Four lyric sources** | LRCLIB, then NetEase, then lyrics.ovh, plus Quran text for recitations. |
-| 🔤 **English letters** | Songs in Hindi, Arabic, Korean and more can show in Latin letters. |
-| ⏱ **Sync buttons** | Nudge timed lyrics earlier or later (−3s, −0.5s, +0.5s, +3s). Saved per song. |
-| 📖 **Quran recitations** | Spelling-tolerant surah detection (Arabic titles too). Arabic with an English translation that follows the reciter ayah by ayah, using Quran.com timing (estimated for reciters it doesn't cover). |
-| 🙈 **Cover filter** | Automatically hides explicit album covers (runs on the device). |
-| 🚫 **Ad block** | Skips and mutes YouTube Music ads. |
-| 🚗 **Android Auto** | Play, pause, next, previous, shuffle, repeat, and the current lyric line on the car screen. |
-| 📺 **Google TV** | A separate app made for the remote, with full screen. |
-| 🔒 **Background playback** | Keeps playing with the screen off, with lock-screen controls. |
-| ▶️ **Picks up where you left off** | Same song, same spot, same settings. |
+| 1 | Unzip the folder anywhere. |
+| 2 | Double-click **Start.bat**. The first run installs what it needs (a few minutes, needs internet). |
+| 3 | Drag a playlist, album or song link onto the window, or paste it and press **Load**. |
 
----
+The app remembers what you were playing (playlist, album or song), the exact spot, and your shuffle, repeat and layout settings, and picks up from there next time.
 
-## ✅ What you need
+## 2. Getting your playlist in
 
-| | Minimum | Recommended | Notes |
-|---|---|---|---|
-| 💻 **Windows** | Windows 10 (64-bit), 4 GB RAM, about 200 MB free space | Windows 10/11, 8 GB RAM | Portable `.exe`, no install. |
-| 📲 **Android phone** | Android 8.0 (API 26) or newer, 3 GB RAM | Android 10+, 4 GB RAM | Keep **Android System WebView** (or Chrome) up to date from the Play Store. |
-| 📺 **Google TV / Android TV** | Android 8.0 or newer, 1.5 GB RAM, 1080p | A 4K stick or box with 2 GB+ RAM | Tested on the **onn. Full HD (1080p) streaming device** (1.5 GB RAM): it plays properly, with some lag. |
-| 🌐 **All** | An internet connection | | Playback, search and lyrics all come from the internet. |
-
-> **On low-end hardware it may be slow and laggy, but it still plays properly.** The app runs YouTube Music's own web page behind the lyrics screen, which is heavy for small chips. On a weak device expect a pause of a few seconds when a song changes or you skip, and the lyrics may appear a moment after the song starts. Once a song is playing it is smooth, and the music itself is not affected.
->
-> **If it feels slow:** restart the device, close other apps, keep Android System WebView updated, and on TV switch off apps you don't use (Settings → Apps). On TV the **Cover filter** starts **off** to save memory; you can turn it on with the button.
-
----
-
-## 💻 Windows
-
-1. Open the [**windows-latest release**](https://github.com/NaqibC/lyric-player/releases/tag/windows-latest) (log in to GitHub, the repo is private).
-2. Download **`Lyric-Player-1.0.0.exe`** and double-click it. It is portable: no install.
-3. Click **Change music**, then search or paste a link.
-
-**Shortcuts:** `Space` play/pause · `F11` full screen · `Ctrl+→ / ←` next / previous.
-
----
-
-## 📲 Android
-
-1. Open the [**latest release**](https://github.com/NaqibC/lyric-player/releases/tag/latest) on your phone (log in to GitHub, the repo is private).
-2. Download **`LyricPlayer.apk`**.
-3. Open it and allow **Install unknown apps** for your browser when asked.
-4. Open **Lyric Player**, allow notifications, then search or paste a link.
-
-The **Full screen** button hides the system bars and the top bar. Tap the screen to bring the controls back; Back leaves full screen.
-
-> Updating? Install the new APK over the old one. Your settings and saved lyrics stay.
-
----
-
-## 🚗 Android Auto
-
-Lyric Player is a sideloaded app, so Android Auto hides it until you allow that:
-
-1. Open **Android Auto settings** on your phone.
-2. Tap the **Version** row about **10 times** to turn on developer mode.
-3. Open the ⋮ menu → **Developer settings** → turn on **Unknown sources**.
-4. Connect to the car. Lyric Player shows in the media apps.
-
-**On the car screen:** the line being sung takes the big title slot; the song and artist move to the line beneath. Shuffle and repeat are extra buttons on the now-playing screen (some cars tuck them in an overflow menu).
-
-> Lyrics appear only for songs with **timed** lyrics. A full scrolling lyrics page on the car display would need a separate car-app screen and Google's approval, so it isn't included.
-
----
-
-## 📺 Google TV / Android TV
-
-A separate app, **`LyricPlayer-TV.apk`** (installs as *Lyric Player TV*, next to the phone app). It is tuned for small TV sticks: on each song change it works one step at a time (cover, then lyrics, then the song plays), so there is a short pause before the music starts.
-
-- **Remote:** arrows move between buttons, OK presses, left/right on the progress bar skips 10 s, and the media keys (play/pause, next, previous, rewind, fast-forward) work.
-- **No typing:** the "choose music" card shows an address like `http://192.168.1.20:8080`. Open it on your phone (same Wi-Fi), paste a link and press **Play**.
-- **Install:** put the APK on a USB stick or use the **Downloader** app with a link to it, then allow unknown apps. Or use `adb install LyricPlayer-TV.apk`.
-
----
-
-## 🧭 Using it
-
-| Do this | To get this |
+| Method | How |
 |---|---|
-| Search or paste a link in **Change music** | Plays a song, album or playlist. Playlists must be **Public** or **Unlisted**. |
-| Paste a **Spotify, Deezer or SoundCloud** playlist link in **Change music** | Each song is matched on YouTube Music and queued. You're told how many were found and which weren't. Playlists must be public; SoundCloud is best-effort. |
-| Tap **YouTube Music** | Shows the real site (accept cookies, sign in). Tap **Back to lyrics** to return. |
-| **Add lyrics** | Paste your own. Plain text works; `[00:12.50] line` timestamps make it scroll. |
-| **Auto lyrics** | Looks up lyrics online when a song has none. |
-| **English letters** | Shows lyrics in other scripts in Latin letters. |
-| **Sync** (under the lyrics) | Shifts timed lyrics earlier or later if they drift. |
-| **Ad block** | On by default. |
-| **Cover filter** | Blurs explicit covers. |
-| **Album: right / left** | Swaps sides (landscape). |
-| **Diagnose** | Copies a troubleshooting report to paste into a message. |
+| Drag and drop | In YouTube Music (browser), drag the playlist's link or card onto the app window. |
+| Paste | In YouTube Music: playlist, album or song > **Share** > **Copy link**, then paste in the box. A single song plays on its own and stops at the end (Repeat plays it again). |
+| Accepted links | Anything containing `list=...` (music.youtube.com or youtube.com). A bare ID like `PLxxxxxxxx` also works. |
 
-Your phone's volume buttons control the volume.
+**No sign-in needed** for Public or Unlisted playlists. A Private playlist needs you to sign in: click **YouTube Music** at the top, sign in there once, and the app remembers it. (Google sometimes refuses sign-ins inside apps. If so, set the playlist to Unlisted instead: YouTube Music > your playlist > **Edit** > **Privacy** > **Unlisted**.)
 
----
+## 3. Lyrics
 
-## 🛠 How it works
+**Automatic:** when a song has no lyrics file yet, the app looks it up on LRCLIB (a free public lyrics database). If LRCLIB has nothing or can't be reached, it tries two backups: NetEase Cloud Music (for timed lyrics) and lyrics.ovh (plain text). It saves what it finds into your lyrics folder, so each song is only looked up once. Timed lyrics scroll along with the song, and the line being sung grows and glows, then shrinks back when the next line starts. If a song has no lyrics, the album slides to the middle of the window and slides back to the normal layout when the next song has lyrics. The **Add lyrics** button under the song title is there for that case. Turn this off with the **Auto lyrics** button at the top.
 
-Two web views sit in one app. The **player screen** (lyrics, controls, shuffle logic) is the same code as the Windows version (`windows/`). Behind it, a hidden **YouTube Music page** does the actual playback. A small Kotlin layer keeps the music alive in the background and presents it to Android Auto as a media session.
+**Quran recitations:** if a song's title looks like a recitation (for example "Surah Al-Kahf", "Surah Yaseen (1-10)", "Ayatul Kursi", or a surah name by a well-known reciter), the app shows the Arabic text with an English translation from Al-Quran Cloud (free). It's plain text, not timed, so you scroll it yourself. A title range like (1-10) shows just those ayahs. Normal songs and nasheeds are never treated as recitations. If a title isn't recognised, use **Add lyrics**.
 
-```
- Player screen  ──reads/controls──▶  YouTube Music page (plays the audio)
-       │
-       └──▶ Kotlin service ──▶ notification · lock screen · Android Auto
-```
+Only the song title, artist and length are sent to these services. If a song isn't in their database you'll see "Couldn't find lyrics online", and you can paste your own.
 
-The player code is copied from the Windows app (the `windows/` folder) by `tools/assemble.py`, so both apps behave the same.
+**Your own files:** lyrics are plain files in your **lyrics folder** (button, top right). Default location:
+`Documents\Lyric Player\lyrics`
 
----
-
-## 🏗 Build it yourself
-
-Every push to `main` builds everything on GitHub Actions: the Android and TV APKs go to the **latest** release, and the Windows `.exe` goes to **windows-latest**. No local setup needed. To rebuild the web assets from the desktop app:
-
-```bash
-python3 tools/assemble.py windows
-```
-
-The Windows app lives in `windows/` (Electron). Run it with `npm install` then `npm start` inside that folder, or package it with `Build-EXE.bat`. Tests: `npm test`.
-
----
-
-## 🩺 Troubleshooting
-
-| Problem | Try this |
+| Item | Detail |
 |---|---|
-| Stuck on *"Taking longer than expected"* | Tap **YouTube Music**, accept any cookie or consent page, go back and reload the link. |
-| Playlist won't load | It must be **Public** or **Unlisted**, not Private. |
-| No lyrics found | Tap **Add lyrics** and paste them. They're saved for next time. |
-| Not showing in Android Auto | Turn on developer mode and **Unknown sources** (see above). |
-| Music stops in the background | Set the app to **Unrestricted** battery use in Android settings. |
-| Something else | Tap **Diagnose** and paste the result. |
+| Naming | The file name should match the song title, e.g. `Midnight Run.txt` or `Midnight Run.lrc`. |
+| Matching | Case, punctuation, "(Official Audio)" and a leading track number like `02 - ` are ignored. |
+| Plain text | `.txt`, shows the lyrics and you scroll. |
+| Timed | `.lrc`, lines light up and scroll in time. Click any line to jump the song to it. |
+| Your own lyrics win | A file you add or edit is always used before any online lookup. Fetched files can be edited with **Edit lyrics**. |
+| Add manually | Click **Add lyrics** while a song plays, paste, **Save**. The file is created for you. Include timestamps and it saves as `.lrc`. |
+| Format example | See `lyrics-examples\Sample Song.lrc`. |
 
----
+Timestamp format: `[minutes:seconds.hundredths] line`, for example `[01:12.50] your line here`.
 
-## 🔐 Privacy
+## 3b. Hiding explicit album covers
 
-No account, no tracking, nothing sent to us. Lyric lookups send only the **song title, artist and length** to the lyric services (LRCLIB, NetEase, lyrics.ovh). Settings and lyrics stay on your device. Quran lookups send only the surah number and reciter to Al-Quran Cloud and Quran.com.
+| Item | Detail |
+|---|---|
+| Automatic | Each cover is checked on your computer by a small image model (NSFWJS, free, offline). Covers it judges explicit are blurred and labeled "Cover hidden". Other covers show as normal. |
+| Your choice wins | Hover over the album and click **Hide cover** or **Show cover**. The choice is remembered for that album. |
+| Turn it off | **Cover filter: on/off** at the top. Your Hide choices still apply. |
+| First cover | The model loads (about 8 MB) the first time a cover is checked, so the first cover stays blurred for a second or two. |
+| Limits | No automatic check is perfect. Artistic nudity can be missed, and some harmless covers can be blurred. That is what the Hide and Show buttons are for. |
 
----
+## 4. Controls
 
-<div align="center">
+| Control | Action |
+|---|---|
+| Shuffle | The app reads the playlist's song list and picks a random song each time, without repeating until every song has played. Back returns to the song that played before. Shuffle can take a second or two to switch songs. |
+| Previous | Restarts the song if you're past 3 seconds, otherwise goes to the previous song. |
+| Play / Pause | Also the **Space** bar. |
+| Next | Also **Ctrl + Right**. Previous is **Ctrl + Left**. |
+| Repeat | Cycles: off > repeat playlist > repeat this song (badge shows 1). Both Shuffle and Repeat are handled by this app, not by YouTube Music's own buttons, and are remembered next time. |
+| Fullscreen | The corner button on the bottom left, or **F11**. Hides the top buttons; the controls fade out when the mouse is still. **Esc** exits. |
+| YouTube Music | Shows the YouTube Music page (browse, sign in). Click again to go back to lyrics. |
 
-Made for personal use. Not affiliated with YouTube or Google.
+## 5. Make a standalone .exe (optional)
 
-</div>
+Double-click **Build-EXE.bat**. When it finishes, the portable `Lyric-Player-1.0.0.exe` is in the `dist` folder. You can copy that single file to any Windows PC.
+
+## 6. Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| Nothing happens after pasting | Click **YouTube Music** at the top. If the page is asking you to accept cookies or confirm something, do that, then click **Back to lyrics**. |
+| "Taking longer than expected" | Same as above. The page is probably waiting for you. |
+| Ads still play | Ad block is on by default (button at the top) but YouTube changes its ads often. The app mutes and fast-forwards any ad that gets through. If one plays in full, tell me and I'll update the rules. |
+| Back, Next, Shuffle or Repeat misbehave | Press **Ctrl + Shift + D**. It copies a short troubleshooting report to the clipboard. Paste it into a message to me. |
+| Song title or art doesn't update | YouTube may have changed its page. Press **F12** and tell me what you see. |
+| "Couldn't find lyrics online" | The song isn't in LRCLIB or either backup, or its title is unusual. Use **Add lyrics** to paste them. |
+| "Couldn't reach the lyrics service" | Check your internet connection. It retries the next time the song plays. |
+| Wrong lyrics were saved | Open the lyrics folder, delete that file (or fix it with **Edit lyrics**). |
+| Lyrics don't appear for a file you added | Check the file name matches the song title, and the file is `.txt` or `.lrc` in the lyrics folder. Click the window to refresh the list. |
+| Covers don't blur | If the model can't start, covers are shown normally and a message says so. Use **Hide cover** on any cover you want hidden. |
+| Port in use | The app uses a local-only port (47831) and picks another automatically if it's busy. |
+
+## 7. How it works and its limits
+
+- The app opens music.youtube.com in a hidden view and reads the song title, artist, art and time from it. The buttons at the bottom press the same controls on that page.
+- Your playlist, listening and (if you sign in) account are handled by YouTube Music itself, not by this app.
+- If YouTube changes its page layout, reading the song info or pressing a control can break until the app is updated.
+- Lyrics come from your own files first, then from LRCLIB, then the two backups (NetEase, lyrics.ovh). The online lookup sends only the song title, artist and length.
+- Ad block works three ways: it blocks known ad servers, removes ad data from YouTube's responses before the player sees it, and mutes and skips any ad that still starts. YouTube's terms discourage ad blocking, and it can stop working whenever YouTube changes its page. YouTube Music Premium is the supported way to avoid ads.
+- Timed lyrics depend on volunteers who contribute to LRCLIB. A few songs only have plain lyrics, and some have none.
+
+## 8. Developer notes
+
+| Command | Purpose |
+|---|---|
+| `npm install` | Install dependencies |
+| `npm start` | Run the app |
+| `npm test` | Run the lyrics parser tests |
+| `npm run dist` | Build the portable .exe into `dist\` |
+
+Files: `main.js` (window, local server, settings, lyrics files), `preload.js` (safe bridge), `renderer/` (UI: `index.html`, `style.css`, `app.js`, `lyrics.js`).
