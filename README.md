@@ -14,6 +14,8 @@
 
 [**⬇ Windows**](https://github.com/NaqibC/lyric-player/releases/tag/windows-latest) · [**⬇ Android + TV**](https://github.com/NaqibC/lyric-player/releases/tag/latest)
 
+<img src="docs/windows-main.jpg" width="900" alt="Lyric Player on Windows: album cover on the left, synced lyrics on the right, controls along the bottom">
+
 </div>
 
 ---
@@ -64,6 +66,10 @@
 3. Click **Change music**, then search or paste a link.
 
 **Shortcuts:** `Space` play/pause · `F11` full screen · `Ctrl+→ / ←` next / previous.
+
+**Mini player:** click **Mini player** at the top for a small always-on-top pill with the cover, song, one rolling lyric line, and controls that appear when you hover.
+
+<img src="docs/windows-mini.png" width="444" alt="The Lyric Player mini player on Windows">
 
 ---
 
