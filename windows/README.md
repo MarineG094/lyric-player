@@ -1,3 +1,5 @@
+<p align="center"><img src="icon.png" width="96" alt="Lyric Player logo"></p>
+
 # Lyric Player
 
 A Windows desktop player for your YouTube Music playlists, albums and single songs.

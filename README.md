@@ -1,6 +1,8 @@
 <div align="center">
 
-# 🎵 Lyric Player
+<img src="docs/logo.png" width="112" alt="Lyric Player logo">
+
+# Lyric Player
 
 **Your YouTube Music, with lyrics that scroll in time. Free, on Windows, Android, Android Auto and Google TV.**
 
