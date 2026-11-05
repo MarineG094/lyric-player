@@ -82,7 +82,9 @@
 
 The **Full screen** button hides the system bars and the top bar. Tap the screen to bring the controls back; Back leaves full screen.
 
-> Updating? Install the new APK over the old one. Your settings and saved lyrics stay.
+<img src="docs/phone-main.jpg" width="300" alt="Lyric Player on an Android phone: cover, synced lyrics, sync buttons and controls">
+
+> Updating? When a newer build is published, an **Update available** button appears at the top (or use **Menu > Check for updates**). It downloads the new APK; open it to install over the old one. Your settings and saved lyrics stay.
 
 ---
 
