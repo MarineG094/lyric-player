@@ -467,3 +467,10 @@ button.icon.play svg { width: 26px; height: 26px; }
 
 .wrong { align-self: center; margin: 6px auto 0; opacity: .75; }
 .wrong:hover { opacity: 1; }
+
+.import-note { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 60; width: min(560px, calc(100vw - 24px)); max-height: 60vh; overflow: auto; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: color-mix(in srgb, var(--bg, #111) 92%, var(--text) 8%); backdrop-filter: blur(12px); font-size: 14px; }
+.import-note[hidden], .import-note [hidden] { display: none; }
+.import-note p { margin: 0 0 8px; }
+.import-note ul { margin: 0 0 8px; padding-left: 20px; font-size: 13px; opacity: .85; }
+.import-btns { display: flex; gap: 8px; justify-content: flex-end; }
+.import-btns .ghost { margin-top: 0; }

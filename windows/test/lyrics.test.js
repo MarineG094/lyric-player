@@ -228,3 +228,46 @@ test('matchFile does not match a title hidden inside another word (Vore vs Carni
   assert.equal(L.matchFile('Carnivore', 'Starset', files).file, 'Carnivore.lrc');
   assert.equal(L.matchFile('Midnight Run Remix', '', [{ file: 'Midnight Run.lrc', name: 'Midnight Run' }]).file, 'Midnight Run.lrc');
 });
+
+/* ---------- playlist import ---------- */
+test('extractExternal recognises Spotify / Deezer / SoundCloud links', () => {
+  const L = require('../renderer/lyrics.js');
+  assert.deepEqual(L.extractExternal('https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M?si=abc').id, '37i9dQZF1DXcBWIGoYBM5M');
+  assert.equal(L.extractExternal('https://open.spotify.com/intl-de/album/4aawyAB9vmqN3uQ7FjRGTy').kind, 'album');
+  assert.equal(L.extractExternal('https://www.deezer.com/en/playlist/908622995').service, 'deezer');
+  assert.equal(L.extractExternal('https://soundcloud.com/some-user/sets/my-mix').id, 'some-user/my-mix');
+  assert.equal(L.extractExternal('https://music.youtube.com/playlist?list=PLabc123456'), null);
+});
+test('parseSpotifyEmbed reads the song list', () => {
+  const L = require('../renderer/lyrics.js');
+  const data = { props: { pageProps: { state: { data: { entity: { name: 'Mix', trackList: [
+    { title: 'Carnivore', subtitle: 'Starset', duration: 215000 },
+    { title: 'Carnivore', subtitle: 'Starset', duration: 215000 },
+    { title: 'Numb', subtitle: 'Linkin Park', duration: 185000 } ] } } } } } };
+  const html = `<html><script id="__NEXT_DATA__" type="application/json">${JSON.stringify(data)}</script></html>`;
+  const r = L.parseSpotifyEmbed(html);
+  assert.equal(r.name, 'Mix');
+  assert.equal(r.tracks.length, 2); // duplicate dropped
+  assert.equal(r.tracks[1].artist, 'Linkin Park');
+  assert.equal(L.parseSpotifyEmbed('<html></html>'), null);
+});
+test('parseDeezer and parseSoundcloud', () => {
+  const L = require('../renderer/lyrics.js');
+  const d = L.parseDeezer({ data: [{ title: 'Numb', artist: { name: 'Linkin Park' }, duration: 185 }] });
+  assert.equal(d.tracks[0].dur, 185);
+  const sc = `<script>window.__sc_hydration = ${JSON.stringify([{ hydratable: 'playlist', data: { title: 'Set', tracks: [{ title: 'A', user: { username: 'u' }, duration: 1000 }, { id: 5 }] } }])};</script>`;
+  const r = L.parseSoundcloud(sc);
+  assert.equal(r.tracks.length, 2);
+  assert.equal(r.tracks[1].title, ''); // bare id: no title known
+});
+test('matchTrack picks the right song and rejects wrong ones', () => {
+  const L = require('../renderer/lyrics.js');
+  const res = [
+    { kind: 'song', id: 'aaaaaaaaaaa', title: 'Carnivore (Live)', sub: 'Starset • Vessels • 4:10', type: 'Song' },
+    { kind: 'song', id: 'bbbbbbbbbbb', title: 'Carnivore', sub: 'Starset • Divisions • 3:35', type: 'Song' },
+    { kind: 'song', id: 'ccccccccccc', title: 'Carnivore', sub: 'Some Cover Band • 3:30', type: 'Video' },
+  ];
+  assert.equal(L.matchTrack({ title: 'Carnivore', artist: 'Starset', dur: 215 }, res).id, 'bbbbbbbbbbb');
+  assert.equal(L.matchTrack({ title: 'Totally Other Song', artist: 'Nobody', dur: 100 }, res), null);
+  assert.equal(L.matchTrack({ title: 'Numb - Remastered 2009', artist: 'Linkin Park' }, [{ kind: 'song', id: 'ddddddddddd', title: 'Numb', sub: 'Linkin Park • Meteora • 3:05', type: 'Song' }]).id, 'ddddddddddd');
+});

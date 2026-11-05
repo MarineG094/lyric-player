@@ -507,7 +507,7 @@ const searchScript = (query) => `(async () => {
   } catch (e) { return JSON.stringify({ error: String(e && e.message || e) }); }
 })()`;
 
-ipcMain.handle('player:search', async (_e, query) => {
+async function searchYt(query) {
   const q = String(query || '').trim().slice(0, 120);
   if (!ytView || q.length < 2) return { results: [] };
   const wc = ytView.webContents;
@@ -522,7 +522,8 @@ ipcMain.handle('player:search', async (_e, query) => {
     await wait(700);
   }
   return { results: [], error: last };
-});
+}
+ipcMain.handle('player:search', (_e, query) => searchYt(query));
 
 ipcMain.handle('player:enqueue', (_e, item, front) => {
   const id = String(item && item.id || '');
@@ -624,6 +625,79 @@ ipcMain.handle('player:resolveItems', async (_e, src) => {
   } catch (err) { return { items: [], error: err && err.message ? err.message : 'failed' }; }
   return { items: [], error: 'YouTube Music is still loading' };
 });
+/* ---------- playlists from Spotify / Deezer / SoundCloud ----------
+   The song list is read from the service's public page, then every song is looked up on YouTube Music
+   (one search at a time, with a pause between them) and the best match is kept. Nothing runs unless
+   a link from one of those services is pasted. */
+const importState = { running: false, cancel: false, phase: '', done: 0, total: 0, found: 0, service: '', name: '' };
+
+async function textGet(url) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36', 'Accept-Language': 'en' },
+      signal: controller.signal,
+    });
+    if (!res.ok) throw new Error('answered HTTP ' + res.status);
+    return await res.text();
+  } finally { clearTimeout(timer); }
+}
+
+async function readExternalList(ext) {
+  const svc = Lyrics.SERVICE_NAME[ext.service] || 'that service';
+  let body;
+  try { body = await textGet(ext.url); } catch (err) {
+    throw new Error(err && err.name === 'AbortError' ? `${svc} took too long to answer` : `couldn't open the ${svc} link (${err && err.message ? err.message : 'network error'})`);
+  }
+  let r = null;
+  if (ext.service === 'spotify') r = Lyrics.parseSpotifyEmbed(body);
+  else if (ext.service === 'deezer') { try { r = Lyrics.parseDeezer(JSON.parse(body)); } catch (_) { r = null; } }
+  else r = Lyrics.parseSoundcloud(body);
+  if (!r || !r.tracks.length) throw new Error(`couldn't read any songs from that ${svc} link. Make sure the playlist is public`);
+  return r;
+}
+
+ipcMain.handle('player:importPlaylist', async (_e, ext) => {
+  if (importState.running) return { items: [], missing: [], total: 0, error: 'An import is already running' };
+  const e = ext && Lyrics.extractExternal(ext.url || '') ;
+  if (!e) return { items: [], missing: [], total: 0, error: "That isn't a Spotify, Deezer or SoundCloud playlist link" };
+  Object.assign(importState, { running: true, cancel: false, phase: 'reading', done: 0, total: 0, found: 0, service: e.service, name: '' });
+  const items = [];
+  const missing = [];
+  let list;
+  try {
+    list = await readExternalList(e);
+    importState.name = list.name || '';
+    const tracks = list.tracks.slice(0, 200);
+    importState.total = tracks.length;
+    importState.phase = 'matching';
+    const gap = Number(globalThis.__lpImportGap) > 0 ? Number(globalThis.__lpImportGap) : 350;
+    for (const t of tracks) {
+      if (importState.cancel) break;
+      const label = t.title ? (t.artist ? `${t.artist} – ${t.title}` : t.title) : '(a song without a readable name)';
+      let hit = null;
+      if (t.title) {
+        const res = await searchYt(`${t.artist} ${t.title}`.trim());
+        hit = Lyrics.matchTrack(t, res.results || []);
+        if (res.error && !(res.results || []).length && !items.length && importState.done === 0) throw new Error(res.error);
+      }
+      if (hit && !items.some((x) => x.id === hit.id)) {
+        const it = { id: hit.id, title: hit.title, sub: hit.sub, thumb: hit.thumb || '' };
+        items.push(it);
+        ctl.meta.set(it.id, it);
+        importState.found += 1;
+      } else if (!hit) missing.push(label);
+      importState.done += 1;
+      await wait(gap);
+    }
+    return { items, missing, total: tracks.length, name: list.name || '', cut: Math.max(0, list.tracks.length - tracks.length), cancelled: importState.cancel };
+  } catch (err) {
+    return { items, missing, total: importState.total, error: err && err.message ? err.message : 'failed' };
+  } finally { importState.running = false; importState.phase = 'done'; }
+});
+ipcMain.handle('player:importStatus', () => ({ ...importState }));
+ipcMain.handle('player:importCancel', () => { importState.cancel = true; return true; });
 ipcMain.handle('player:dequeue', (_e, index) => {
   const i = Number(index);
   if (Number.isInteger(i) && i >= 0 && i < ctl.queue.length) { ctl.queue.splice(i, 1); if (i < ctl.nextN) ctl.nextN -= 1; }

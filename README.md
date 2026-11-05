@@ -105,6 +105,7 @@ A separate app, **`LyricPlayer-TV.apk`** (installs as *Lyric Player TV*, next to
 | Do this | To get this |
 |---|---|
 | Search or paste a link in **Change music** | Plays a song, album or playlist. Playlists must be **Public** or **Unlisted**. |
+| Paste a **Spotify, Deezer or SoundCloud** playlist link in **Change music** | Each song is matched on YouTube Music and queued. You're told how many were found and which weren't. Playlists must be public; SoundCloud is best-effort. |
 | Tap **YouTube Music** | Shows the real site (accept cookies, sign in). Tap **Back to lyrics** to return. |
 | **Add lyrics** | Paste your own. Plain text works; `[00:12.50] line` timestamps make it scroll. |
 | **Auto lyrics** | Looks up lyrics online when a song has none. |

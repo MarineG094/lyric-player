@@ -43,7 +43,7 @@
   const fetch = async (url, opts) => {
     const r = await native('http.get', { url, headers: (opts && opts.headers) || {} });
     if (!r || r.error) throw new Error((r && r.error) || 'network error');
-    return { status: r.status, ok: r.status >= 200 && r.status < 300, json: async () => JSON.parse(r.body) };
+    return { status: r.status, ok: r.status >= 200 && r.status < 300, json: async () => JSON.parse(r.body), text: async () => String(r.body) };
   };
 
   let fsOn = false;
@@ -189,6 +189,9 @@
       queue: () => handlers['player:queue'](),
       enqueueMany: (items, front) => handlers['player:enqueueMany'](null, items, front),
       resolveItems: (src) => handlers['player:resolveItems'](null, src),
+      importPlaylist: (ext) => handlers['player:importPlaylist'](null, ext),
+      importStatus: () => handlers['player:importStatus'](),
+      importCancel: () => handlers['player:importCancel'](),
       dequeue: (index) => handlers['player:dequeue'](null, index),
       clearQueue: () => handlers['player:clearQueue'](),
       // The phone's own volume buttons set the loudness; the page's volume stays at full.

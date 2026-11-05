@@ -192,5 +192,118 @@
     return null;
   }
 
-  return { parse, activeIndex, hasTimestamps, matchFile, normalize, sanitizeFileName, formatTime, extractPlaylistId, extractSource, queryFor };
+
+  /* ---------- playlists from other services (Spotify, Deezer, SoundCloud) ---------- */
+
+  /* { service, kind: 'playlist' | 'album', id, url } for a Spotify / Deezer / SoundCloud link, else null. */
+  function extractExternal(text) {
+    const s = String(text || '').trim();
+    let m = s.match(/open\.spotify\.com\/(?:intl-[a-z]+\/|embed\/)*(playlist|album)\/([A-Za-z0-9]{10,30})/i);
+    if (m) return { service: 'spotify', kind: m[1].toLowerCase(), id: m[2], url: `https://open.spotify.com/embed/${m[1].toLowerCase()}/${m[2]}` };
+    m = s.match(/deezer\.com\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?(playlist|album)\/(\d{3,20})/i);
+    if (m) return { service: 'deezer', kind: m[1].toLowerCase(), id: m[2], url: `https://api.deezer.com/${m[1].toLowerCase()}/${m[2]}/tracks?limit=200` };
+    m = s.match(/^https?:\/\/(?:www\.|m\.)?soundcloud\.com\/([A-Za-z0-9_-]+)\/sets\/([A-Za-z0-9_-]+)/i);
+    if (m) return { service: 'soundcloud', kind: 'playlist', id: `${m[1]}/${m[2]}`, url: `https://soundcloud.com/${m[1]}/sets/${m[2]}` };
+    return null;
+  }
+
+  const SERVICE_NAME = { spotify: 'Spotify', deezer: 'Deezer', soundcloud: 'SoundCloud' };
+
+  function cleanList(arr) {
+    const out = [];
+    const seen = new Set();
+    for (const t of arr) {
+      const title = String(t.title || '').replace(/\s+/g, ' ').trim();
+      if (!title) { out.push({ title: '', artist: '', dur: 0 }); continue; }
+      const artist = String(t.artist || '').replace(/\s+/g, ' ').trim();
+      const key = normalize(title) + '|' + normalize(artist);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ title, artist, dur: Number(t.dur) > 0 ? Math.round(Number(t.dur)) : 0 });
+    }
+    return out;
+  }
+
+  /* Spotify's public embed page carries the song list as JSON ("__NEXT_DATA__"). → { name, tracks } or null. */
+  function parseSpotifyEmbed(html) {
+    const m = String(html || '').match(/<script[^>]*id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
+    if (!m) return null;
+    let data;
+    try { data = JSON.parse(m[1]); } catch (_) { return null; }
+    let entity = null;
+    const find = (o, depth) => {
+      if (!o || typeof o !== 'object' || entity || depth > 12) return;
+      if (Array.isArray(o.trackList)) { entity = o; return; }
+      for (const k in o) find(o[k], depth + 1);
+    };
+    find(data, 0);
+    if (!entity) return null;
+    const tracks = entity.trackList.map((t) => ({
+      title: t.title || t.name || '',
+      artist: String(t.subtitle || t.artists || '').replace(/ /g, ' '),
+      dur: t.duration ? Number(t.duration) / 1000 : 0,
+    }));
+    return { name: String(entity.name || entity.title || ''), tracks: cleanList(tracks) };
+  }
+
+  /* Deezer's public API: /playlist/ID/tracks or /album/ID/tracks. */
+  function parseDeezer(json) {
+    if (!json || !Array.isArray(json.data)) return null;
+    return { name: '', tracks: cleanList(json.data.map((t) => ({ title: t.title, artist: t.artist && t.artist.name, dur: t.duration }))) };
+  }
+
+  /* SoundCloud pages embed their data as window.__sc_hydration. Only the first tracks carry titles; the rest are bare ids. */
+  function parseSoundcloud(html) {
+    const m = String(html || '').match(/window\.__sc_hydration\s*=\s*(\[[\s\S]*?\]);\s*<\/script>/);
+    if (!m) return null;
+    let arr;
+    try { arr = JSON.parse(m[1]); } catch (_) { return null; }
+    const pl = (Array.isArray(arr) ? arr : []).find((x) => x && x.hydratable === 'playlist');
+    if (!pl || !pl.data || !Array.isArray(pl.data.tracks)) return null;
+    const tracks = pl.data.tracks.map((t) => ({
+      title: t.title || '',
+      artist: (t.publisher_metadata && t.publisher_metadata.artist) || (t.user && t.user.username) || '',
+      dur: t.duration ? t.duration / 1000 : 0,
+    }));
+    return { name: String(pl.data.title || ''), tracks: cleanList(tracks) };
+  }
+
+  const wordsOf = (s) => normalize(s).split(' ').filter(Boolean);
+  const NOISE = /\b(live|cover|karaoke|instrumental|sped|slowed|reverb|remix|acoustic|8d|nightcore|reaction|tutorial)\b/;
+
+  function durFromText(sub) {
+    const m = String(sub || '').match(/(\d{1,2}):(\d{2})(?!\d)/);
+    return m ? Number(m[1]) * 60 + Number(m[2]) : 0;
+  }
+
+  /* Picks the YouTube Music result that is the wanted song, or null. results: [{ kind, id, title, sub, type }] */
+  function matchTrack(want, results) {
+    const wTitle = String(want.title || '').replace(/\s*-\s*(remaster(ed)?|single|radio|mono|stereo|album)\b.*$/i, '').replace(/\s*(feat\.?|ft\.?|with)\s.*$/i, '');
+    const wt = wordsOf(wTitle);
+    if (!wt.length) return null;
+    const wa = wordsOf(String(want.artist || '').split(/[,&]| feat\.?| x /i)[0]);
+    const wantNoisy = NOISE.test(normalize(want.title));
+    let best = null;
+    for (const r of results || []) {
+      if (!r || r.kind !== 'song') continue;
+      const rt = wordsOf(r.title);
+      if (!rt.length) continue;
+      const rset = new Set(rt);
+      const inter = wt.filter((w) => rset.has(w)).length;
+      const t = inter / Math.max(wt.length, rt.length, 1);
+      if (t < 0.5) continue;
+      const sub = normalize(r.sub);
+      const a = wa.length ? wa.filter((w) => sub.split(' ').includes(w)).length / wa.length : 0;
+      let score = 0.55 * t + 0.3 * a;
+      const d = durFromText(r.sub);
+      if (want.dur && d) { const diff = Math.abs(d - want.dur); score += diff <= 5 ? 0.1 : diff <= 15 ? 0.04 : -0.1; }
+      if (/^song$/i.test(r.type || '')) score += 0.05;
+      if (!wantNoisy && NOISE.test(normalize(r.title))) score -= 0.3;
+      if (a === 0 && t < 0.9) continue; // wrong artist and not clearly the same title
+      if (score >= 0.5 && (!best || score > best.score)) best = { score, r };
+    }
+    return best ? best.r : null;
+  }
+
+  return { extractExternal, SERVICE_NAME, parseSpotifyEmbed, parseDeezer, parseSoundcloud, matchTrack, parse, activeIndex, hasTimestamps, matchFile, normalize, sanitizeFileName, formatTime, extractPlaylistId, extractSource, queryFor };
 });

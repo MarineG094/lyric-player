@@ -141,12 +141,20 @@
           </div>
         </div>
         <p id="overlayMsg" class="msg" hidden></p>
-        <p class="fine">Playlists must be <strong>Public</strong> or <strong>Unlisted</strong>. Private ones can't be played here. Albums and single songs work with their normal share links.</p>
+        <p class="fine">Playlists must be <strong>Public</strong> or <strong>Unlisted</strong>. Private ones can't be played here. Albums and single songs work with their normal share links. Public Spotify, Deezer and SoundCloud playlist links work too: the songs are matched on YouTube Music, and any that aren't found are listed.</p>
         <button id="btnCloseOverlay" class="ghost small" type="button" hidden>Close</button>
       </div>
     </div>
 
     <div id="dragVeil" class="drag-veil" hidden><div>Drop to play this</div></div>
+    <div id="importNote" class="import-note" role="status" hidden>
+      <p id="importText"></p>
+      <ul id="importMissing" hidden></ul>
+      <div class="import-btns">
+        <button id="importCancel" class="ghost small" type="button" hidden>Cancel</button>
+        <button id="importClose" class="ghost small" type="button" hidden>Close</button>
+      </div>
+    </div>
     <div id="toast" class="toast" role="status" hidden></div>
   </div>
 

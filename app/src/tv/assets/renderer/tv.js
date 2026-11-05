@@ -2,6 +2,7 @@
 (() => {
   const N = window.LPNative;
   window.__lpTv = true;
+  globalThis.__lpImportGap = 900; // slower pace for playlist imports so the stick keeps up
 
   /* ---- full screen: the menu and the player controls go away, lyrics and cover fill the TV ---- */
   let fsCb = null;

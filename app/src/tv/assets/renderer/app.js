@@ -60,6 +60,11 @@
     chPlayNext: $('#chPlayNext'),
     chQueue: $('#chQueue'),
     chCancel: $('#chCancel'),
+    importNote: $('#importNote'),
+    importText: $('#importText'),
+    importMissing: $('#importMissing'),
+    importCancel: $('#importCancel'),
+    importClose: $('#importClose'),
     queueBox: $('#queueBox'),
     queueList: $('#queueList'),
     btnClearQueue: $('#btnClearQueue'),
@@ -178,8 +183,17 @@
   async function refreshQueue() { try { renderQueue(await P.queue()); } catch (_) { /* ignore */ } }
   els.btnClearQueue.addEventListener('click', async () => renderQueue(await P.clearQueue()));
 
+  // A YouTube Music link, or a Spotify / Deezer / SoundCloud playlist link (those get matched song by song).
+  function linkOf(text) {
+    const y = L.extractSource(text);
+    if (y) return y;
+    const ext = L.extractExternal(text);
+    return ext ? { kind: 'import', ext } : null;
+  }
+
   // Adds whatever a link or search result points at (one song, or all songs of an album / playlist) to the queue.
   async function queueSource(src, title, front) {
+    if (src.kind === 'import') return importAndQueue(src.ext, front, false);
     let res;
     try { res = await P.resolveItems(src); } catch (_) { res = { items: [], error: 'failed' }; }
     const items = (res && res.items) || [];
@@ -189,6 +203,53 @@
     renderQueue(out.queue);
     const what = items.length === 1 ? (items[0].title || title || 'the song') : `${out.added} songs`;
     toast((front ? 'Playing next: ' : 'Added to the queue: ') + what + (out.skipped ? ` (${out.skipped} didn't fit, the queue holds 200)` : ''));
+    return true;
+  }
+
+
+  /* ---------- importing a Spotify / Deezer / SoundCloud playlist ---------- */
+  let importTimer = null;
+  function showImport(text, opts) {
+    els.importNote.hidden = false;
+    els.importText.textContent = text;
+    els.importCancel.hidden = !(opts && opts.running);
+    els.importClose.hidden = !!(opts && opts.running);
+    els.importMissing.hidden = !(opts && opts.missing && opts.missing.length);
+    els.importMissing.textContent = '';
+    if (opts && opts.missing) for (const m of opts.missing) { const li = document.createElement('li'); li.textContent = m; els.importMissing.appendChild(li); }
+  }
+  els.importCancel.addEventListener('click', () => { P.importCancel(); els.importCancel.hidden = true; els.importText.textContent += ' Stopping…'; });
+  els.importClose.addEventListener('click', () => { els.importNote.hidden = true; });
+
+  async function importAndQueue(ext, front, playFirst) {
+    hideChoice();
+    els.urlInput.value = '';
+    const svc = L.SERVICE_NAME[ext.service];
+    showImport(`Reading the ${svc} ${ext.kind}…`, { running: true });
+    clearInterval(importTimer);
+    importTimer = setInterval(async () => {
+      try {
+        const st = await P.importStatus();
+        if (st && st.running && st.phase === 'matching') showImport(`Finding songs on YouTube Music: ${st.done} of ${st.total} (${st.found} found)…`, { running: true });
+      } catch (_) { /* ignore */ }
+    }, 800);
+    let res;
+    try { res = await P.importPlaylist({ url: ext.url || '' }); } catch (_) { res = { items: [], missing: [], total: 0, error: 'failed' }; }
+    clearInterval(importTimer);
+    const items = (res && res.items) || [];
+    if (res && res.error && !items.length) { showImport("Couldn't import that: " + res.error, { running: false }); return false; }
+    if (!items.length) { showImport(`None of the ${res.total || ''} songs could be found on YouTube Music.`.replace('  ', ' '), { running: false, missing: res.missing }); return false; }
+    let rest = items;
+    let first = null;
+    if (playFirst && !state.currentVideoId) { first = items[0]; rest = items.slice(1); }
+    if (rest.length) { try { const out = await P.enqueueMany(rest, front); renderQueue(out.queue); } catch (_) { /* ignore */ } }
+    const missing = (res && res.missing) || [];
+    const bits = [`Found ${items.length} of ${res.total} songs${res.name ? ' from "' + res.name + '"' : ''} and ${first ? 'started them' : 'added them to the queue'}.`];
+    if (missing.length) bits.push(`Not all songs were found. Missing ${missing.length}:`);
+    if (res.cut) bits.push(`(${res.cut} more songs in the playlist were left out; at most 200 are imported.)`);
+    if (res.cancelled) bits.push('(Stopped early.)');
+    showImport(bits.join(' '), { running: false, missing });
+    if (first) loadSong(first.id, true);
     return true;
   }
 
@@ -239,7 +300,7 @@
     const mine = ++searchSeq;
     if (q.length < 2) { renderResults([]); searchNote(''); return; }
     // A pasted link in the search box just works too.
-    if (L.extractSource(q)) { submitUrl(q); els.searchInput.value = ''; return; }
+    if (linkOf(q)) { submitUrl(q); els.searchInput.value = ''; return; }
     searchNote('Searching…');
     let res;
     try { res = await P.search(q); } catch (_) { res = { results: [], error: 'search failed' }; }
@@ -261,15 +322,17 @@
   function offerLink(src) {
     if (!state.currentVideoId) { els.urlInput.value = ''; loadSource(src); return; }
     pendingSrc = src;
-    els.choiceText.textContent = `That link is ${KIND_WORD[src.kind] || 'music'}. What should happen?`;
+    els.choiceText.textContent = src.kind === 'import'
+      ? `That's a ${L.SERVICE_NAME[src.ext.service]} ${src.ext.kind}. The songs are matched on YouTube Music one by one, so it may take a minute. What should happen?`
+      : `That link is ${KIND_WORD[src.kind] || 'music'}. What should happen?`;
     els.linkChoice.hidden = false;
     els.overlayMsg.hidden = true;
     setTimeout(() => els.chPlayNow.focus(), 0);
   }
   function submitUrl(text) {
-    const src = L.extractSource(text);
+    const src = linkOf(text);
     if (!src) {
-      showOverlay("That doesn't look like a YouTube Music link. Paste a playlist, album or song link.");
+      showOverlay("That doesn't look like a music link. Paste a YouTube Music, Spotify, Deezer or SoundCloud playlist, album or song link.");
       return;
     }
     offerLink(src);
@@ -281,7 +344,8 @@
 
   // Playlist, album or single song: whatever the link points at.
   function loadSource(src) {
-    if (src.kind === 'song') loadSong(src.id, true);
+    if (src.kind === 'import') importAndQueue(src.ext, false, true);
+    else if (src.kind === 'song') loadSong(src.id, true);
     else if (src.kind === 'album') loadAlbum(src.id);
     else loadPlaylist(src.id, true, src.video);
   }
@@ -1165,7 +1229,7 @@
     dragDepth = 0;
     els.dragVeil.hidden = true;
     for (const text of textFromDrop(event.dataTransfer)) {
-      const src = L.extractSource(text);
+      const src = linkOf(text);
       if (src) { showOverlay(); return offerLink(src); }
     }
     toast("Couldn't find a playlist, album or song link in what you dropped. Try pasting the link instead.");
@@ -1181,7 +1245,7 @@
     if (event.key === 'Enter') submitUrl(els.urlInput.value);
   });
   els.urlInput.addEventListener('paste', () => setTimeout(() => {
-    if (L.extractSource(els.urlInput.value)) submitUrl(els.urlInput.value);
+    if (linkOf(els.urlInput.value)) submitUrl(els.urlInput.value);
   }, 0));
   els.btnPlaylist.addEventListener('click', () => showOverlay());
   els.btnCloseOverlay.addEventListener('click', hideOverlay);
