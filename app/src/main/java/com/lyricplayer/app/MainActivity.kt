@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.view.Gravity
 import android.view.KeyEvent
 import android.view.View
+import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.TextView
 import android.view.WindowManager
@@ -22,6 +23,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 class MainActivity : Activity() {
     private lateinit var root: FrameLayout
     private lateinit var back: TextView
+    private lateinit var ytLayer: FrameLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,7 +32,7 @@ class MainActivity : Activity() {
         setContentView(root)
 
         // Layers, bottom to top: the YouTube Music page (always "visible" so it keeps playing), then the player screen.
-        val ytLayer = FrameLayout(this)
+        ytLayer = FrameLayout(this)
         val uiLayer = FrameLayout(this)
         root.addView(ytLayer, FrameLayout.LayoutParams(-1, -1))
         root.addView(uiLayer, FrameLayout.LayoutParams(-1, -1))
@@ -68,6 +70,14 @@ class MainActivity : Activity() {
     fun showBrowse(on: Boolean) {
         Hub.ui?.visibility = if (on) View.INVISIBLE else View.VISIBLE
         back.visibility = if (on) View.VISIBLE else View.GONE
+        // On a TV stick the hidden YouTube Music page is kept small (it sits under the player screen anyway), so the
+        // stick doesn't draw a full-size copy of the website all the time. Full size only while you are looking at it.
+        if (resources.getBoolean(R.bool.is_tv)) {
+            val lp = ytLayer.layoutParams
+            lp.width = if (on) ViewGroup.LayoutParams.MATCH_PARENT else 480
+            lp.height = if (on) ViewGroup.LayoutParams.MATCH_PARENT else 270
+            ytLayer.layoutParams = lp
+        }
     }
 
     /** Full screen on the phone: hides the status and navigation bars (a swipe from the edge shows them briefly) and keeps the screen on. */
