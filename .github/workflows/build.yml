@@ -52,7 +52,8 @@ jobs:
           node-version: '22'
       - name: Stamp this build (the app compares it with the newest release)
         shell: bash
-        run: printf 'window.__build = { sha: "%s", platform: "windows" };\n' "$GITHUB_SHA" > windows/renderer/build-info.js
+        run: |
+          printf 'window.__build = { sha: "%s", platform: "windows" };\n' "$GITHUB_SHA" > windows/renderer/build-info.js
       - name: Install, test, build the portable .exe
         working-directory: windows
         shell: bash
