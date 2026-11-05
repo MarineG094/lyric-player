@@ -1468,7 +1468,7 @@ const lrclibRequest = (pathAndQuery) => jsonGet('LRCLIB', LRCLIB + pathAndQuery)
 
 // The newest published build of this app (for the update button). Only the two release tags are ever asked for.
 ipcMain.handle('app:latestRelease', async (_e, tag) => {
-  if (tag !== 'latest' && tag !== 'windows-latest') return null;
+  if (tag !== 'latest' && tag !== 'windows-latest' && tag !== 'linux-latest') return null;
   try {
     const r = await jsonGet('GitHub', `https://api.github.com/repos/NaqibC/lyric-player/releases/tags/${tag}`, { Accept: 'application/vnd.github+json' });
     if (!r) return null;

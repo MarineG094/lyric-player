@@ -74,3 +74,35 @@ jobs:
         run: |
           gh release delete windows-latest --yes --cleanup-tag || true
           gh release create windows-latest windows/dist/Lyric-Player-*.exe --title "Lyric Player for Windows (latest)" --notes "Lyric-Player-1.0.0.exe is the portable Windows app: download it and double-click. No install needed." --target "$GITHUB_SHA"
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Stamp this build (the app compares it with the newest release)
+        shell: bash
+        run: |
+          printf 'window.__build = { sha: "%s", platform: "linux" };\n' "$GITHUB_SHA" > windows/renderer/build-info.js
+      - name: Install, test, build the .deb and AppImage
+        working-directory: windows
+        shell: bash
+        run: |
+          npm install
+          npm test
+          npm run dist:linux
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LyricPlayer-linux
+          path: |
+            windows/dist/Lyric-Player-*.deb
+            windows/dist/Lyric-Player-*.AppImage
+      - name: Publish as the "linux-latest" release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete linux-latest --yes --cleanup-tag || true
+          gh release create linux-latest windows/dist/Lyric-Player-*.deb windows/dist/Lyric-Player-*.AppImage --title "Lyric Player for Linux (latest, experimental)" --notes "Lyric-Player-1.0.0.deb is for Linux Mint, Ubuntu and Debian: sudo apt install ./Lyric-Player-1.0.0.deb. The AppImage runs on most distributions (chmod +x, then run; on newer Ubuntu/Mint it may need the --no-sandbox option). Experimental." --target "$GITHUB_SHA"

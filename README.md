@@ -8,11 +8,12 @@
 
 [![Build](https://github.com/NaqibC/lyric-player/actions/workflows/build.yml/badge.svg)](https://github.com/NaqibC/lyric-player/actions/workflows/build.yml)
 ![Windows](https://img.shields.io/badge/Windows-portable%20.exe-0078d4)
+![Linux](https://img.shields.io/badge/Linux-.deb%20%2F%20AppImage%20(experimental)-fcc624)
 ![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B-3ddc84)
 ![Android Auto](https://img.shields.io/badge/Android%20Auto-media%20app-4285f4)
 ![Google TV](https://img.shields.io/badge/Google%20TV-remote%20ready-ea4335)
 
-[**⬇ Windows**](https://github.com/NaqibC/lyric-player/releases/tag/windows-latest) · [**⬇ Android + TV**](https://github.com/NaqibC/lyric-player/releases/tag/latest)
+[**⬇ Windows**](https://github.com/NaqibC/lyric-player/releases/tag/windows-latest) · [**⬇ Linux**](https://github.com/NaqibC/lyric-player/releases/tag/linux-latest) · [**⬇ Android + TV**](https://github.com/NaqibC/lyric-player/releases/tag/latest)
 
 <img src="docs/windows-main.jpg" width="900" alt="Lyric Player on Windows: album cover on the left, synced lyrics on the right, controls along the bottom">
 
@@ -70,6 +71,20 @@
 **Mini player:** click **Mini player** at the top for a small always-on-top pill with the cover, song, one rolling lyric line, and controls that appear when you hover.
 
 <img src="docs/windows-mini.png" width="444" alt="The Lyric Player mini player on Windows">
+
+---
+
+## 🐧 Linux (experimental)
+
+Made and tested on **Linux Mint**; other Debian/Ubuntu-based systems should work the same.
+
+1. Open the [**linux-latest release**](https://github.com/NaqibC/lyric-player/releases/tag/linux-latest).
+2. Download **`Lyric-Player-1.0.0.deb`** and install it: double-click it, or run `sudo apt install ./Lyric-Player-1.0.0.deb`.
+3. Open **Lyric Player** from the menu, click **Change music**, then search or paste a link.
+
+**Other distributions:** download the **`.AppImage`**, make it executable (`chmod +x Lyric-Player-1.0.0.AppImage`) and run it. If it won't start on a newer Ubuntu/Mint, run it with `--no-sandbox`, or use the `.deb` instead. Older AppImages may also need `sudo apt install libfuse2`.
+
+Everything in the Windows version is included, including the mini player. It needs a desktop with window transparency (a compositor) to look right. The **Update available** button downloads a new `.deb` for you to install.
 
 ---
 

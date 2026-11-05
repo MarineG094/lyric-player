@@ -261,7 +261,7 @@
     openLink(updateInfo.url);
     toast(window.__lpTv
       ? `New version: open github.com/${REPO}/releases/tag/latest and download LyricPlayer-TV.apk (the Downloader app works well).`
-      : window.api.mini ? 'Downloading the new version. Close this app and run the new file instead.' : 'Downloading the new version. Open the file when it finishes to update.', 9000);
+      : window.__build && window.__build.platform === 'linux' ? 'Downloading the new version (.deb). Open it with the software installer, or run: sudo apt install ./Lyric-Player-1.0.0.deb' : window.api.mini ? 'Downloading the new version. Close this app and run the new file instead.' : 'Downloading the new version. Open the file when it finishes to update.', 9000);
   });
   // manual = from the Menu: always asks GitHub and always says what it found.
   async function checkForUpdate(manual) {
@@ -273,8 +273,8 @@
     if (st.updateInfo && st.updateInfo.sha && st.updateInfo.sha !== B.sha && st.updateInfo.platform === B.platform) showUpdate(st.updateInfo); // found earlier, not installed yet
     const now = Date.now();
     if (!manual && st.updateCheckedAt && now - st.updateCheckedAt < 30 * 60 * 1000 && now >= st.updateCheckedAt) return;
-    const tag = B.platform === 'windows' ? 'windows-latest' : 'latest';
-    const want = B.platform === 'windows' ? /\.exe$/i : B.platform === 'tv' ? /^LyricPlayer-TV\.apk$/i : /^LyricPlayer\.apk$/i;
+    const tag = B.platform === 'windows' ? 'windows-latest' : B.platform === 'linux' ? 'linux-latest' : 'latest';
+    const want = B.platform === 'windows' ? /\.exe$/i : B.platform === 'linux' ? /\.deb$/i : B.platform === 'tv' ? /^LyricPlayer-TV\.apk$/i : /^LyricPlayer\.apk$/i;
     try {
       const rel = await window.api.latestRelease(tag);
       if (!rel) return say("Couldn't reach GitHub right now (or a new build is being published). Try again in a minute.");

@@ -2,7 +2,7 @@
 
 # Lyric Player
 
-A Windows desktop player for your YouTube Music playlists, albums and single songs.
+A Windows (and experimental Linux) desktop player for your YouTube Music playlists, albums and single songs.
 Lyrics on the left, the album art on the right, controls along the bottom. The colors follow the album art of the current song.
 Songs play through the real YouTube Music website (kept out of sight inside the app), so songs that can't be played in other apps still work.
 

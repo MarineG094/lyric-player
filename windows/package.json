@@ -7,7 +7,8 @@
   "scripts": {
     "start": "electron .",
     "test": "node --test test/lyrics.test.js test/quran.test.js test/romanize.test.js test/probe.test.js",
-    "dist": "electron-builder --win portable"
+    "dist": "electron-builder --win portable",
+    "dist:linux": "electron-builder --linux"
   },
   "devDependencies": {
     "electron": "^45.2.1",
@@ -33,6 +34,22 @@
     },
     "portable": {
       "artifactName": "Lyric-Player-${version}.exe"
+    },
+    "linux": {
+      "target": [
+        "deb",
+        "AppImage"
+      ],
+      "icon": "icon.png",
+      "category": "AudioVideo",
+      "maintainer": "NaqibC <200555248+NaqibC@users.noreply.github.com>",
+      "synopsis": "YouTube Music with synced lyrics",
+      "artifactName": "Lyric-Player-${version}.${ext}"
     }
-  }
+  },
+  "author": {
+    "name": "NaqibC",
+    "email": "200555248+NaqibC@users.noreply.github.com"
+  },
+  "homepage": "https://github.com/NaqibC/lyric-player"
 }
