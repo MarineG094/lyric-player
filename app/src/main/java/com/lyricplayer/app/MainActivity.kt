@@ -80,6 +80,13 @@ class MainActivity : Activity() {
         }
     }
 
+    /** TV: while a song is playing the screen stays on, so the stick doesn't fall asleep (and switch the TV off) mid-song. */
+    fun keepAwake(playing: Boolean) {
+        if (!resources.getBoolean(R.bool.is_tv)) return
+        if (playing) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        else window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+
     /** Full screen on the phone: hides the status and navigation bars (a swipe from the edge shows them briefly) and keeps the screen on. */
     fun setFullscreen(on: Boolean) {
         val c = WindowInsetsControllerCompat(window, window.decorView)

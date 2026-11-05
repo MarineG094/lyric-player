@@ -136,7 +136,7 @@ object Hub {
             (o.optDouble("dur", 0.0) * 1000).toLong(), (o.optDouble("cur", 0.0) * 1000).toLong(), o.optBoolean("playing"), o.optString("cover", "s"),
         )
         last = np
-        main.post { service?.update(np) }
+        main.post { service?.update(np); activity?.keepAwake(np.playing) }
     }
 
     /** Runs a script in the YouTube Music page and reports its result (waiting for promises). Always answers, even if the page is mid-navigation. */
