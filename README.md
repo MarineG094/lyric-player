@@ -33,6 +33,7 @@
 | 🪟 **Mini player (Windows)** | A small always-on-top pill with the cover, song and one rolling lyric line. |
 | 🔀 **Shuffle & repeat** | Real shuffle: no repeats until every song has played. |
 | 🌐 **Four lyric sources** | LRCLIB, then NetEase, then lyrics.ovh, plus Quran text for recitations. |
+| 🖥️ **Startup and tray (Windows, Linux)** | Optional **Launch at startup** and **Keep in tray** switches in the Menu. Both are off until you turn them on. |
 | 🔤 **English letters** | Songs in Hindi, Arabic, Korean and more can show in Latin letters. |
 | ⏱ **Sync buttons** | Nudge timed lyrics earlier or later (−3s, −0.5s, +0.5s, +3s). Saved per song. |
 | 📖 **Quran recitations** | Spelling-tolerant surah detection (Arabic titles too). Arabic with an English translation that follows the reciter ayah by ayah, using Quran.com timing (estimated for reciters it doesn't cover). |

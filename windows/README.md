@@ -75,6 +75,7 @@ Timestamp format: `[minutes:seconds.hundredths] line`, for example `[01:12.50] y
 | Fullscreen | The corner button on the bottom left, or **F11**. Hides the top buttons; the controls fade out when the mouse is still. **Esc** exits. |
 | YouTube Music | Shows the YouTube Music page (browse, sign in). Click again to go back to lyrics. |
 | Update available | A button that appears at the top when a newer version has been published. Click it to download the new .exe, then close the app and run the new file instead. The app checks quietly after it starts, at most every 6 hours. |
+| Launch at startup / Keep in tray | Two switches in the Menu, both off by default. **Launch at startup** starts the app when you sign in (to the tray if Keep in tray is on). **Keep in tray** makes the close button hide the window while music keeps playing; use the tray icon (Show, Play/Pause, Next, Previous, Quit) to control or exit. |
 | Mini player | A small always-on-top pill with the cover, song, artist and one rolling lyric line, in the cover's colours. Drag it anywhere (it remembers where). Hover for previous / play / next; otherwise it shows what plays next. Double-click it, or press the expand button, to bring back the full window. |
 
 ## 5. Make a standalone .exe (optional)

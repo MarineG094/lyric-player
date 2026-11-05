@@ -82,6 +82,8 @@
     btnFolder: $('#btnFolder'),
     btnAuto: $('#btnAuto'),
     btnRoman: $('#btnRoman'),
+    btnStartup: $('#btnStartup'),
+    btnTray: $('#btnTray'),
     btnSide: $('#btnSide'),
     dragVeil: $('#dragVeil'),
     toast: $('#toast'),
@@ -239,7 +241,7 @@
   els.btnMenu.addEventListener('click', () => { if (els.menuPanel.hidden) { openMenu(); const f = [...els.menuPanel.querySelectorAll('button')].find((b) => b.offsetParent !== null); if (f && window.__lpTv) f.focus(); } else closeMenu(); });
   els.menuPanel.addEventListener('click', (e) => { // choices that open something close the menu; the on/off switches stay so several can be flipped
     const b = e.target.closest('button');
-    if (b && !/^(btnAds|btnCover|btnRoman|btnAuto|btnSide)$/.test(b.id)) closeMenu();
+    if (b && !/^(btnAds|btnCover|btnRoman|btnAuto|btnSide|btnStartup|btnTray)$/.test(b.id)) closeMenu();
   });
   document.addEventListener('pointerdown', (e) => { if (!els.menuPanel.hidden && !e.target.closest('.menu-wrap')) closeMenu(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && closeMenu(true)) e.stopPropagation(); }, true);
@@ -1434,6 +1436,29 @@
     toast(state.romanize ? 'Lyrics in other scripts now show in English letters.' : 'Lyrics show in their original script.');
   });
 
+  /* Windows / Linux only: launch at startup and keep running in the tray. Both start off. */
+  const DESKTOP = !!(window.api && window.api.desktop);
+  function applyDesktopButtons() {
+    els.btnStartup.textContent = state.launchAtLogin ? 'Launch at startup: on' : 'Launch at startup: off';
+    els.btnTray.textContent = state.keepInTray ? 'Keep in tray: on' : 'Keep in tray: off';
+  }
+  if (DESKTOP) {
+    els.btnStartup.hidden = false;
+    els.btnTray.hidden = false;
+    els.btnStartup.addEventListener('click', () => {
+      state.launchAtLogin = !state.launchAtLogin;
+      applyDesktopButtons();
+      window.api.setSettings({ launchAtLogin: state.launchAtLogin });
+      toast(state.launchAtLogin ? 'Lyric Player will start when you sign in.' : 'Lyric Player will no longer start at sign-in.');
+    });
+    els.btnTray.addEventListener('click', () => {
+      state.keepInTray = !state.keepInTray;
+      applyDesktopButtons();
+      window.api.setSettings({ keepInTray: state.keepInTray });
+      toast(state.keepInTray ? 'Closing the window now keeps Lyric Player running in the tray. Use the tray icon to quit.' : 'Closing the window quits Lyric Player.');
+    });
+  }
+
   function applyAuto() {
     els.btnAuto.textContent = state.autoFetch ? 'Auto lyrics: on' : 'Auto lyrics: off';
   }
@@ -1469,6 +1494,9 @@
     applyAuto();
     state.romanize = settings.romanize !== false;
     applyRoman();
+    state.launchAtLogin = settings.launchAtLogin === true;
+    state.keepInTray = settings.keepInTray === true;
+    applyDesktopButtons();
     // Shuffle, repeat and the album side come back the way they were left.
     state.shuffle = settings.shuffle === true;
     state.repeat = ['off', 'all', 'one'].includes(settings.repeat) ? settings.repeat : 'off';

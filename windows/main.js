@@ -1,4 +1,4 @@
-const { app, BrowserWindow, WebContentsView, ipcMain, dialog, shell, session, net, nativeImage, clipboard, screen } = require('electron');
+const { app, BrowserWindow, WebContentsView, ipcMain, dialog, shell, session, net, nativeImage, clipboard, screen, Tray, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
@@ -93,8 +93,9 @@ function startServer() {
 
 /* ---------- window ---------- */
 
-function createWindow() {
+function createWindow(startHidden) {
   win = new BrowserWindow({
+    show: !startHidden,
     width: 1180,
     height: 720,
     minWidth: 920,
@@ -141,6 +142,14 @@ function createWindow() {
     }
   });
   win.on('resize', layoutYt);
+  // With "keep in tray" on, the close button only hides the window; the tray menu's Quit really exits.
+  win.on('close', (event) => {
+    if (quitting || !tray || loadSettings().keepInTray !== true) return;
+    event.preventDefault();
+    if (win.isFullScreen()) win.setFullScreen(false);
+    win.hide();
+  });
+  win.on('session-end', () => { quitting = true; });
   win.on('enter-full-screen', () => win && win.webContents.send('app:fullscreen', true));
   win.on('leave-full-screen', () => win && win.webContents.send('app:fullscreen', false));
   win.on('closed', () => {
@@ -1337,7 +1346,7 @@ function openMini() {
     if (miniDrag) { clearInterval(miniDrag.t); miniDrag = null; }
     miniWin = null;
     stateHook = null;
-    if (win && !win.isDestroyed()) { win.webContents.setBackgroundThrottling(true); if (win.isMinimized()) win.restore(); win.focus(); win.webContents.send('mini:closed'); }
+    if (win && !win.isDestroyed()) { win.webContents.setBackgroundThrottling(true); if (!win.isVisible()) win.show(); if (win.isMinimized()) win.restore(); win.focus(); win.webContents.send('mini:closed'); }
   });
   win.webContents.setBackgroundThrottling(false); // the main window keeps working while it is out of sight
   win.minimize();
@@ -1394,6 +1403,8 @@ ipcMain.handle('settings:get', () => loadSettings());
 ipcMain.handle('settings:set', (_event, patch) => {
   const next = { ...loadSettings(), ...(patch || {}) };
   saveSettings(next);
+  if (patch && 'launchAtLogin' in patch) applyLaunchAtLogin(next.launchAtLogin === true);
+  if (patch && 'keepInTray' in patch) applyTray(next.keepInTray === true);
   return next;
 });
 
@@ -1669,16 +1680,96 @@ ipcMain.handle('lyrics:chooseFolder', async () => {
 
 ipcMain.handle('lyrics:openFolder', () => shell.openPath(lyricsDir()));
 
+/* ---------- desktop extras: launch at startup and keep running in the tray (Windows and Linux) ----------
+   Both are off until switched on in the Menu. */
+let tray = null;
+let quitting = false;
+const startedAtLogin = process.argv.includes('--at-login');
+
+// What the system should launch: the portable .exe / AppImage itself, the installed binary, or electron + this folder in development.
+function launchTarget() {
+  const exe = process.env.PORTABLE_EXECUTABLE_FILE || process.env.APPIMAGE || process.execPath;
+  const args = !app.isPackaged && !process.env.PORTABLE_EXECUTABLE_FILE && !process.env.APPIMAGE ? [app.getAppPath()] : [];
+  return { exe, args: [...args, '--at-login'] };
+}
+
+const autostartFile = () => path.join(process.env.XDG_CONFIG_HOME || path.join(app.getPath('home'), '.config'), 'autostart', 'lyric-player.desktop');
+
+function applyLaunchAtLogin(on) {
+  try {
+    const t = launchTarget();
+    if (process.platform === 'win32') {
+      app.setLoginItemSettings({ openAtLogin: on, path: t.exe, args: t.args });
+    } else if (process.platform === 'linux') {
+      if (on) {
+        const q = (x) => '"' + x.replace(/(["\\$`])/g, '\\$1') + '"';
+        fs.mkdirSync(path.dirname(autostartFile()), { recursive: true });
+        fs.writeFileSync(autostartFile(), [
+          '[Desktop Entry]', 'Type=Application', 'Name=Lyric Player', 'Comment=YouTube Music with synced lyrics',
+          'Exec=' + [t.exe, ...t.args].map(q).join(' '), 'Terminal=false', 'X-GNOME-Autostart-enabled=true', '',
+        ].join('\n'));
+      } else {
+        fs.rmSync(autostartFile(), { force: true });
+      }
+    }
+  } catch (_) { /* a failed startup entry should never break the app */ }
+}
+
+function showMain() {
+  if (!win || win.isDestroyed()) { createWindow(false); return; }
+  if (win.isMinimized()) win.restore();
+  win.show();
+  win.focus();
+}
+
+function applyTray(on) {
+  if (!on) {
+    if (tray) { tray.destroy(); tray = null; }
+    return;
+  }
+  if (tray) return;
+  try {
+    const size = process.platform === 'win32' ? 32 : 22;
+    tray = new Tray(nativeImage.createFromPath(path.join(__dirname, 'icon.png')).resize({ width: size, height: size }));
+    tray.setToolTip('Lyric Player');
+    tray.setContextMenu(Menu.buildFromTemplate([
+      { label: 'Show Lyric Player', click: showMain },
+      { type: 'separator' },
+      { label: 'Play / Pause', click: () => playerCmd('toggle') },
+      { label: 'Next', click: () => playerCmd('next') },
+      { label: 'Previous', click: () => playerCmd('prev') },
+      { type: 'separator' },
+      { label: 'Quit', click: () => { quitting = true; app.quit(); } },
+    ]));
+    tray.on('click', showMain);
+  } catch (_) {
+    tray = null; // no tray on this desktop: closing the window then quits as usual
+  }
+}
+
+app.on('before-quit', () => { quitting = true; });
+
 /* ---------- lifecycle ---------- */
 
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+  app.quit(); // already running (possibly only in the tray): the first copy comes forward instead
+} else {
+  app.on('second-instance', () => showMain());
+}
+
 app.whenReady().then(async () => {
-  adBlock = loadSettings().adBlock !== false;
+  if (!gotLock) return;
+  const st = loadSettings();
+  adBlock = st.adBlock !== false;
   // Present as a normal Chromium browser (drops the "Electron/x.y.z" token).
   const ses = session.defaultSession;
   ses.setUserAgent(ses.getUserAgent().replace(/\s*Electron\/\S+/i, ''));
 
   port = await startServer();
-  createWindow();
+  if (st.keepInTray === true) applyTray(true);
+  if (st.launchAtLogin === true) applyLaunchAtLogin(true); // keeps the entry pointing at wherever the app is now
+  createWindow(startedAtLogin && !!tray); // started by the system at login: stay in the tray if there is one
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
