@@ -37,6 +37,21 @@
 
 ---
 
+## ✅ What you need
+
+| | Minimum | Recommended | Notes |
+|---|---|---|---|
+| 💻 **Windows** | Windows 10 (64-bit), 4 GB RAM, about 200 MB free space | Windows 10/11, 8 GB RAM | Portable `.exe`, no install. |
+| 📲 **Android phone** | Android 8.0 (API 26) or newer, 3 GB RAM | Android 10+, 4 GB RAM | Keep **Android System WebView** (or Chrome) up to date from the Play Store. |
+| 📺 **Google TV / Android TV** | Android 8.0 or newer, 1.5 GB RAM, 1080p | A 4K stick or box with 2 GB+ RAM | Tested on the **onn. Full HD (1080p) streaming device** (1.5 GB RAM): it plays properly, with some lag. |
+| 🌐 **All** | An internet connection | | Playback, search and lyrics all come from the internet. |
+
+> **On low-end hardware it may be slow and laggy, but it still plays properly.** The app runs YouTube Music's own web page behind the lyrics screen, which is heavy for small chips. On a weak device expect a pause of a few seconds when a song changes or you skip, and the lyrics may appear a moment after the song starts. Once a song is playing it is smooth, and the music itself is not affected.
+>
+> **If it feels slow:** restart the device, close other apps, keep Android System WebView updated, and on TV switch off apps you don't use (Settings → Apps). On TV the **Cover filter** starts **off** to save memory; you can turn it on with the button.
+
+---
+
 ## 💻 Windows
 
 1. Open the [**windows-latest release**](https://github.com/NaqibC/lyric-player/releases/tag/windows-latest) (log in to GitHub, the repo is private).
@@ -77,7 +92,7 @@ Lyric Player is a sideloaded app, so Android Auto hides it until you allow that:
 
 ## 📺 Google TV / Android TV
 
-A separate app, **`LyricPlayer-TV.apk`** (installs as *Lyric Player TV*, next to the phone app).
+A separate app, **`LyricPlayer-TV.apk`** (installs as *Lyric Player TV*, next to the phone app). It is tuned for small TV sticks: on each song change it works one step at a time (cover, then lyrics, then the song plays), so there is a short pause before the music starts.
 
 - **Remote:** arrows move between buttons, OK presses, left/right on the progress bar skips 10 s, and the media keys (play/pause, next, previous, rewind, fast-forward) work.
 - **No typing:** the "choose music" card shows an address like `http://192.168.1.20:8080`. Open it on your phone (same Wi-Fi), paste a link and press **Play**.
