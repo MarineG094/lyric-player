@@ -1,4 +1,4 @@
-const { app, BrowserWindow, WebContentsView, ipcMain, dialog, shell, session, net, nativeImage, clipboard } = require('electron');
+const { app, BrowserWindow, WebContentsView, ipcMain, dialog, shell, session, net, nativeImage, clipboard, screen } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
@@ -144,6 +144,7 @@ function createWindow() {
   win.on('enter-full-screen', () => win && win.webContents.send('app:fullscreen', true));
   win.on('leave-full-screen', () => win && win.webContents.send('app:fullscreen', false));
   win.on('closed', () => {
+    if (miniWin && !miniWin.isDestroyed()) miniWin.destroy();
     clearInterval(ytTimer);
     ytView = null;
     win = null;
@@ -161,6 +162,7 @@ function createWindow() {
 
 const YT_URL = process.env.YT_URL_FOR_TESTS || 'https://music.youtube.com/';
 let ytView = null;
+let stateHook = null; // Windows mini player: gets every player state
 let ytBrowse = false;
 let ytTop = 64;
 let ytDesiredVolume = null;
@@ -341,7 +343,7 @@ const probeScript = (desiredVolume, blockAds, wantId) => `(() => {
 async function pollYt() {
   if (ytPolling || !ytView || !win || ytView.webContents.isDestroyed()) return;
   // Minimised or hidden: look a quarter as often, except near the end of a song so the next one still starts on time.
-  if (win.isMinimized() || !win.isVisible()) {
+  if (!stateHook && (win.isMinimized() || !win.isVisible())) {
     ytTick = (ytTick + 1) % 4;
     const near = ctl.snap && ctl.snap.dur > 0 && ctl.snap.dur - ctl.snap.cur < 6;
     if (ytTick && !near) return;
@@ -361,6 +363,7 @@ async function pollYt() {
     if (state && state.hasMedia) controllerTick(state);
     if (state) { learnMeta(state); state.next = computeNext(state); }
     if (win && !win.isDestroyed()) win.webContents.send('player:state', state);
+    if (stateHook && state) stateHook(state);
   } catch (_) {
     /* page is navigating; try again next tick */
   } finally {
@@ -1132,7 +1135,7 @@ async function stepTrack(wc, name) {
   return pressed;
 }
 
-ipcMain.handle('player:cmd', async (_e, name, arg) => {
+const playerCmd = async (name, arg) => {
   if (!ytView) return false;
   const wc = ytView.webContents;
   const num = Number(arg);
@@ -1160,7 +1163,8 @@ ipcMain.handle('player:cmd', async (_e, name, arg) => {
   } catch (_) {
     return false;
   }
-});
+};
+ipcMain.handle('player:cmd', (_e, name, arg) => playerCmd(name, arg));
 
 // A text report of what the YouTube Music page looks like to the app, for troubleshooting (copied to the clipboard).
 const diagnoseScript = `(() => {
@@ -1282,6 +1286,93 @@ function safeLyricsFile(name) {
   if (!/\.(lrc|txt)$/i.test(base)) throw new Error('Unsupported lyrics file type');
   return full;
 }
+
+/* ---------- mini player (Windows only) ----------
+   A small always-on-top pill: cover, song, artist and rolling lyrics, with the controls showing on hover.
+   It is a second light window that only receives text: the main window keeps doing all the real work
+   (playing, finding lyrics, colours) and hands the results over. Nothing runs while it is closed. */
+const MINI_W = 440;
+const MINI_H = 132;
+let miniWin = null;
+let miniDrag = null;
+const miniData = { palette: null, lyrics: null, cover: false, state: null };
+
+function miniStart() {
+  const saved = loadSettings().miniPos;
+  let x; let y;
+  if (saved && Number.isFinite(saved.x) && Number.isFinite(saved.y)) {
+    const d = screen.getDisplayMatching({ x: saved.x, y: saved.y, width: MINI_W, height: MINI_H }).workArea;
+    if (saved.x + 60 < d.x + d.width && saved.x + MINI_W - 60 > d.x && saved.y >= d.y - 10 && saved.y + 40 < d.y + d.height) { x = saved.x; y = saved.y; }
+  }
+  if (x === undefined) { const d = screen.getPrimaryDisplay().workArea; x = Math.round(d.x + (d.width - MINI_W) / 2); y = d.y + 14; } // top centre, like an island
+  return { x, y };
+}
+
+function openMini() {
+  if (!win || win.isDestroyed()) return false;
+  if (miniWin && !miniWin.isDestroyed()) { miniWin.show(); return true; }
+  const { x, y } = miniStart();
+  miniWin = new BrowserWindow({
+    width: MINI_W, height: MINI_H, x, y,
+    frame: false, transparent: true, backgroundColor: '#00000000', hasShadow: false,
+    resizable: false, maximizable: false, minimizable: false, fullscreenable: false,
+    skipTaskbar: true, alwaysOnTop: true, show: false, title: 'Lyric Player mini',
+    webPreferences: { preload: path.join(__dirname, 'mini-preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true, backgroundThrottling: false },
+  });
+  miniWin.setAlwaysOnTop(true, 'floating');
+  miniWin.setMenuBarVisibility(false);
+  miniWin.on('system-context-menu', (e) => e.preventDefault());
+  miniWin.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  miniWin.webContents.on('will-navigate', (e) => e.preventDefault());
+  miniWin.loadURL(`http://${host}:${port}/mini.html`);
+  miniWin.once('ready-to-show', () => { if (miniWin && !miniWin.isDestroyed()) miniWin.showInactive(); });
+  stateHook = (s) => {
+    if (!miniWin || miniWin.isDestroyed()) return;
+    const st = { hasMedia: !!s.hasMedia, ad: !!s.ad, title: s.title || '', artist: s.artist || '', art: s.art || '', cur: s.cur || 0, dur: s.dur || 0, playing: !!s.playing };
+    miniData.state = st;
+    miniWin.webContents.send('mini:state', st);
+  };
+  miniWin.on('closed', () => {
+    if (miniDrag) { clearInterval(miniDrag.t); miniDrag = null; }
+    miniWin = null;
+    stateHook = null;
+    if (win && !win.isDestroyed()) { win.webContents.setBackgroundThrottling(true); if (win.isMinimized()) win.restore(); win.focus(); win.webContents.send('mini:closed'); }
+  });
+  win.webContents.setBackgroundThrottling(false); // the main window keeps working while it is out of sight
+  win.minimize();
+  win.webContents.send('mini:opened');
+  return true;
+}
+
+function closeMini() { if (miniWin && !miniWin.isDestroyed()) miniWin.close(); }
+
+ipcMain.handle('mini:toggle', () => { if (miniWin && !miniWin.isDestroyed()) { closeMini(); return false; } return openMini(); });
+ipcMain.handle('mini:init', () => ({ ...miniData }));
+ipcMain.on('mini:lyrics', (_e, d) => { miniData.lyrics = d; if (miniWin && !miniWin.isDestroyed()) miniWin.webContents.send('mini:lyrics', d); });
+ipcMain.on('mini:palette', (_e, c) => { miniData.palette = c; if (miniWin && !miniWin.isDestroyed()) miniWin.webContents.send('mini:palette', c); });
+ipcMain.on('mini:cover', (_e, hidden) => { miniData.cover = !!hidden; if (miniWin && !miniWin.isDestroyed()) miniWin.webContents.send('mini:cover', !!hidden); });
+ipcMain.handle('mini:cmd', (e, name, arg) => {
+  if (!miniWin || e.sender !== miniWin.webContents) return false;
+  return ['toggle', 'next', 'prev'].includes(name) ? playerCmd(name, arg) : false;
+});
+ipcMain.on('mini:expand', (e) => { if (miniWin && e.sender === miniWin.webContents) closeMini(); }); // closing it brings the full window back
+ipcMain.on('mini:dragStart', (e) => {
+  if (!miniWin || e.sender !== miniWin.webContents || miniDrag) return;
+  const c = screen.getCursorScreenPoint();
+  const b = miniWin.getBounds();
+  miniDrag = { cx: c.x, cy: c.y, x: b.x, y: b.y };
+  miniDrag.t = setInterval(() => {
+    if (!miniWin || miniWin.isDestroyed()) return;
+    const p = screen.getCursorScreenPoint();
+    miniWin.setBounds({ x: miniDrag.x + p.x - miniDrag.cx, y: miniDrag.y + p.y - miniDrag.cy, width: MINI_W, height: MINI_H });
+  }, 8);
+});
+ipcMain.on('mini:dragEnd', () => {
+  if (!miniDrag) return;
+  clearInterval(miniDrag.t);
+  miniDrag = null;
+  if (miniWin && !miniWin.isDestroyed()) { const b = miniWin.getBounds(); saveSettings({ ...loadSettings(), miniPos: { x: b.x, y: b.y } }); }
+});
 
 // Saved playlists live in their own file (read only when asked for, written only when they change),
 // so the settings file that is rewritten every few seconds stays small.

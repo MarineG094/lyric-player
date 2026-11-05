@@ -5,6 +5,7 @@
   const L = window.Lyrics;
   const $ = (sel) => document.querySelector(sel);
 
+  const MINI = window.api && window.api.mini ? window.api.mini : null; // only the Windows app has the mini player
   const els = {
     app: $('#app'),
     lyrics: $('#lyrics'),
@@ -73,6 +74,7 @@
     btnLoad: $('#btnLoad'),
     btnCloseOverlay: $('#btnCloseOverlay'),
     btnPlaylist: $('#btnPlaylist'),
+    btnMini: $('#btnMini'),
     btnFolder: $('#btnFolder'),
     btnAuto: $('#btnAuto'),
     btnRoman: $('#btnRoman'),
@@ -631,6 +633,7 @@
     root.setProperty('--accent-2', c.accent2);
     root.setProperty('--glow', c.glow);
     root.setProperty('--glow-2', c.glow2);
+    if (MINI) MINI.palette(c);
   }
 
   /* ---------- cover filter: hides explicit album covers ---------- */
@@ -704,6 +707,7 @@
     state.coverMode = mode; // 'shown' | 'checking' | 'hidden'
     const hidden = mode !== 'shown';
     els.albumBox.classList.toggle('cover-hidden', hidden);
+    if (MINI) MINI.cover(hidden);
     els.coverVeil.hidden = mode !== 'hidden';
     els.btnCoverToggle.hidden = !state.artUrl;
     els.btnCoverToggle.textContent = hidden ? 'Show cover' : 'Hide cover';
@@ -986,6 +990,7 @@
   function renderLyrics() {
     updateLayout();
     const data = state.lyricsData;
+    if (MINI) MINI.lyrics({ status: state.lyricsStatus || '', synced: !!(data && data.synced), lines: data ? data.lines.map((l) => ({ time: l.time || 0, text: l.text })) : [] });
     els.lines.textContent = '';
     els.lyrics.classList.toggle('synced', !!(data && data.synced));
     // Arabic (Quran) text mixes right-to-left and left-to-right lines, so centre everything.
@@ -1321,6 +1326,7 @@
     if (linkOf(els.urlInput.value)) submitUrl(els.urlInput.value);
   }, 0));
   els.btnPlaylist.addEventListener('click', () => showOverlay());
+  if (MINI) { els.btnMini.hidden = false; els.btnMini.addEventListener('click', () => MINI.toggle()); } // Windows only
   els.btnCloseOverlay.addEventListener('click', hideOverlay);
   els.btnFolder.addEventListener('click', () => window.api.openLyricsFolder());
 

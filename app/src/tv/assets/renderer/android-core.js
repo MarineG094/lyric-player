@@ -77,6 +77,7 @@
   function layoutYt() { native('yt.layout', { browse: ytBrowse, top: ytTop }); }
 
 let ytView = null;
+let stateHook = null; // Windows mini player: gets every player state
 let ytBrowse = false;
 let ytTop = 64;
 let ytDesiredVolume = null;
@@ -180,7 +181,7 @@ const probeScript = (desiredVolume, blockAds, wantId) => `(() => {
 async function pollYt() {
   if (ytPolling || !ytView || !win || ytView.webContents.isDestroyed()) return;
   // Minimised or hidden: look a quarter as often, except near the end of a song so the next one still starts on time.
-  if (win.isMinimized() || !win.isVisible()) {
+  if (!stateHook && (win.isMinimized() || !win.isVisible())) {
     ytTick = (ytTick + 1) % 4;
     const near = ctl.snap && ctl.snap.dur > 0 && ctl.snap.dur - ctl.snap.cur < 6;
     if (ytTick && !near) return;
@@ -200,6 +201,7 @@ async function pollYt() {
     if (state && state.hasMedia) controllerTick(state);
     if (state) { learnMeta(state); state.next = computeNext(state); }
     if (win && !win.isDestroyed()) win.webContents.send('player:state', state);
+    if (stateHook && state) stateHook(state);
   } catch (_) {
     /* page is navigating; try again next tick */
   } finally {
@@ -976,7 +978,7 @@ async function stepTrack(wc, name) {
   return pressed;
 }
 
-ipcMain.handle('player:cmd', async (_e, name, arg) => {
+const playerCmd = async (name, arg) => {
   if (!ytView) return false;
   const wc = ytView.webContents;
   const num = Number(arg);
@@ -1004,7 +1006,8 @@ ipcMain.handle('player:cmd', async (_e, name, arg) => {
   } catch (_) {
     return false;
   }
-});
+};
+ipcMain.handle('player:cmd', (_e, name, arg) => playerCmd(name, arg));
 
 // A text report of what the YouTube Music page looks like to the app, for troubleshooting (copied to the clipboard).
 const diagnoseScript = `(() => {
