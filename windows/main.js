@@ -1291,8 +1291,8 @@ function safeLyricsFile(name) {
    A small always-on-top pill: cover, song, artist and rolling lyrics, with the controls showing on hover.
    It is a second light window that only receives text: the main window keeps doing all the real work
    (playing, finding lyrics, colours) and hands the results over. Nothing runs while it is closed. */
-const MINI_W = 440;
-const MINI_H = 132;
+const MINI_W = 380;
+const MINI_H = 108;
 let miniWin = null;
 let miniDrag = null;
 const miniData = { palette: null, lyrics: null, cover: false, state: null };

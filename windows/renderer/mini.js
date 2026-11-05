@@ -4,7 +4,7 @@
   const api = window.mini;
   const $ = (id) => document.getElementById(id);
   const el = { pill: $('pill'), cover: $('cover'), title: $('title'), artist: $('artist'), roll: $('roll'), note: $('note'), prog: $('prog') };
-  const LH = 26;
+  const LH = 22;
   let lyr = null;            // { status, synced, lines: [{ time, text }] }
   let nodes = [];
   let idx = -2;
@@ -64,7 +64,7 @@
   function fit(n) {
     n.style.fontSize = '';
     const over = n.scrollWidth / Math.max(1, n.clientWidth);
-    if (over > 1) n.style.fontSize = Math.max(11, Math.floor(16 / over * 10) / 10) + 'px';
+    if (over > 1) n.style.fontSize = Math.max(10.5, Math.floor(14.5 / over * 10) / 10) + 'px';
   }
 
   function lineAt(t) {
@@ -113,6 +113,11 @@
     if (d.state) setState(d.state);
     if (d.lyrics) { lyr = d.lyrics; buildLyrics(); }
   });
+  // Resting: the cover and names sit in the middle; on hover they slide left to make room for the buttons.
+  const idBox = $('idBox');
+  const centre = () => { const top = idBox.parentElement; const free = top.clientWidth - idBox.offsetWidth; el.pill.style.setProperty('--shift', Math.max(0, free / 2) + 'px'); };
+  if (window.ResizeObserver) new ResizeObserver(centre).observe(idBox);
+  centre();
   setInterval(tick, 100);
 
   $('bPlay').addEventListener('click', () => { st.playing = !st.playing; stamp = performance.now(); el.pill.classList.toggle('playing', st.playing); api.cmd('toggle'); });
