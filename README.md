@@ -8,7 +8,7 @@
 
 [![Build](https://github.com/NaqibC/lyric-player/actions/workflows/build.yml/badge.svg)](https://github.com/NaqibC/lyric-player/actions/workflows/build.yml)
 ![Windows](https://img.shields.io/badge/Windows-portable%20.exe-0078d4)
-![Linux](https://img.shields.io/badge/Linux-.deb%20%2F%20AppImage%20(experimental)-fcc624)
+![Linux](https://img.shields.io/badge/Linux-AppImage%20%2F%20.deb-fcc624)
 ![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B-3ddc84)
 ![Android Auto](https://img.shields.io/badge/Android%20Auto-media%20app-4285f4)
 ![Google TV](https://img.shields.io/badge/Google%20TV-remote%20ready-ea4335)
@@ -79,15 +79,26 @@
 
 ---
 
-## 🐧 Linux (experimental)
+## 🐧 Linux
 
 Made and tested on **Linux Mint**; other Debian/Ubuntu-based systems should work the same.
 
-1. Open the [**linux-latest release**](https://github.com/NaqibC/lyric-player/releases/tag/linux-latest).
-2. Download **`Lyric-Player-1.0.0.deb`** and install it: double-click it, or run `sudo apt install ./Lyric-Player-1.0.0.deb`.
-3. Open **Lyric Player** from the menu, click **Change music**, then search or paste a link.
+**AppImage (recommended: it updates itself)**
 
-**Other distributions:** download the **`.AppImage`**, make it executable (`chmod +x Lyric-Player-1.0.0.AppImage`) and run it. If it won't start on a newer Ubuntu/Mint, run it with `--no-sandbox`, or use the `.deb` instead. Older AppImages may also need `sudo apt install libfuse2`.
+1. Open the [**linux-latest release**](https://github.com/NaqibC/lyric-player/releases/tag/linux-latest) and download **`Lyric-Player-1.0.0.AppImage`** into a folder you can write to, such as Downloads.
+2. Make it runnable and start it:
+   ```
+   cd ~/Downloads
+   chmod +x Lyric-Player-1.0.0.AppImage
+   ./Lyric-Player-1.0.0.AppImage
+   ```
+   After that you can also just double-click it. If it won't start on a newer Ubuntu/Mint, add `--no-sandbox`. Older systems may need `sudo apt install libfuse2`.
+
+**`.deb` (installs into the app menu)**
+
+Download **`Lyric-Player-1.0.0.deb`** and install it: double-click it, or run `sudo apt install ./Lyric-Player-1.0.0.deb`. Then open **Lyric Player** from the menu.
+
+In either case, click **Change music**, then search or paste a link.
 
 Everything in the Windows version is included, including the mini player. It needs a desktop with window transparency (a compositor) to look right. The **Update available** button replaces the AppImage in place; with the `.deb` it downloads the new file for you to install.
 
