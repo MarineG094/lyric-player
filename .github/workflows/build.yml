@@ -22,8 +22,9 @@ jobs:
           gradle-version: '8.9'
       - name: Stamp this build (the apps compare it with the newest release)
         run: |
-          printf 'window.__build = { sha: "%s", platform: "phone" };\n' "$GITHUB_SHA" > app/src/phone/assets/renderer/build-info.js
-          printf 'window.__build = { sha: "%s", platform: "tv" };\n' "$GITHUB_SHA" > app/src/tv/assets/renderer/build-info.js
+          V="1.0.$GITHUB_RUN_NUMBER"
+          printf 'window.__build = { sha: "%s", platform: "phone", version: "%s" };\n' "$GITHUB_SHA" "$V" > app/src/phone/assets/renderer/build-info.js
+          printf 'window.__build = { sha: "%s", platform: "tv", version: "%s" };\n' "$GITHUB_SHA" "$V" > app/src/tv/assets/renderer/build-info.js
       - name: Build debug APK
         run: gradle --no-daemon --stacktrace assemblePhoneDebug assembleTvDebug
       - name: Name the files
@@ -53,7 +54,9 @@ jobs:
       - name: Stamp this build (the app compares it with the newest release)
         shell: bash
         run: |
-          printf 'window.__build = { sha: "%s", platform: "windows" };\n' "$GITHUB_SHA" > windows/renderer/build-info.js
+          V="1.0.$GITHUB_RUN_NUMBER"
+          printf 'window.__build = { sha: "%s", platform: "windows", version: "%s" };\n' "$GITHUB_SHA" "$V" > windows/renderer/build-info.js
+          (cd windows && npm version "$V" --no-git-tag-version --allow-same-version)
       - name: Install, test, build the portable .exe
         working-directory: windows
         shell: bash
@@ -74,7 +77,7 @@ jobs:
         run: |
           for f in windows/dist/Lyric-Player-*.exe; do sha256sum "$f" | cut -d' ' -f1 > "$f.sha256"; done
           gh release delete windows-latest --yes --cleanup-tag || true
-          gh release create windows-latest windows/dist/Lyric-Player-*.exe windows/dist/Lyric-Player-*.exe.sha256 --title "Lyric Player for Windows (latest)" --notes "Lyric-Player-1.0.0.exe is the portable Windows app: download it and double-click. No install needed." --target "$GITHUB_SHA"
+          gh release create windows-latest windows/dist/Lyric-Player-*.exe windows/dist/Lyric-Player-*.exe.sha256 --title "Lyric Player for Windows (latest)" --notes "Lyric-Player-<version>.exe is the portable Windows app: download it and double-click. No install needed." --target "$GITHUB_SHA"
 
   linux:
     runs-on: ubuntu-latest
@@ -86,7 +89,9 @@ jobs:
       - name: Stamp this build (the app compares it with the newest release)
         shell: bash
         run: |
-          printf 'window.__build = { sha: "%s", platform: "linux" };\n' "$GITHUB_SHA" > windows/renderer/build-info.js
+          V="1.0.$GITHUB_RUN_NUMBER"
+          printf 'window.__build = { sha: "%s", platform: "linux", version: "%s" };\n' "$GITHUB_SHA" "$V" > windows/renderer/build-info.js
+          (cd windows && npm version "$V" --no-git-tag-version --allow-same-version)
       - name: Install, test, build the .deb and AppImage
         working-directory: windows
         shell: bash
@@ -107,4 +112,4 @@ jobs:
         run: |
           for f in windows/dist/Lyric-Player-*.AppImage; do sha256sum "$f" | cut -d' ' -f1 > "$f.sha256"; done
           gh release delete linux-latest --yes --cleanup-tag || true
-          gh release create linux-latest windows/dist/Lyric-Player-*.deb windows/dist/Lyric-Player-*.AppImage windows/dist/Lyric-Player-*.AppImage.sha256 --title "Lyric Player for Linux (latest)" --notes "Lyric-Player-1.0.0.AppImage runs on most distributions and updates itself (chmod +x, then run; on newer Ubuntu/Mint it may need the --no-sandbox option). Lyric-Player-1.0.0.deb is for Linux Mint, Ubuntu and Debian: sudo apt install ./Lyric-Player-1.0.0.deb. The .sha256 files are used by the in-app updater." --target "$GITHUB_SHA"
+          gh release create linux-latest windows/dist/Lyric-Player-*.deb windows/dist/Lyric-Player-*.AppImage windows/dist/Lyric-Player-*.AppImage.sha256 --title "Lyric Player for Linux (latest)" --notes "The AppImage (Lyric-Player-<version>.AppImage) runs on most distributions and updates itself (chmod +x, then run; on newer Ubuntu/Mint it may need the --no-sandbox option). The .deb is for Linux Mint, Ubuntu and Debian: sudo apt install ./Lyric-Player-*.deb. The .sha256 files are used by the in-app updater." --target "$GITHUB_SHA"

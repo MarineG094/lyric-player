@@ -1,9 +1,17 @@
 /* What's new: shown once, the first time a newer version is opened. Newest entry first.
-   To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux. */
+   To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 2,
+    title: 'Battery and version numbers',
+    items: [
+      { text: 'Lower battery use on phones. The hidden YouTube Music page behind the player is now drawn small and asks for the smallest video, since only the sound matters.', mobile: true },
+      { text: 'Real version numbers. The version now counts every build (1.0.<build number>) instead of always saying 1.0.0. You can see it at the bottom of the Menu.' },
+    ],
+  },
+  {
     id: 1,
-    title: 'New in this version',
+    title: 'Updates, languages and translation',
     items: [
       { text: 'Update and restart. On Windows (the .exe) and Linux (the AppImage), the Update button now replaces the app by itself and restarts. Nothing to download or move around.', desktop: true },
       { text: 'Launch at startup and Keep in tray. Two new switches in the Menu, both off until you turn them on. Keep in tray lets the music keep playing after you close the window.', desktop: true },

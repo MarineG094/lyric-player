@@ -68,7 +68,7 @@
 ## 💻 Windows
 
 1. Open the [**windows-latest release**](https://github.com/NaqibC/lyric-player/releases/tag/windows-latest).
-2. Download **`Lyric-Player-1.0.0.exe`** and double-click it. It is portable: no install.
+2. Download **`Lyric-Player-<version>.exe`** and double-click it. It is portable: no install.
 3. Click **Change music**, then search or paste a link.
 
 **Shortcuts:** `Space` play/pause · `F11` full screen · `Ctrl+→ / ←` next / previous.
@@ -85,18 +85,18 @@ Made and tested on **Linux Mint**; other Debian/Ubuntu-based systems should work
 
 **AppImage (recommended: it updates itself)**
 
-1. Open the [**linux-latest release**](https://github.com/NaqibC/lyric-player/releases/tag/linux-latest) and download **`Lyric-Player-1.0.0.AppImage`** into a folder you can write to, such as Downloads.
+1. Open the [**linux-latest release**](https://github.com/NaqibC/lyric-player/releases/tag/linux-latest) and download **`Lyric-Player-<version>.AppImage`** into a folder you can write to, such as Downloads.
 2. Make it runnable and start it:
    ```
    cd ~/Downloads
-   chmod +x Lyric-Player-1.0.0.AppImage
-   ./Lyric-Player-1.0.0.AppImage
+   chmod +x Lyric-Player-*.AppImage
+   ./Lyric-Player-*.AppImage
    ```
    After that you can also just double-click it. If it won't start on a newer Ubuntu/Mint, add `--no-sandbox`. Older systems may need `sudo apt install libfuse2`.
 
 **`.deb` (installs into the app menu)**
 
-Download **`Lyric-Player-1.0.0.deb`** and install it: double-click it, or run `sudo apt install ./Lyric-Player-1.0.0.deb`. Then open **Lyric Player** from the menu.
+Download **`Lyric-Player-<version>.deb`** and install it: double-click it, or run `sudo apt install ./Lyric-Player-*.deb`. Then open **Lyric Player** from the menu.
 
 In either case, click **Change music**, then search or paste a link.
 

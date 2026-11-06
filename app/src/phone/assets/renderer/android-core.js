@@ -31,7 +31,7 @@
   try { settings = JSON.parse(N.settings()) || {}; } catch (_) { settings = {}; }
   const loadSettings = () => settings;
   const saveSettings = (s) => { settings = s; try { N.mergeSettings(JSON.stringify(s)); } catch (_) { /* ignore */ } };
-  const app = { getVersion: () => '1.0.0' };
+  const app = { getVersion: () => (window.__build && window.__build.version) || '1.0' };
   const clipboard = { writeText: (t) => { native('clipboard', { t: String(t) }); } };
   const fs = { writeFileSync: (file, content) => { N.writeLyrics(file, String(content)); } };
   const safeLyricsFile = (name) => {

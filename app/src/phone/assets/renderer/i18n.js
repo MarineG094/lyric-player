@@ -38,10 +38,10 @@
     'Closing the window now keeps Lyric Player running in the tray. Use the tray icon to quit.', 'Closing the window quits Lyric Player.',
     'Lyric Player will start when you sign in.', 'Lyric Player will no longer start at sign-in.',
     'Downloading the update. The app restarts by itself when it is ready.', "Couldn't update in place, so the new file is downloading instead.",
-    'Language', 'Translate lyrics', 'Off', 'Clear translations', 'Saved translations cleared.', "Couldn't translate these lyrics right now.",
+    'Version', 'Language', 'Translate lyrics', 'Off', 'Clear translations', 'Saved translations cleared.', "Couldn't translate these lyrics right now.",
   ];
   // Messages that continue with a name or a reason: the start is translated and the rest is kept.
-  const PREFIXES = ['Added to the queue:', 'Playing next:', "Couldn't add that:", "Couldn't import that:", "Couldn't save the lyrics:", 'Could not load'];
+  const PREFIXES = ['Version', 'Added to the queue:', 'Playing next:', "Couldn't add that:", "Couldn't import that:", "Couldn't save the lyrics:", 'Could not load'];
 
   let dict = null;
   let lang = 'en';

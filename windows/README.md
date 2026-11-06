@@ -83,7 +83,7 @@ Timestamp format: `[minutes:seconds.hundredths] line`, for example `[01:12.50] y
 
 ## 5. Make a standalone .exe (optional)
 
-Double-click **Build-EXE.bat**. When it finishes, the portable `Lyric-Player-1.0.0.exe` is in the `dist` folder. You can copy that single file to any Windows PC.
+Double-click **Build-EXE.bat**. When it finishes, the portable `Lyric-Player-<version>.exe` is in the `dist` folder. You can copy that single file to any Windows PC.
 
 ## 6. Troubleshooting
 

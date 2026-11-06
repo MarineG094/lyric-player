@@ -11,8 +11,10 @@ android {
         applicationId = "com.lyricplayer.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        // Every build on GitHub counts up: 1.0.<build number>
+        val buildNumber = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toIntOrNull() ?: 1
+        versionCode = buildNumber
+        versionName = "1.0.$buildNumber"
     }
 
     flavorDimensions += "device"

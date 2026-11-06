@@ -82,6 +82,7 @@
     btnFolder: $('#btnFolder'),
     btnAuto: $('#btnAuto'),
     btnRoman: $('#btnRoman'),
+    menuVersion: $('#menuVersion'),
     news: $('#news'),
     newsBody: $('#newsBody'),
     newsClose: $('#newsClose'),
@@ -286,7 +287,7 @@
     openLink(updateInfo.url);
     toast(window.__lpTv
       ? `New version: open github.com/${REPO}/releases/tag/latest and download LyricPlayer-TV.apk (the Downloader app works well).`
-      : window.__build && window.__build.platform === 'linux' ? 'Downloading the new version (.deb). Open it with the software installer, or run: sudo apt install ./Lyric-Player-1.0.0.deb' : window.api.mini ? 'Downloading the new version. Close this app and run the new file instead.' : 'Downloading the new version. Open the file when it finishes to update.', 9000);
+      : window.__build && window.__build.platform === 'linux' ? 'Downloading the new version (.deb). Open it with the software installer, or run: sudo apt install ./Lyric-Player-*.deb' : window.api.mini ? 'Downloading the new version. Close this app and run the new file instead.' : 'Downloading the new version. Open the file when it finishes to update.', 9000);
   });
   // manual = from the Menu: always asks GitHub and always says what it found.
   async function checkForUpdate(manual) {
@@ -1595,7 +1596,7 @@
     els.newsBody.textContent = '';
     let any = false;
     for (const e of entries) {
-      const items = (e.items || []).filter((i) => !i.desktop || desktop);
+      const items = (e.items || []).filter((i) => (!i.desktop || desktop) && (!i.mobile || !desktop));
       if (!items.length) continue;
       any = true;
       if (entries.length > 1) { const h = document.createElement('h3'); h.textContent = e.title || ''; els.newsBody.appendChild(h); }
@@ -1607,6 +1608,7 @@
     els.news.hidden = false;
     els.newsClose.focus();
   }
+  if (window.__build && window.__build.version) { els.menuVersion.textContent = 'Version ' + window.__build.version; els.menuVersion.hidden = false; }
   els.newsClose.addEventListener('click', () => { els.news.hidden = true; });
   els.news.addEventListener('keydown', (e) => { if (e.key === 'Escape') els.news.hidden = true; });
 
