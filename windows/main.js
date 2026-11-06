@@ -1487,6 +1487,66 @@ ipcMain.handle('app:latestRelease', async (_e, tag) => {
   } catch (_) { return null; }
 });
 
+/* ---------- translation (lyric lines and the app's own labels) ----------
+   The free Google Translate web endpoint first, MyMemory as a backup. Only the text to translate is sent. */
+const GT_URL = 'https://translate.googleapis.com/translate_a/single';
+const MYMEMORY_URL = 'https://api.mymemory.translated.net/get';
+
+async function gtLines(lines, target) { // lines: non-empty, one line each. Returns { out, src } or null if the answer didn't line up.
+  const r = await jsonGet('Translate', `${GT_URL}?client=gtx&sl=auto&tl=${encodeURIComponent(target)}&dt=t&q=${encodeURIComponent(lines.join('\n'))}`, {}, 12000);
+  if (!r || !Array.isArray(r[0])) return null;
+  const parts = r[0].map((seg) => (seg && seg[0]) || '').join('').split('\n').map((x) => x.trim());
+  while (parts.length > lines.length && parts[parts.length - 1] === '') parts.pop();
+  return parts.length === lines.length ? { out: parts, src: typeof r[2] === 'string' ? r[2] : '' } : null;
+}
+
+async function myMemoryLine(line, target) {
+  try {
+    const r = await jsonGet('MyMemory', `${MYMEMORY_URL}?q=${encodeURIComponent(line.slice(0, 450))}&langpair=${encodeURIComponent('autodetect|' + target)}`, {}, 10000);
+    const t = r && r.responseData && r.responseData.translatedText;
+    return t && Number(r.responseStatus) === 200 && !/MYMEMORY WARNING|INVALID|QUERY LENGTH/i.test(t) ? String(t) : null;
+  } catch (_) { return null; }
+}
+
+async function translateTexts(texts, target) {
+  const clean = (Array.isArray(texts) ? texts : []).slice(0, 400).map((x) => String(x == null ? '' : x).replace(/[\r\n\u2028\u2029]+/g, ' ').trim().slice(0, 400));
+  const uniq = [...new Set(clean.filter(Boolean))];
+  const done = new Map();
+  let src = '';
+  // chunks stay small enough for a web address
+  const chunks = [];
+  let cur = [];
+  let size = 0;
+  for (const t of uniq) {
+    const n = encodeURIComponent(t).length + 3;
+    if (cur.length && (size + n > 5500 || cur.length >= 60)) { chunks.push(cur); cur = []; size = 0; }
+    cur.push(t);
+    size += n;
+  }
+  if (cur.length) chunks.push(cur);
+  let fallbackLeft = 40;
+  for (const chunk of chunks) {
+    let got = null;
+    try { got = await gtLines(chunk, target); } catch (_) { got = null; }
+    if (got) { chunk.forEach((t, i) => done.set(t, got.out[i])); if (!src) src = got.src; continue; }
+    // the batch failed or came back misaligned: line by line through the backup service
+    for (let i = 0; i < chunk.length && fallbackLeft > 0; i += 3) {
+      const group = chunk.slice(i, i + 3);
+      fallbackLeft -= group.length;
+      const res = await Promise.all(group.map((t) => myMemoryLine(t, target)));
+      group.forEach((t, k) => { if (res[k]) done.set(t, res[k]); });
+    }
+  }
+  if (uniq.length && !done.size) return null;
+  return { lines: clean.map((t) => (t ? (done.get(t) || '') : '')), src };
+}
+
+ipcMain.handle('text:translate', async (_e, p) => {
+  const target = p && typeof p.target === 'string' ? p.target : '';
+  if (!/^[A-Za-z]{2,3}(-[A-Za-z]{2,4})?$/.test(target)) return null;
+  try { return await translateTexts(p.texts, target); } catch (_) { return null; }
+});
+
 function hasLyrics(r) {
   return r && !r.instrumental && (r.syncedLyrics || r.plainLyrics);
 }
@@ -1749,6 +1809,96 @@ function applyTray(on) {
 
 app.on('before-quit', () => { quitting = true; });
 
+
+/* ---------- update in place (Windows portable .exe and Linux AppImage) ----------
+   Downloads the newest build next to the running file, checks it against the checksum published with the release,
+   swaps it in (the old one is kept as ".old" until the new one has started) and restarts. */
+const crypto = require('crypto');
+const { spawn } = require('child_process');
+const RELEASES_URL = 'https://github.com/NaqibC/lyric-player/releases/';
+let updating = false;
+
+function selfUpdateTarget() {
+  if (process.platform === 'win32' && process.env.PORTABLE_EXECUTABLE_FILE) return { file: process.env.PORTABLE_EXECUTABLE_FILE, tag: 'windows-latest', pick: /\.exe$/i };
+  if (process.platform === 'linux' && process.env.APPIMAGE) return { file: process.env.APPIMAGE, tag: 'linux-latest', pick: /\.AppImage$/i };
+  return null;
+}
+
+ipcMain.handle('app:canSelfUpdate', () => !!selfUpdateTarget());
+
+ipcMain.handle('app:selfUpdate', async (e) => {
+  const T = selfUpdateTarget();
+  if (!T) return { ok: false, error: 'unsupported' };
+  if (updating) return { ok: false, error: 'busy' };
+  updating = true;
+  const send = (pct) => { try { e.sender.send('app:updateProgress', pct); } catch (_) { /* window gone */ } };
+  const tmp = T.file + '.new';
+  try {
+    const rel = await jsonGet('GitHub', `https://api.github.com/repos/NaqibC/lyric-player/releases/tags/${T.tag}`, { Accept: 'application/vnd.github+json' }, 15000);
+    const assets = (rel && rel.assets) || [];
+    const bin = assets.find((a) => T.pick.test(String(a.name || '')));
+    const sum = bin && assets.find((a) => a.name === bin.name + '.sha256');
+    if (!bin || !sum) { updating = false; return { ok: false, error: 'nochecksum' }; }
+    for (const a of [bin, sum]) if (!String(a.browser_download_url || '').startsWith(RELEASES_URL)) throw new Error('unexpected download address');
+
+    const sumText = await (await fetch(sum.browser_download_url)).text();
+    const want = (sumText.match(/[0-9a-f]{64}/i) || [''])[0].toLowerCase();
+    if (!want) throw new Error('no checksum');
+
+    const res = await fetch(bin.browser_download_url);
+    if (!res.ok || !res.body) throw new Error('download failed');
+    const total = Number(res.headers.get('content-length')) || Number(bin.size) || 0;
+    const hash = crypto.createHash('sha256');
+    const out = fs.createWriteStream(tmp);
+    let got = 0;
+    let last = -1;
+    for await (const chunk of res.body) {
+      hash.update(chunk);
+      if (!out.write(chunk)) await new Promise((r) => out.once('drain', r));
+      got += chunk.length;
+      const pct = total ? Math.min(99, Math.floor((got / total) * 100)) : 0;
+      if (pct !== last) { last = pct; send(pct); }
+    }
+    await new Promise((r, j) => { out.once('error', j); out.end(r); });
+    if (got < 5 * 1024 * 1024 || hash.digest('hex') !== want) throw new Error('checksum mismatch');
+
+    // Swap: a running file can be renamed (both Windows and Linux allow it), so the old one is moved aside first.
+    const old = T.file + '.old';
+    try { fs.rmSync(old, { force: true }); } catch (_) { /* ignore */ }
+    if (process.platform !== 'win32') fs.chmodSync(tmp, 0o755);
+    fs.renameSync(T.file, old);
+    try { fs.renameSync(tmp, T.file); } catch (err) { try { fs.renameSync(old, T.file); } catch (_) { /* ignore */ } throw err; }
+    send(100);
+
+    // Restart a moment after this copy has exited (it holds the single-instance lock and the port until then).
+    const env = { ...process.env };
+    for (const k of ['APPIMAGE', 'APPDIR', 'ARGV0', 'OWD', 'PORTABLE_EXECUTABLE_FILE', 'PORTABLE_EXECUTABLE_DIR', 'PORTABLE_EXECUTABLE_APP_FILENAME']) delete env[k];
+    const flags = process.argv.includes('--no-sandbox') ? ['--no-sandbox'] : [];
+    let child;
+    if (process.platform === 'win32') {
+      child = spawn('cmd.exe', ['/c', `ping -n 3 127.0.0.1 >nul & start "" "${T.file}"`], { detached: true, stdio: 'ignore', windowsHide: true, windowsVerbatimArguments: true, env });
+    } else {
+      child = spawn('/bin/sh', ['-c', 'sleep 1.5; exec "$0" "$@"', T.file, ...flags], { detached: true, stdio: 'ignore', env });
+    }
+    child.unref();
+    quitting = true;
+    app.releaseSingleInstanceLock();
+    setTimeout(() => app.quit(), 400);
+    return { ok: true };
+  } catch (err) {
+    updating = false;
+    try { fs.rmSync(tmp, { force: true }); } catch (_) { /* ignore */ }
+    return { ok: false, error: String((err && err.message) || err) };
+  }
+});
+
+// The previous version is left beside the new one while the new one starts; once it is running it is not needed.
+function cleanupOldBuild() {
+  const T = selfUpdateTarget();
+  if (!T) return;
+  for (const f of [T.file + '.old', T.file + '.new']) { try { fs.rmSync(f, { force: true }); } catch (_) { /* still in use: next start */ } }
+}
+
 /* ---------- lifecycle ---------- */
 
 const gotLock = app.requestSingleInstanceLock();
@@ -1760,6 +1910,7 @@ if (!gotLock) {
 
 app.whenReady().then(async () => {
   if (!gotLock) return;
+  setTimeout(cleanupOldBuild, 8000);
   const st = loadSettings();
   adBlock = st.adBlock !== false;
   // Present as a normal Chromium browser (drops the "Electron/x.y.z" token).

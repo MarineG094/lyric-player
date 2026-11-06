@@ -1080,6 +1080,66 @@ ipcMain.handle('app:latestRelease', async (_e, tag) => {
   } catch (_) { return null; }
 });
 
+/* ---------- translation (lyric lines and the app's own labels) ----------
+   The free Google Translate web endpoint first, MyMemory as a backup. Only the text to translate is sent. */
+const GT_URL = 'https://translate.googleapis.com/translate_a/single';
+const MYMEMORY_URL = 'https://api.mymemory.translated.net/get';
+
+async function gtLines(lines, target) { // lines: non-empty, one line each. Returns { out, src } or null if the answer didn't line up.
+  const r = await jsonGet('Translate', `${GT_URL}?client=gtx&sl=auto&tl=${encodeURIComponent(target)}&dt=t&q=${encodeURIComponent(lines.join('\n'))}`, {}, 12000);
+  if (!r || !Array.isArray(r[0])) return null;
+  const parts = r[0].map((seg) => (seg && seg[0]) || '').join('').split('\n').map((x) => x.trim());
+  while (parts.length > lines.length && parts[parts.length - 1] === '') parts.pop();
+  return parts.length === lines.length ? { out: parts, src: typeof r[2] === 'string' ? r[2] : '' } : null;
+}
+
+async function myMemoryLine(line, target) {
+  try {
+    const r = await jsonGet('MyMemory', `${MYMEMORY_URL}?q=${encodeURIComponent(line.slice(0, 450))}&langpair=${encodeURIComponent('autodetect|' + target)}`, {}, 10000);
+    const t = r && r.responseData && r.responseData.translatedText;
+    return t && Number(r.responseStatus) === 200 && !/MYMEMORY WARNING|INVALID|QUERY LENGTH/i.test(t) ? String(t) : null;
+  } catch (_) { return null; }
+}
+
+async function translateTexts(texts, target) {
+  const clean = (Array.isArray(texts) ? texts : []).slice(0, 400).map((x) => String(x == null ? '' : x).replace(/[\r\n\u2028\u2029]+/g, ' ').trim().slice(0, 400));
+  const uniq = [...new Set(clean.filter(Boolean))];
+  const done = new Map();
+  let src = '';
+  // chunks stay small enough for a web address
+  const chunks = [];
+  let cur = [];
+  let size = 0;
+  for (const t of uniq) {
+    const n = encodeURIComponent(t).length + 3;
+    if (cur.length && (size + n > 5500 || cur.length >= 60)) { chunks.push(cur); cur = []; size = 0; }
+    cur.push(t);
+    size += n;
+  }
+  if (cur.length) chunks.push(cur);
+  let fallbackLeft = 40;
+  for (const chunk of chunks) {
+    let got = null;
+    try { got = await gtLines(chunk, target); } catch (_) { got = null; }
+    if (got) { chunk.forEach((t, i) => done.set(t, got.out[i])); if (!src) src = got.src; continue; }
+    // the batch failed or came back misaligned: line by line through the backup service
+    for (let i = 0; i < chunk.length && fallbackLeft > 0; i += 3) {
+      const group = chunk.slice(i, i + 3);
+      fallbackLeft -= group.length;
+      const res = await Promise.all(group.map((t) => myMemoryLine(t, target)));
+      group.forEach((t, k) => { if (res[k]) done.set(t, res[k]); });
+    }
+  }
+  if (uniq.length && !done.size) return null;
+  return { lines: clean.map((t) => (t ? (done.get(t) || '') : '')), src };
+}
+
+ipcMain.handle('text:translate', async (_e, p) => {
+  const target = p && typeof p.target === 'string' ? p.target : '';
+  if (!/^[A-Za-z]{2,3}(-[A-Za-z]{2,4})?$/.test(target)) return null;
+  try { return await translateTexts(p.texts, target); } catch (_) { return null; }
+});
+
 function hasLyrics(r) {
   return r && !r.instrumental && (r.syncedLyrics || r.plainLyrics);
 }
@@ -1340,6 +1400,7 @@ ipcMain.handle('lyrics:fetched', () => loadSettings().fetchedLyrics || []);
       return { file: fileName };
     },
     fetchLyrics: (payload) => handlers['lyrics:fetch'](null, payload),
+    translateTexts: (payload) => handlers['text:translate'](null, payload),
     chooseLyricsFolder: async () => null,
     setAdBlock: (on) => handlers['adblock:set'](null, on),
     getThumb: async (url) => {

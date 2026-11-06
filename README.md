@@ -34,6 +34,10 @@
 | 🔀 **Shuffle & repeat** | Real shuffle: no repeats until every song has played. |
 | 🌐 **Four lyric sources** | LRCLIB, then NetEase, then lyrics.ovh, plus Quran text for recitations. |
 | 🖥️ **Startup and tray (Windows, Linux)** | Optional **Launch at startup** and **Keep in tray** switches in the Menu. Both are off until you turn them on. |
+| 🔄 **Updates in place (Windows .exe, Linux AppImage)** | **Update available** downloads the new version, checks it against its published checksum, replaces the app and restarts. Phone and TV still ask you to confirm the install. |
+| 📰 **What's new** | A short note shows once the first time you open an updated version (never on a fresh install). |
+| 🌍 **App language** | Pick a language in the Menu (28 to choose from; Arabic, Urdu, Persian and Hebrew read right to left). Spanish, French, Arabic, Urdu and Bengali are bundled. The others are translated online once, then kept on the device (a few KB). Songs, artists and lyrics are never translated this way. Not on the TV app. |
+| 🈯 **Translate lyrics** | Off by default. Pick a language in the Menu to show a translation under each lyric line. Saved translations are capped at about 1 MB (oldest dropped first); **Clear translations** deletes them. Not on the TV app. |
 | 🔤 **English letters** | Songs in Hindi, Arabic, Korean and more can show in Latin letters. |
 | ⏱ **Sync buttons** | Nudge timed lyrics earlier or later (−3s, −0.5s, +0.5s, +3s). Saved per song. |
 | 📖 **Quran recitations** | Spelling-tolerant surah detection (Arabic titles too). Arabic with an English translation that follows the reciter ayah by ayah, using Quran.com timing (estimated for reciters it doesn't cover). |
@@ -85,7 +89,7 @@ Made and tested on **Linux Mint**; other Debian/Ubuntu-based systems should work
 
 **Other distributions:** download the **`.AppImage`**, make it executable (`chmod +x Lyric-Player-1.0.0.AppImage`) and run it. If it won't start on a newer Ubuntu/Mint, run it with `--no-sandbox`, or use the `.deb` instead. Older AppImages may also need `sudo apt install libfuse2`.
 
-Everything in the Windows version is included, including the mini player. It needs a desktop with window transparency (a compositor) to look right. The **Update available** button downloads a new `.deb` for you to install.
+Everything in the Windows version is included, including the mini player. It needs a desktop with window transparency (a compositor) to look right. The **Update available** button replaces the AppImage in place; with the `.deb` it downloads the new file for you to install.
 
 ---
 
@@ -146,6 +150,8 @@ A separate app, **`LyricPlayer-TV.apk`** (installs as *Lyric Player TV*, next to
 | **Add lyrics** | Paste your own. Plain text works; `[00:12.50] line` timestamps make it scroll. |
 | **Auto lyrics** | Looks up lyrics online when a song has none. |
 | **English letters** | Shows lyrics in other scripts in Latin letters. |
+| **Language** / **Translate lyrics** | Language of the app's buttons and messages, and an optional translation under each lyric line (see the note below). |
+| **Launch at startup** / **Keep in tray** (Windows and Linux) | Both off by default. Keep in tray lets the music keep playing after you close the window; quit from the tray icon. |
 | **Sync** (under the lyrics) | Shifts timed lyrics earlier or later if they drift. |
 | **Ad block** | On by default. |
 | **Cover filter** | Blurs explicit covers. |
@@ -207,3 +213,9 @@ No account, no tracking, nothing sent to us. Lyric lookups send only the **song 
 Made for personal use. Not affiliated with YouTube or Google.
 
 </div>
+
+---
+
+## Privacy note on translation
+
+Translating lyrics, or showing the app in a language that isn't bundled, sends the text to be translated (lyric lines or the app's own button labels, never your account or listening history) to the free Google Translate web endpoint, with MyMemory as a backup. Both are off until you choose a language. Nothing is sent while you use English with Translate lyrics off. The endpoint is unofficial, so it can change or rate-limit without notice; if it does, the text simply stays in the original language.

@@ -82,6 +82,14 @@
     btnFolder: $('#btnFolder'),
     btnAuto: $('#btnAuto'),
     btnRoman: $('#btnRoman'),
+    news: $('#news'),
+    newsBody: $('#newsBody'),
+    newsClose: $('#newsClose'),
+    rowLang: $('#rowLang'),
+    rowTrans: $('#rowTrans'),
+    selLang: $('#selLang'),
+    selTrans: $('#selTrans'),
+    btnClearTr: $('#btnClearTr'),
     btnStartup: $('#btnStartup'),
     btnTray: $('#btnTray'),
     btnSide: $('#btnSide'),
@@ -241,7 +249,7 @@
   els.btnMenu.addEventListener('click', () => { if (els.menuPanel.hidden) { openMenu(); const f = [...els.menuPanel.querySelectorAll('button')].find((b) => b.offsetParent !== null); if (f && window.__lpTv) f.focus(); } else closeMenu(); });
   els.menuPanel.addEventListener('click', (e) => { // choices that open something close the menu; the on/off switches stay so several can be flipped
     const b = e.target.closest('button');
-    if (b && !/^(btnAds|btnCover|btnRoman|btnAuto|btnSide|btnStartup|btnTray)$/.test(b.id)) closeMenu();
+    if (b && !/^(btnAds|btnCover|btnRoman|btnAuto|btnSide|btnStartup|btnTray|btnClearTr)$/.test(b.id)) closeMenu();
   });
   document.addEventListener('pointerdown', (e) => { if (!els.menuPanel.hidden && !e.target.closest('.menu-wrap')) closeMenu(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && closeMenu(true)) e.stopPropagation(); }, true);
@@ -258,8 +266,23 @@
     updateInfo = info;
     els.btnUpdate.hidden = false;
   }
-  els.btnUpdate.addEventListener('click', () => {
-    if (!updateInfo) return;
+  let canSelfUpdate = false;
+  let selfUpdating = false;
+  if (window.api.canSelfUpdate) {
+    window.api.canSelfUpdate().then((v) => { canSelfUpdate = v === true; if (canSelfUpdate) window.api.onUpdateProgress((pct) => { els.btnUpdate.textContent = pct >= 100 ? 'Restarting…' : `Updating… ${pct}%`; }); }).catch(() => {});
+  }
+  els.btnUpdate.addEventListener('click', async () => {
+    if (!updateInfo || selfUpdating) return;
+    if (canSelfUpdate) { // Windows .exe / Linux AppImage: replace this copy and restart
+      selfUpdating = true;
+      els.btnUpdate.textContent = 'Updating… 0%';
+      toast('Downloading the update. The app restarts by itself when it is ready.', 6000);
+      const r = await window.api.selfUpdate().catch(() => ({ ok: false }));
+      if (r && r.ok) return;
+      selfUpdating = false;
+      els.btnUpdate.textContent = 'Update available';
+      toast("Couldn't update in place, so the new file is downloading instead.", 6000);
+    }
     openLink(updateInfo.url);
     toast(window.__lpTv
       ? `New version: open github.com/${REPO}/releases/tag/latest and download LyricPlayer-TV.apk (the Downloader app works well).`
@@ -1112,6 +1135,7 @@
       els.lines.appendChild(p);
     });
     els.lyrics.scrollTop = 0;
+    maybeTranslate(); // only does anything when lyric translation is switched on
   }
 
   // A very long entry (a long Quran verse with its translation) would run past the lyrics area. It is shrunk until it
@@ -1459,6 +1483,73 @@
     });
   }
 
+  /* ---------- app language and lyric translation ---------- */
+  const I18N = window.I18N || null;
+  const LANG_UI = !!I18N && !window.__lpTv; // (the TV remote can't drive a drop-down)
+  const TR_KEY = 'lp.tr';
+  const TR_MAX = 900000; // characters kept on the device: about 1 MB, oldest songs dropped first
+  let trSeq = 0;
+  const hashText = (str) => { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h * 33) ^ str.charCodeAt(i)) >>> 0; return h.toString(36) + '-' + str.length.toString(36); };
+  function trLoad() { try { const v = JSON.parse(localStorage.getItem(TR_KEY)); return v && Array.isArray(v.order) && v.map ? v : { order: [], map: {} }; } catch (_) { return { order: [], map: {} }; } }
+  function trGet(key) { const v = trLoad().map[key]; return Array.isArray(v) ? v : null; }
+  function trPut(key, lines) {
+    const c = trLoad();
+    if (!c.map[key]) c.order.push(key);
+    c.map[key] = lines;
+    let json = JSON.stringify(c);
+    while (json.length > TR_MAX && c.order.length > 1) { delete c.map[c.order.shift()]; json = JSON.stringify(c); }
+    try { localStorage.setItem(TR_KEY, json); } catch (_) { /* storage full or blocked: it just won't be remembered */ }
+  }
+  function clearTranslationLines() { els.lines.querySelectorAll('.line[data-tr]').forEach((p) => p.removeAttribute('data-tr')); }
+  async function maybeTranslate() {
+    const target = state.transTarget;
+    const data = state.lyricsData;
+    if (!target || !data || !data.lines.length || !window.api.translateTexts) return;
+    const texts = data.lines.map((l) => l.text.replace(/[\r\n\u2028\u2029]+/g, ' ').trim());
+    const key = target + ':' + hashText(texts.join('\n'));
+    const seq = ++trSeq;
+    let lines = trGet(key);
+    if (!lines) {
+      const r = await window.api.translateTexts({ texts, target }).catch(() => null);
+      if (seq !== trSeq) return;
+      if (!r || !Array.isArray(r.lines)) { toast("Couldn't translate these lyrics right now."); return; }
+      lines = r.lines.map((x) => String(x || ''));
+      trPut(key, lines);
+    }
+    if (seq !== trSeq || state.lyricsData !== data) return;
+    const same = (a, b) => a.replace(/\W+/g, '').toLowerCase() === b.replace(/\W+/g, '').toLowerCase();
+    els.lines.querySelectorAll('.line').forEach((p) => {
+      const i = Number(p.dataset.i);
+      const tr = lines[i];
+      if (tr && texts[i] && !same(tr, texts[i])) p.dataset.tr = tr; else p.removeAttribute('data-tr');
+    });
+  }
+  if (LANG_UI) {
+    for (const [code, name] of I18N.LANGS) els.selLang.add(new Option(name, code));
+    els.selTrans.add(new Option('Off', ''));
+    for (const [code, name] of I18N.LANGS) els.selTrans.add(new Option(name, code));
+    els.rowLang.hidden = false;
+    els.rowTrans.hidden = false;
+    els.btnClearTr.hidden = false;
+    els.selLang.addEventListener('change', async () => {
+      const code = els.selLang.value;
+      window.api.setSettings({ uiLang: code });
+      await I18N.set(code);
+      if (code !== 'en' && I18N.couldntFetch()) toast("Couldn't download this language right now. Connect to the internet and pick it again.", 6000);
+    });
+    els.selTrans.addEventListener('change', () => {
+      state.transTarget = els.selTrans.value;
+      window.api.setSettings({ translateTo: state.transTarget });
+      trSeq += 1;
+      clearTranslationLines();
+      if (state.transTarget) maybeTranslate();
+    });
+    els.btnClearTr.addEventListener('click', () => {
+      I18N.clearCache();
+      toast('Saved translations cleared.');
+    });
+  }
+
   function applyAuto() {
     els.btnAuto.textContent = state.autoFetch ? 'Auto lyrics: on' : 'Auto lyrics: off';
   }
@@ -1481,8 +1572,37 @@
 
   /* ---------- start ---------- */
 
+  /* ---------- what's new: once, the first time a newer version is opened ---------- */
+  function showNews(lastSeen) {
+    const desktop = !!(window.api && window.api.desktop);
+    const entries = (window.__whatsnew || []).filter((e) => e.id > lastSeen).slice(0, 4);
+    els.newsBody.textContent = '';
+    let any = false;
+    for (const e of entries) {
+      const items = (e.items || []).filter((i) => !i.desktop || desktop);
+      if (!items.length) continue;
+      any = true;
+      if (entries.length > 1) { const h = document.createElement('h3'); h.textContent = e.title || ''; els.newsBody.appendChild(h); }
+      const ul = document.createElement('ul');
+      for (const i of items) { const li = document.createElement('li'); li.textContent = i.text; ul.appendChild(li); }
+      els.newsBody.appendChild(ul);
+    }
+    if (!any) return;
+    els.news.hidden = false;
+    els.newsClose.focus();
+  }
+  els.newsClose.addEventListener('click', () => { els.news.hidden = true; });
+  els.news.addEventListener('keydown', (e) => { if (e.key === 'Escape') els.news.hidden = true; });
+
   async function init() {
     const settings = (await window.api.getSettings()) || {};
+    // A brand-new install has nothing to compare with, so it stays quiet; anyone updating sees what changed.
+    const newest = (window.__whatsnew && window.__whatsnew[0] && window.__whatsnew[0].id) || 0;
+    const lastSeen = Number(settings.lastSeenNews) || 0;
+    if (newest && newest > lastSeen) {
+      window.api.setSettings({ lastSeenNews: newest });
+      if (Object.keys(settings).length > 0) setTimeout(() => showNews(lastSeen), 2500);
+    }
     state.volume = Number.isFinite(settings.volume) ? settings.volume : 80;
     state.autoFetch = settings.autoFetch !== false;
     state.adBlock = settings.adBlock !== false;
@@ -1494,6 +1614,13 @@
     applyAuto();
     state.romanize = settings.romanize !== false;
     applyRoman();
+    state.transTarget = LANG_UI && typeof settings.translateTo === 'string' ? settings.translateTo : '';
+    if (LANG_UI) {
+      els.selTrans.value = state.transTarget;
+      const ui = typeof settings.uiLang === 'string' ? settings.uiLang : 'en';
+      els.selLang.value = I18N.LANGS.some((l) => l[0] === ui) ? ui : 'en';
+      if (els.selLang.value !== 'en') I18N.set(els.selLang.value);
+    }
     state.launchAtLogin = settings.launchAtLogin === true;
     state.keepInTray = settings.keepInTray === true;
     applyDesktopButtons();

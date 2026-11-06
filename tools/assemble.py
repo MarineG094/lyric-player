@@ -72,7 +72,7 @@ core = shim.replace('/*__CORE__*/', core_body)
 (out / 'android-core.js').write_text(core, encoding='utf8')
 
 # renderer files
-for name in ['lyrics.js', 'anyascii.js', 'romanize.js', 'palette.js', 'coverfilter.js', 'build-info.js', 'style.css']:
+for name in ['lyrics.js', 'anyascii.js', 'romanize.js', 'palette.js', 'coverfilter.js', 'build-info.js', 'whatsnew.js', 'i18n.js', 'style.css']:
     shutil.copy(src / 'renderer' / name, out / name)
 
 # The cover filter's AI check normally runs on the graphics chip, which depends on timers that Android freezes
@@ -114,6 +114,7 @@ app = app.replace(old_classify, new_classify, 1)
 (out / 'app.js').write_text(app, encoding='utf8')
 shutil.copy(src / 'quran.js', out / 'quran.js')
 shutil.copytree(src / 'renderer/vendor', out / 'vendor')
+shutil.copytree(src / 'renderer/lang', out / 'lang')
 shutil.copy(root / 'tools/android.css', out / 'android.css')
 
 html = (src / 'renderer/index.html').read_text(encoding='utf8')

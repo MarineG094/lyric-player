@@ -487,3 +487,22 @@ button.icon.play svg { width: 26px; height: 26px; }
 .saved-info { flex: 1 1 140px; min-width: 0; display: flex; flex-direction: column; font-size: 13px; }
 .saved-info strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 .saved-info span { opacity: .65; font-size: 12px; }
+
+/* ---------- what's new (shown once after an update) ---------- */
+.news { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 16px; background: rgba(10, 8, 6, 0.72); backdrop-filter: blur(6px); }
+.news[hidden] { display: none; }
+.news-card { width: min(520px, 100%); max-height: min(80vh, 640px); display: flex; flex-direction: column; gap: 14px; padding: 24px 24px 20px; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; }
+.news-card h2 { margin: 0; font-family: var(--serif); font-weight: 500; font-size: 24px; }
+.news-body { overflow: auto; min-height: 0; font-size: 15px; line-height: 1.45; }
+.news-body h3 { margin: 0 0 6px; font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--accent-2); }
+.news-body ul { margin: 0 0 14px; padding-inline-start: 20px; }
+.news-body li { margin: 0 0 8px; color: var(--text); }
+.news-card .solid { align-self: flex-end; }
+
+/* ---------- language and lyric translation ---------- */
+.menu-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 14px; font-size: 13.5px; }
+.menu-row[hidden] { display: none; }
+.menu-row span { color: var(--dim); white-space: nowrap; }
+.menu-row select { max-width: 150px; min-width: 0; padding: 5px 8px; font: inherit; color: var(--text); background: var(--bg-2); border: 1px solid var(--line); border-radius: 8px; }
+.lyrics .line[data-tr]::after { content: attr(data-tr); display: block; margin-top: .22em; font-size: .62em; font-weight: 400; line-height: 1.3; opacity: .72; }
+html[dir="rtl"] .controls, html[dir="rtl"] .seek-row, html[dir="rtl"] .transport { direction: ltr; }

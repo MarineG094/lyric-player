@@ -156,6 +156,7 @@
       return { file: fileName };
     },
     fetchLyrics: (payload) => handlers['lyrics:fetch'](null, payload),
+    translateTexts: (payload) => handlers['text:translate'](null, payload),
     chooseLyricsFolder: async () => null,
     setAdBlock: (on) => handlers['adblock:set'](null, on),
     getThumb: async (url) => {

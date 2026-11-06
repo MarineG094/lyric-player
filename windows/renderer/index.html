@@ -27,6 +27,9 @@
             <button id="btnSide" type="button" title="Switch the album cover between the right and left side">Album: right</button>
             <button id="btnStartup" type="button" title="Start Lyric Player when you sign in to the computer" hidden>Launch at startup: off</button>
             <button id="btnTray" type="button" title="Closing the window keeps Lyric Player running in the tray. Quit from the tray icon." hidden>Keep in tray: off</button>
+            <label class="menu-row" id="rowLang" hidden><span>Language</span><select id="selLang" aria-label="Language"></select></label>
+            <label class="menu-row" id="rowTrans" hidden><span>Translate lyrics</span><select id="selTrans" aria-label="Translate lyrics"></select></label>
+            <button id="btnClearTr" type="button" title="Delete the saved translations from this device" hidden>Clear translations</button>
             <button id="btnCheckUpdate" type="button" title="Look for a newer version of the app">Check for updates</button>
             <button id="btnFolder" type="button" title="Open the folder where lyrics files live">Lyrics folder</button>
           </div>
@@ -155,7 +158,7 @@
           </div>
         </div>
         <p id="overlayMsg" class="msg" hidden></p>
-        <p class="fine">Playlists must be <strong>Public</strong> or <strong>Unlisted</strong>. Private ones can't be played here. Albums and single songs work with their normal share links. Public Spotify, Deezer and SoundCloud playlist links work too: the songs are matched on YouTube Music, and any that aren't found are listed.</p>
+        <p class="fine">Playlists must be Public or Unlisted. Private ones can't be played here. Albums and single songs work with their normal share links. Public Spotify, Deezer and SoundCloud playlist links work too: the songs are matched on YouTube Music, and any that aren't found are listed.</p>
         <button id="btnCloseOverlay" class="ghost small" type="button" hidden>Close</button>
       </div>
     </div>
@@ -169,6 +172,13 @@
         <button id="importClose" class="ghost small" type="button" hidden>Close</button>
       </div>
     </div>
+    <div id="news" class="news" role="dialog" aria-modal="true" aria-labelledby="newsTitle" hidden>
+      <div class="news-card">
+        <h2 id="newsTitle">What's new</h2>
+        <div id="newsBody" class="news-body"></div>
+        <button id="newsClose" class="solid" type="button">Got it</button>
+      </div>
+    </div>
     <div id="toast" class="toast" role="status" hidden></div>
   </div>
 
@@ -178,6 +188,8 @@
   <script src="romanize.js"></script>
   <script src="palette.js"></script>
   <script src="coverfilter.js"></script>
+  <script src="whatsnew.js"></script>
+  <script src="i18n.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
