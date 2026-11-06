@@ -49,6 +49,7 @@ button.icon:hover { background: transparent; }
   .lines { padding: 30vh 8px 40vh 0; }
   .line { font-size: clamp(18px, 3.2vw, 26px); }
   .dock { padding-bottom: 6px; gap: 4px; }
+  .album-col > .upnext { max-width: 100%; margin-top: 0; flex: none; }
 }
 
 /* Full screen (phone): the top bar goes, the controls fade after a few seconds, a tap brings them back with an Exit button. */
@@ -60,8 +61,10 @@ button.icon:hover { background: transparent; }
 #app.immersive { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
 @media (orientation: landscape) and (max-height: 560px) {
   #app.immersive .album-col { justify-content: center; align-items: center; height: 100%; text-align: center; }
-  #app.immersive .album-box { width: min(100%, 52vh); }
+  #app.immersive .album-col { padding-bottom: 104px; gap: 4px; }
+  #app.immersive .album-box { width: min(100%, 38vh); }
   #app.immersive .meta { text-align: center; }
+  #app.immersive.idle .album-col { padding-bottom: 0; }
   #app.immersive .stage { padding-top: 2px; padding-bottom: 2px; }
 }
 

@@ -617,6 +617,20 @@
 
   // The tiny "Up next" line at the bottom: cover, title and artist of the song that plays after this one.
   let upNextId = '';
+  // Phone in landscape: the strip sits under the title on the album side so it never covers the Sync row.
+  (function placeUpNext() {
+    if (!document.querySelector('link[href="android.css"]') || !window.matchMedia) return;
+    const mq = window.matchMedia('(orientation: landscape) and (max-height: 560px)');
+    const home = els.upNext.parentElement;
+    const move = () => {
+      const col = document.querySelector('.album-col');
+      if (!col) return;
+      if (mq.matches) { if (els.upNext.parentElement !== col) col.appendChild(els.upNext); }
+      else if (els.upNext.parentElement !== home) home.appendChild(els.upNext);
+    };
+    move();
+    if (mq.addEventListener) mq.addEventListener('change', move); else if (mq.addListener) mq.addListener(move);
+  })();
   function paintNext(s) {
     const n = s && s.hasMedia && !s.ad ? s.next : null;
     if (!n || (!n.title && !n.thumb)) { els.upNext.hidden = true; upNextId = ''; return; }

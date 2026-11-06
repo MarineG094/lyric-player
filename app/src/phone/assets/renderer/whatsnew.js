@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 4,
+    title: 'Up next moved',
+    items: [
+      { text: 'In landscape on the phone, the Up next strip now sits under the album and title on the left, so it no longer covers the Sync buttons.', mobile: true },
+    ],
+  },
+  {
     id: 3,
     title: 'What\'s new button',
     items: [
