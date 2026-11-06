@@ -70,9 +70,9 @@ class MainActivity : Activity() {
     fun showBrowse(on: Boolean) {
         Hub.ui?.visibility = if (on) View.INVISIBLE else View.VISIBLE
         back.visibility = if (on) View.VISIBLE else View.GONE
-        // On a TV stick the hidden YouTube Music page is kept small (it sits under the player screen anyway), so the
-        // stick doesn't draw a full-size copy of the website all the time. Full size only while you are looking at it.
-        if (resources.getBoolean(R.bool.is_tv)) {
+        // The hidden YouTube Music page is kept small on phones and TVs (it sits under the player screen anyway), so the
+        // device doesn't draw a full-size copy of the website all the time. Full size only while you are looking at it.
+        run {
             val lp = ytLayer.layoutParams
             lp.width = if (on) ViewGroup.LayoutParams.MATCH_PARENT else 480
             lp.height = if (on) ViewGroup.LayoutParams.MATCH_PARENT else 270

@@ -154,6 +154,11 @@ const probeScript = (desiredVolume, blockAds, wantId) => `(() => {
       qc.wantMeta = wantVid ? metaOf(items.find((i) => i.data && i.data.videoId === wantVid)) : null;
       qc.nextMeta = ci >= 0 ? metaOf(items[ci + 1]) : null;
     }
+    // Nobody watches the video (only the sound matters), so ask the page for its smallest picture, once per song.
+    if (v && vid && window.__lpLowQ !== vid) {
+      window.__lpLowQ = vid;
+      try { const mp = document.getElementById('movie_player'); if (mp && mp.setPlaybackQualityRange) mp.setPlaybackQualityRange('tiny', 'tiny'); } catch (_) { /* the page changed: skip */ }
+    }
     const items = { length: qc.n };
     const curIdx = qc.curIdx;
     const wantMeta = qc.wantMeta;
