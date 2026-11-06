@@ -83,6 +83,7 @@
     btnAuto: $('#btnAuto'),
     btnRoman: $('#btnRoman'),
     menuVersion: $('#menuVersion'),
+    btnWhatsNew: $('#btnWhatsNew'),
     news: $('#news'),
     newsBody: $('#newsBody'),
     newsClose: $('#newsClose'),
@@ -1590,9 +1591,11 @@
   /* ---------- start ---------- */
 
   /* ---------- what's new: once, the first time a newer version is opened ---------- */
-  function showNews(lastSeen) {
+  // lastSeen = the newest note already read (everything newer is shown); latestOnly = just the newest update's note, for the Menu button.
+  function showNews(lastSeen, latestOnly) {
     const desktop = !!(window.api && window.api.desktop);
-    const entries = (window.__whatsnew || []).filter((e) => e.id > lastSeen).slice(0, 4);
+    const all = window.__whatsnew || [];
+    const entries = latestOnly ? all.slice(0, 1) : all.filter((e) => e.id > lastSeen).slice(0, 4);
     els.newsBody.textContent = '';
     let any = false;
     for (const e of entries) {
@@ -1609,6 +1612,7 @@
     els.newsClose.focus();
   }
   if (window.__build && window.__build.version) { els.menuVersion.textContent = 'Version ' + window.__build.version; els.menuVersion.hidden = false; }
+  els.btnWhatsNew.addEventListener('click', () => showNews(0, true));
   els.newsClose.addEventListener('click', () => { els.news.hidden = true; });
   els.news.addEventListener('keydown', (e) => { if (e.key === 'Escape') els.news.hidden = true; });
 

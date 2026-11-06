@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 3,
+    title: 'What\'s new button',
+    items: [
+      { text: 'A What\'s new button in the Menu. It reopens the note for the latest update any time, showing only what changed in it.' },
+    ],
+  },
+  {
     id: 2,
     title: 'Battery and version numbers',
     items: [
