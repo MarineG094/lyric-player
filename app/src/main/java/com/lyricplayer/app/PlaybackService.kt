@@ -120,6 +120,27 @@ class PlaybackService : MediaBrowserServiceCompat() {
             notifKey = key
             lastPlaying = np.playing
             refreshNotification()
+            if (np.playing) {
+                idleHandler.removeCallbacks(stepDown)
+                if (!started) {
+                    try {
+                        ServiceCompat.startForeground(this, NOTIF_ID, notification(np), ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
+                        started = true
+                    } catch (_: Exception) { /* Android only lets this happen from the app, notification or headset; the next press will */ }
+                }
+            } else {
+                idleHandler.removeCallbacks(stepDown)
+                idleHandler.postDelayed(stepDown, 5 * 60 * 1000L)
+            }
+        }
+    }
+
+    // Paused for 5 minutes: stop counting as an "active app" (the notification stays, and playing again brings it back).
+    private val idleHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val stepDown = Runnable {
+        if (lastPlaying == false && started) {
+            ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_DETACH)
+            started = false
         }
     }
 

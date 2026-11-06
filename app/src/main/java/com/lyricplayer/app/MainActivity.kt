@@ -135,6 +135,8 @@ class MainActivity : Activity() {
     override fun onStart() {
         super.onStart()
         Hub.visible = true
+        // The service steps down from "active app" while music stays paused for a while; opening the app brings it back.
+        try { ContextCompat.startForegroundService(this, Intent(this, PlaybackService::class.java)) } catch (_: Exception) { }
     }
 
     override fun onStop() {

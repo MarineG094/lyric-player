@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 7,
+    title: 'No more "active app" when paused',
+    items: [
+      { text: 'After music has been paused for 5 minutes, the app no longer shows up under Android\'s Active apps. Pressing play brings it back.', mobile: true },
+    ],
+  },
+  {
     id: 6,
     title: 'Fix for freezing after long playback',
     items: [
