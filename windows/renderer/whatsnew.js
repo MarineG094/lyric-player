@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 8,
+    title: 'Home screen widgets',
+    items: [
+      { text: 'Two widgets for your phone\'s home screen: a small one with the song and play, previous and next buttons, and a larger one that also shows the current lyric line. Long-press your home screen, tap Widgets, then find Lyric Player.', mobile: true },
+    ],
+  },
+  {
     id: 7,
     title: 'No more "active app" when paused',
     items: [

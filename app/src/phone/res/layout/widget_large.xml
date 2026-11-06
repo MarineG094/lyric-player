@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/w_root" android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="@drawable/widget_bg" android:orientation="vertical" android:padding="12dp">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+        <ImageView android:id="@+id/w_art" android:layout_width="56dp" android:layout_height="56dp" android:scaleType="centerCrop" android:src="@mipmap/ic_launcher" />
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:paddingStart="12dp" android:paddingEnd="4dp">
+            <TextView android:id="@+id/w_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="end" android:textColor="#F1E6D8" android:textSize="15sp" android:textStyle="bold" android:text="Lyric Player" />
+            <TextView android:id="@+id/w_artist" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="end" android:textColor="#A89A8A" android:textSize="12sp" android:text="Tap to open" />
+        </LinearLayout>
+    </LinearLayout>
+    <TextView android:id="@+id/w_lyric" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:gravity="center_vertical" android:maxLines="3" android:ellipsize="end" android:paddingTop="6dp" android:paddingBottom="2dp" android:textColor="#E0B48A" android:textSize="17sp" android:text="" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center">
+        <ImageButton android:id="@+id/w_prev" android:layout_width="48dp" android:layout_height="40dp" android:background="@null" android:src="@android:drawable/ic_media_previous" android:contentDescription="Previous" />
+        <ImageButton android:id="@+id/w_play" android:layout_width="56dp" android:layout_height="44dp" android:background="@null" android:src="@android:drawable/ic_media_play" android:contentDescription="Play or pause" />
+        <ImageButton android:id="@+id/w_next" android:layout_width="48dp" android:layout_height="40dp" android:background="@null" android:src="@android:drawable/ic_media_next" android:contentDescription="Next" />
+    </LinearLayout>
+</LinearLayout>

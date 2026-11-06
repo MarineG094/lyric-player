@@ -171,6 +171,16 @@ class PlaybackService : MediaBrowserServiceCompat() {
     /** The line being sung moves into the title slot, so it shows on the car screen and lock screen. */
     fun lyricChanged() {
         Hub.last?.let { session.setMetadata(metadata(it)) }
+        LyricWidget.refresh(this)
+    }
+
+    private var widgetBmp: Bitmap? = null
+    private var widgetBmpSrc: Bitmap? = null
+    /** The cover at widget size (only while the cover filter allows it). */
+    fun widgetArt(): Bitmap? {
+        val a = art ?: return null
+        if (widgetBmpSrc !== a) { widgetBmp = LyricWidget.small(a); widgetBmpSrc = a }
+        return widgetBmp
     }
 
     private fun metadata(np: NowPlaying): MediaMetadataCompat {
@@ -249,6 +259,7 @@ class PlaybackService : MediaBrowserServiceCompat() {
     }
 
     private fun refreshNotification() {
+        LyricWidget.refresh(this)
         if (!started) return
         try {
             getSystemService(NotificationManager::class.java).notify(NOTIF_ID, notification(Hub.last))

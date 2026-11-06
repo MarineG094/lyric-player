@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_small">Lyric Player (small)</string>
+    <string name="widget_large">Lyric Player (with lyrics)</string>
+    <string name="widget_desc">Now playing with play, previous and next.</string>
+</resources>
