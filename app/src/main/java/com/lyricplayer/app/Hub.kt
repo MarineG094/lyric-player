@@ -11,6 +11,7 @@ import android.webkit.CookieManager
 import android.webkit.JavascriptInterface
 import android.webkit.JsResult
 import android.webkit.PermissionRequest
+import android.webkit.RenderProcessGoneDetail
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -91,25 +92,59 @@ object Hub {
         appCtx = app
         if (!::store.isInitialized) store = Store(app)
         AdBlock.enabled = store.adBlock()
-        if (ui == null) {
-            uiCtx = MutableContextWrapper(app)
-            ytCtx = MutableContextWrapper(app)
-            yt = buildYt(ytCtx!!)
-            ui = buildUi(uiCtx!!)
-            yt!!.loadUrl(YT_URL)
-            ui!!.loadUrl(UI_URL)
-        }
+        uiParentV = uiParent
+        ytParentV = ytParent
+        if (uiCtx == null) uiCtx = MutableContextWrapper(app)
+        if (ytCtx == null) ytCtx = MutableContextWrapper(app)
+        buildMissing()
         uiCtx!!.setBaseContext(activity)
         ytCtx!!.setBaseContext(activity)
-        (yt!!.parent as? ViewGroup)?.removeView(yt)
-        (ui!!.parent as? ViewGroup)?.removeView(ui)
-        ytParent.addView(yt, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
-        uiParent.addView(ui, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
-        ui!!.requestFocus()
+        mount()
+        ui?.requestFocus()
         if (!ticking) { ticking = true; main.post(tick) }
     }
 
+    private var uiParentV: ViewGroup? = null
+    private var ytParentV: ViewGroup? = null
+
+    private fun buildMissing() {
+        if (yt == null) { yt = buildYt(ytCtx!!); yt!!.loadUrl(YT_URL) }
+        if (ui == null) { ui = buildUi(uiCtx!!); ui!!.loadUrl(UI_URL) }
+    }
+
+    private fun mount() {
+        val y = yt; val u = ui
+        val yp = ytParentV; val up = uiParentV
+        if (y != null && yp != null) {
+            (y.parent as? ViewGroup)?.removeView(y)
+            yp.addView(y, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+        }
+        if (u != null && up != null) {
+            (u.parent as? ViewGroup)?.removeView(u)
+            up.addView(u, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+        }
+    }
+
+    /** Android ended a page's renderer (low memory, or a long time in the background). Without this the whole app crashes
+     *  or freezes; instead the dead page is thrown away and a fresh one loads in its place. */
+    fun recover(dead: WebView) {
+        main.post {
+            (dead.parent as? ViewGroup)?.removeView(dead)
+            try { dead.destroy() } catch (_: Exception) { }
+            if (dead === yt) yt = null
+            if (dead === ui) ui = null
+            if (::appCtx.isInitialized && uiCtx != null && ytCtx != null) {
+                buildMissing()
+                mount()
+                ui?.requestFocus()
+                activity?.showBrowse(browsing)
+            }
+        }
+    }
+
     fun detach() {
+        uiParentV = null
+        ytParentV = null
         (yt?.parent as? ViewGroup)?.removeView(yt)
         (ui?.parent as? ViewGroup)?.removeView(ui)
         uiCtx?.setBaseContext(appCtx)
@@ -180,6 +215,8 @@ object Hub {
                 loader.shouldInterceptRequest(request.url)
 
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean = true
+
+            override fun onRenderProcessGone(view: WebView, detail: RenderProcessGoneDetail): Boolean { recover(view); return true }
         }
         w.addJavascriptInterface(Bridge(), "LPNative")
         WebView.setWebContentsDebuggingEnabled(true)
@@ -229,6 +266,8 @@ object Hub {
                 }
                 return null
             }
+
+            override fun onRenderProcessGone(view: WebView, detail: RenderProcessGoneDetail): Boolean { recover(view); return true }
 
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 val u = request.url

@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 6,
+    title: 'Fix for freezing after long playback',
+    items: [
+      { text: 'If Android shuts down the hidden YouTube Music page after a long time in the background, the app now rebuilds it instead of freezing or crashing. Music may need one tap to start again.', mobile: true },
+    ],
+  },
+  {
     id: 5,
     title: 'Closing the app',
     items: [
