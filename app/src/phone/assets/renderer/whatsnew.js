@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 5,
+    title: 'Closing the app',
+    items: [
+      { text: 'Swiping the app away from your recent apps now closes it completely: the music stops, the notification goes, and the next time you open it starts fresh.', mobile: true },
+    ],
+  },
+  {
     id: 4,
     title: 'Up next moved',
     items: [

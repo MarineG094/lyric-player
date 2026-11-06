@@ -72,6 +72,16 @@ class PlaybackService : MediaBrowserServiceCompat() {
         return START_STICKY
     }
 
+    // Swiped away from the recent apps: really close. Pause, drop the notification, stop the service and end the process
+    // (so the hidden YouTube page and the player are gone and the next launch starts fresh).
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        Hub.command("pause")
+        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+        stopSelf()
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ android.os.Process.killProcess(android.os.Process.myPid()) }, 400)
+        super.onTaskRemoved(rootIntent)
+    }
+
     override fun onDestroy() {
         if (Hub.service === this) Hub.service = null
         session.isActive = false
