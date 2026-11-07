@@ -145,16 +145,10 @@ function createWindow(startHidden) {
   // With "keep in tray" on, the close button only hides the window; the tray menu's Quit really exits.
   win.on('close', (event) => {
     if (quitting) return;
-    const st = loadSettings();
-    if (st.keepInTray === true) {
-      if (!tray) return; // no tray on this system: close normally
-      event.preventDefault();
-      hideToTray();
-      return;
-    }
-    if (st.askOnClose === false) return; // "Close for good" was chosen with "Don't ask again"
+    const what = closeDecision(loadSettings(), !!tray);
+    if (what === 'quit') return;
     event.preventDefault();
-    askBeforeClosing();
+    if (what === 'tray') hideToTray(); else askBeforeClosing();
   });
   win.on('session-end', () => { quitting = true; });
   win.on('enter-full-screen', () => win && win.webContents.send('app:fullscreen', true));
@@ -1759,6 +1753,13 @@ let tray = null;
 let quitting = false;
 let closePromptOpen = false;
 
+// What the close button does: ask (the default, even with the tray switch on, because people forget it is on), or the answer
+// remembered with "Don't ask again": hide to the tray, or quit.
+function closeDecision(st, hasTray) {
+  if (st.askOnClose !== false) return 'ask';
+  return st.keepInTray === true && hasTray ? 'tray' : 'quit';
+}
+
 function hideToTray() {
   if (!win || win.isDestroyed()) return;
   if (win.isFullScreen()) win.setFullScreen(false);
@@ -1781,10 +1782,10 @@ async function askBeforeClosing() {
     if (r.response === 0) {
       applyTray(true);
       if (!tray) { dialog.showErrorBox('No tray here', "This system doesn't show tray icons, so Lyric Player can't stay in the tray."); return; }
-      if (r.checkboxChecked) { const next = { ...loadSettings(), keepInTray: true }; saveSettings(next); notifySettings(next); }
+      if (r.checkboxChecked) { const next = { ...loadSettings(), keepInTray: true, askOnClose: false }; saveSettings(next); notifySettings(next); }
       hideToTray();
     } else {
-      if (r.checkboxChecked) saveSettings({ ...loadSettings(), askOnClose: false });
+      if (r.checkboxChecked) { const next = { ...loadSettings(), keepInTray: false, askOnClose: false }; saveSettings(next); notifySettings(next); }
       quitting = true;
       app.quit();
     }

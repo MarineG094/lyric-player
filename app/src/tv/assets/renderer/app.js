@@ -1543,7 +1543,7 @@
       state.keepInTray = !state.keepInTray;
       applyDesktopButtons();
       window.api.setSettings({ keepInTray: state.keepInTray });
-      toast(state.keepInTray ? 'Closing the window now keeps Lyric Player running in the tray. Use the tray icon to quit.' : 'Closing the window asks whether to quit or keep Lyric Player in the tray.');
+      toast(state.keepInTray ? 'Tray icon on. Closing the window still asks whether to quit or keep Lyric Player in the tray.' : 'Tray icon off. Closing the window still asks whether to quit or keep Lyric Player in the tray.');
     });
     // The close question can switch "Keep in tray" on by itself: keep the button in step.
     if (window.api.onSettingsChanged) window.api.onSettingsChanged((s) => { state.keepInTray = !!(s && s.keepInTray === true); applyDesktopButtons(); });

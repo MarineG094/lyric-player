@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 14,
+    title: 'Close question every time',
+    items: [
+      { text: 'Closing the window now asks whether to keep Lyric Player in the tray or quit, even when Keep in tray is switched on, so a forgotten setting never surprises you. Tick "Don\'t ask again" if you want your choice remembered.', desktop: true },
+    ],
+  },
+  {
     id: 13,
     title: 'Closing the window, and full screen',
     items: [
