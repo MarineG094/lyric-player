@@ -4,6 +4,7 @@ contextBridge.exposeInMainWorld('api', {
   desktop: true, // Windows / Linux app: startup and tray options
   getSettings: () => ipcRenderer.invoke('settings:get'),
   setSettings: (patch) => ipcRenderer.invoke('settings:set', patch),
+  discordCover: (url, ok) => ipcRenderer.send('discord:cover', url, ok),
   mini: {
     toggle: () => ipcRenderer.invoke('mini:toggle'),
     lyrics: (d) => ipcRenderer.send('mini:lyrics', d),

@@ -845,6 +845,8 @@
     els.coverVeil.hidden = mode !== 'hidden';
     els.btnCoverToggle.hidden = !state.artUrl;
     els.btnCoverToggle.textContent = hidden ? 'Show cover' : 'Hide cover';
+    // Discord gets the cover only when it is on show and the filter (if on) is really running.
+    if (window.api && window.api.discordCover) window.api.discordCover(state.artUrl, mode === 'shown' && !(state.coverFilter && state.coverFailed));
   }
 
   async function evaluateCover(url) {

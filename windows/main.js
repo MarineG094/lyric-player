@@ -1406,6 +1406,8 @@ ipcMain.handle('saved:set', (_e, list) => {
   return true;
 });
 
+ipcMain.on('discord:cover', (_e, url, ok) => { Discord.setCover(typeof url === 'string' ? url : '', ok === true); });
+
 ipcMain.handle('settings:get', () => loadSettings());
 
 ipcMain.handle('settings:set', (_event, patch) => {

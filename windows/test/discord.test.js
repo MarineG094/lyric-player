@@ -67,3 +67,27 @@ test('answers a ping, and does nothing while switched off', async () => {
   assert.equal(f.sent[f.sent.length - 1].op, 4);
   d.stop();
 });
+
+test('cover: only the approved picture, only from YouTube image hosts', () => {
+  const { coverUrl } = require('../discord.js');
+  const art = 'https://lh3.googleusercontent.com/abc=w800-h800-l90-rj';
+  assert.equal(coverUrl(art), 'https://lh3.googleusercontent.com/abc=w512-h512');
+  assert.equal(coverUrl('https://evil.example/x.png'), '');
+  assert.equal(coverUrl('http://i.ytimg.com/vi/a/b.jpg'), '');
+  assert.equal(activityFor(song({ art }), 0).assets, undefined);                       // no approval: no picture
+  assert.equal(activityFor(song({ art }), 0, { key: art + 'x' }).assets, undefined);   // approval was for another song
+  assert.equal(activityFor(song({ art }), 0, { key: art }).assets.large_image, 'https://lh3.googleusercontent.com/abc=w512-h512');
+  assert.equal(activityFor(song({ art: 'https://evil.example/x' }), 0, { key: 'https://evil.example/x' }).assets, undefined);
+});
+
+test('cover approval arriving later changes the status; taking it away removes the picture', async () => {
+  const f = fakeDiscord(); let t = 9000000; const art = 'https://i.ytimg.com/vi/a/hq.jpg';
+  const d = createDiscord({ connect: f.connect, paths: ['x'], now: () => t });
+  d.start(); await tick(); f.say(1, { evt: 'READY' }); d.update(song({ art }));
+  const n = f.sent.length; assert.equal(f.sent[n - 1].data.args.activity.assets, undefined);
+  d.setCover(art, true); t += 16000; d.update(song({ art, cur: 26 }));
+  assert.equal(f.sent.length, n + 1); assert.ok(f.sent[n].data.args.activity.assets);
+  d.setCover(art, false); t += 16000; d.update(song({ art, cur: 42 }));
+  assert.equal(f.sent.length, n + 2); assert.equal(f.sent[n + 1].data.args.activity.assets, undefined);
+  d.stop();
+});

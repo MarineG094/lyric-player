@@ -33,9 +33,14 @@ function clip(s, fallback) {
 }
 
 // What the status should say for a player state, or null for "nothing" (no song, an ad).
-function activityFor(st, now) {
+// Only pictures from YouTube's own image hosts go out, and only the exact cover the app has approved for this song.
+const IMG_HOST = /^https:\/\/([a-z0-9-]+\.)*(googleusercontent\.com|ggpht\.com|ytimg\.com)\//i;
+function coverUrl(u) { u = String(u || ''); return IMG_HOST.test(u) ? u.replace(/=w\d+-h\d+[^"']*$/, '=w512-h512') : ''; }
+
+function activityFor(st, now, cover) {
   if (!st || !st.hasMedia || st.ad || !st.title) return null;
   const a = { type: 2, details: clip(st.title, 'Unknown song'), state: clip(st.artist, 'Unknown artist') };
+  if (cover && cover.key && cover.key === st.art && coverUrl(cover.key)) a.assets = { large_image: coverUrl(cover.key), large_text: 'Lyric Player' };
   if (st.playing && st.dur > 0) {
     const start = Math.round(now - (st.cur || 0) * 1000);
     a.timestamps = { start, end: Math.round(start + st.dur * 1000) };
@@ -50,7 +55,7 @@ function createDiscord(opts) {
   const clock = (opts && opts.now) || Date.now;
   let on = false, sock = null, ready = false, connecting = false, buf = Buffer.alloc(0);
   let want = null;            // the status we want shown (null = none)
-  let wantBase = '', dirty = false;
+  let wantBase = '', dirty = false, cover = null;
   let sentBase = '', sentAt = 0, sentStart = 0, pausedSince = 0;
   let retryTimer = null, sendTimer = null;
 
@@ -119,18 +124,20 @@ function createDiscord(opts) {
     update(st) {
       if (!on) return;
       const now = clock();
-      let a = activityFor(st, now);
+      let a = activityFor(st, now, cover);
       if (a && !a.timestamps) {
         if (!pausedSince) pausedSince = now;
         if (now - pausedSince > PAUSE_CLEAR_MS) a = null;
       } else pausedSince = 0;
-      const base = a ? `${a.details}|${a.state}|${a.timestamps ? 'play' : 'pause'}` : '';
+      const base = a ? `${a.details}|${a.state}|${a.timestamps ? 'play' : 'pause'}|${a.assets ? a.assets.large_image : ''}` : '';
       // a seek or a restart moves the song's start time by more than a few seconds
       const seeked = !!(a && a.timestamps && sentStart && Math.abs(a.timestamps.start - sentStart) > 4000);
       want = a; wantBase = base;
       dirty = base !== sentBase || seeked;
       flush(false);
     },
+    // The window says whether the cover for this picture may be shown (the cover filter has passed it).
+    setCover(url, ok) { cover = ok && url ? { key: String(url) } : null; },
     start() { if (on) return; on = true; open(); },
     stop() {
       if (!on) return;
@@ -145,4 +152,4 @@ function createDiscord(opts) {
   };
 }
 
-module.exports = { createDiscord, activityFor, frame, CLIENT_ID };
+module.exports = { createDiscord, activityFor, coverUrl, frame, CLIENT_ID };

@@ -33,7 +33,7 @@
 | 🪟 **Mini player (Windows)** | A small always-on-top pill with the cover, song and one rolling lyric line. |
 | 🔀 **Shuffle & repeat** | Real shuffle: no repeats until every song has played. |
 | 🌐 **Four lyric sources** | LRCLIB, then NetEase, then lyrics.ovh, plus Quran text for recitations. |
-| 💬 **Discord status (Windows, Linux)** | Optional **Discord status** switch in the Menu. When on, your Discord profile shows "Listening to Lyric Player" with the song and artist. Off until you turn it on; needs the Discord app open on the same computer. Only the song title and artist are sent, and only to Discord. |
+| 💬 **Discord status (Windows, Linux)** | Optional **Discord status** switch in the Menu. When on, your Discord profile shows "Listening to Lyric Player" with the song, artist and album cover (a hidden cover is never sent). Off until you turn it on; needs the Discord app open on the same computer. Only the song title, artist and cover picture link are sent, and only to Discord. |
 | 🖥️ **Startup and tray (Windows, Linux)** | Optional **Launch at startup** and **Keep in tray** switches in the Menu. Both are off until you turn them on. |
 | 🔄 **Updates in place (Windows installed or portable, Linux AppImage)** | **Update available** downloads the new version, checks it against its published checksum, replaces the app and restarts. Phone and TV still ask you to confirm the install. |
 | 📰 **What's new** | A short note shows once the first time you open an updated version (never on a fresh install). |

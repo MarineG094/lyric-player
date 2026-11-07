@@ -5,7 +5,7 @@ window.__whatsnew = [
     id: 16,
     title: 'Discord status',
     items: [
-      { text: 'New Menu switch, "Discord status". When it is on, your Discord profile shows "Listening to Lyric Player" with the song and artist while the Discord app is open. It is off until you turn it on.', desktop: true },
+      { text: 'New Menu switch, "Discord status". When it is on, your Discord profile shows "Listening to Lyric Player" with the song and artist with the album cover while the Discord app is open. Covers hidden by the cover filter are never sent. It is off until you turn it on.', desktop: true },
     ],
   },
   {
