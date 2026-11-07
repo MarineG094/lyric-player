@@ -55,6 +55,7 @@
 | | Minimum | Recommended | Notes |
 |---|---|---|---|
 | 💻 **Windows** | Windows 10 (64-bit), 4 GB RAM, about 200 MB free space | Windows 10/11, 8 GB RAM | Portable `.exe`, no install. |
+| 🐧 **Linux** | A 64-bit (x86_64) Debian or Ubuntu-based system such as Linux Mint, 4 GB RAM, about 200 MB free space | A current Mint or Ubuntu, 8 GB RAM | `.AppImage` (no install) or `.deb`. Made and tested on **Linux Mint**. Older systems may need `sudo apt install libfuse2` for the AppImage. |
 | 📲 **Android phone** | Android 8.0 (API 26) or newer, 3 GB RAM | Android 10+, 4 GB RAM | Keep **Android System WebView** (or Chrome) up to date from the Play Store. |
 | 📺 **Google TV / Android TV** | Android 8.0 or newer, 1.5 GB RAM, 1080p | A 4K stick or box with 2 GB+ RAM | Tested on the **onn. Full HD (1080p) streaming device** (1.5 GB RAM): it plays properly, with some lag. |
 | 🌐 **All** | An internet connection | | Playback, search and lyrics all come from the internet. |
