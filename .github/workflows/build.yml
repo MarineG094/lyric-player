@@ -77,7 +77,7 @@ jobs:
         run: |
           for f in windows/dist/Lyric-Player-*.exe; do sha256sum "$f" | cut -d' ' -f1 > "$f.sha256"; done
           gh release delete windows-latest --yes --cleanup-tag || true
-          gh release create windows-latest windows/dist/Lyric-Player-*.exe windows/dist/Lyric-Player-*.exe.sha256 --title "Lyric Player for Windows (latest)" --notes "Lyric-Player-Setup-<version>.exe is the installer (recommended): run it and follow the steps. Lyric-Player-<version>.exe is the portable app: download it and double-click, no install needed." --target "$GITHUB_SHA"
+          gh release create windows-latest windows/dist/Lyric-Player-*.exe windows/dist/Lyric-Player-*.exe.sha256 --title "Lyric Player for Windows (latest)" --notes "**Most people want the file with Setup in the name:** Lyric-Player-Setup-<version>.exe is the installer. Run it and follow the steps. Lyric-Player-<version>.exe (no Setup in the name) is the portable app: download it and double-click, no install needed." --target "$GITHUB_SHA"
 
   linux:
     runs-on: ubuntu-latest
