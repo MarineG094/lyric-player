@@ -22,7 +22,7 @@
   // Messages the app writes while it runs (the labels already on the page are found by scanning it).
   const UI_STRINGS = [
     'Ad block: off', 'Cover filter: off', 'Cover filter: on (not working)', 'English letters: off', 'Auto lyrics: off', 'Album: left', 'Fullscreen button: left',
-    'Launch at startup: on', 'Keep in tray: on', 'Edit lyrics', 'Hide cover', 'Back to lyrics', 'Unknown title', 'Playlist', 'YouTube Music playlist',
+    'Launch at startup: on', 'Keep in tray: on', 'Discord status: on', 'Discord status: off', 'Discord status on. Your song shows as "Listening to Lyric Player" while the Discord app is open.', 'Discord status off.', 'Edit lyrics', 'Hide cover', 'Back to lyrics', 'Unknown title', 'Playlist', 'YouTube Music playlist',
     'Lyrics will show here.', 'Looking for lyrics…', 'No lyrics yet for this song.', 'No lyrics found for this song.', 'No lyrics for this song yet.',
     "Couldn't find lyrics online for this song.", "Couldn't reach the lyrics service.", 'This one is listed as an instrumental.',
     'Check your internet connection. You can still click “Add lyrics” to paste them in.',

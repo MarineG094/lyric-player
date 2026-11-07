@@ -207,6 +207,7 @@ async function pollYt() {
     if (state) { learnMeta(state); state.next = computeNext(state); }
     if (win && !win.isDestroyed()) win.webContents.send('player:state', state);
     if (stateHook && state) stateHook(state);
+    Discord.update(state);
   } catch (_) {
     /* page is navigating; try again next tick */
   } finally {

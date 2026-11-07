@@ -5,6 +5,7 @@ const http = require('http');
 const Lyrics = require('./renderer/lyrics.js');
 const Quran = require('./quran.js');
 const Palette = require('./renderer/palette.js');
+const Discord = require('./discord.js').createDiscord();
 
 const RENDERER_DIR = path.join(__dirname, 'renderer');
 const PREFERRED_PORT = 47831;
@@ -379,6 +380,7 @@ async function pollYt() {
     if (state) { learnMeta(state); state.next = computeNext(state); }
     if (win && !win.isDestroyed()) win.webContents.send('player:state', state);
     if (stateHook && state) stateHook(state);
+    Discord.update(state);
   } catch (_) {
     /* page is navigating; try again next tick */
   } finally {
@@ -1412,6 +1414,7 @@ ipcMain.handle('settings:set', (_event, patch) => {
   saveSettings(next);
   if (patch && 'launchAtLogin' in patch) applyLaunchAtLogin(next.launchAtLogin === true);
   if (patch && 'keepInTray' in patch) applyTray(next.keepInTray === true);
+  if (patch && 'discordPresence' in patch) { if (next.discordPresence === true) Discord.start(); else Discord.stop(); }
   return next;
 });
 
@@ -1858,7 +1861,7 @@ function applyTray(on) {
   }
 }
 
-app.on('before-quit', () => { quitting = true; });
+app.on('before-quit', () => { quitting = true; Discord.stop(); });
 
 
 /* ---------- update in place (Windows portable .exe or installed copy, and Linux AppImage) ----------
@@ -1988,6 +1991,7 @@ app.whenReady().then(async () => {
 
   port = await startServer();
   if (st.keepInTray === true) applyTray(true);
+  if (st.discordPresence === true) Discord.start();
   if (st.launchAtLogin === true) applyLaunchAtLogin(true); // keeps the entry pointing at wherever the app is now
   createWindow(startedAtLogin && !!tray); // started by the system at login: stay in the tray if there is one
 

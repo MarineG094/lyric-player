@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 16,
+    title: 'Discord status',
+    items: [
+      { text: 'New Menu switch, "Discord status". When it is on, your Discord profile shows "Listening to Lyric Player" with the song and artist while the Discord app is open. It is off until you turn it on.', desktop: true },
+    ],
+  },
+  {
     id: 15,
     title: 'Phone: tidier sync and full screen buttons',
     items: [

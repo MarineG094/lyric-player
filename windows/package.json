@@ -6,7 +6,7 @@
   "private": true,
   "scripts": {
     "start": "electron .",
-    "test": "node --test test/lyrics.test.js test/quran.test.js test/romanize.test.js test/probe.test.js test/lang.test.js",
+    "test": "node --test test/lyrics.test.js test/quran.test.js test/romanize.test.js test/probe.test.js test/lang.test.js test/discord.test.js",
     "dist": "electron-builder --win portable nsis",
     "dist:linux": "electron-builder --linux"
   },
@@ -19,6 +19,7 @@
     "productName": "Lyric Player",
     "files": [
       "main.js",
+      "discord.js",
       "quran.js",
       "preload.js",
       "mini-preload.js",

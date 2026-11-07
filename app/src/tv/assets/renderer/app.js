@@ -94,6 +94,7 @@
     btnClearTr: $('#btnClearTr'),
     btnStartup: $('#btnStartup'),
     btnTray: $('#btnTray'),
+    btnDiscord: $('#btnDiscord'),
     btnSide: $('#btnSide'),
     btnFsSide: $('#btnFsSide'),
     dragVeil: $('#dragVeil'),
@@ -253,7 +254,7 @@
   els.btnMenu.addEventListener('click', () => { if (els.menuPanel.hidden) { openMenu(); const f = [...els.menuPanel.querySelectorAll('button')].find((b) => b.offsetParent !== null); if (f && window.__lpTv) f.focus(); } else closeMenu(); });
   els.menuPanel.addEventListener('click', (e) => { // choices that open something close the menu; the on/off switches stay so several can be flipped
     const b = e.target.closest('button');
-    if (b && !/^(btnAds|btnCover|btnRoman|btnAuto|btnSide|btnFsSide|btnStartup|btnTray|btnClearTr)$/.test(b.id)) closeMenu();
+    if (b && !/^(btnAds|btnCover|btnRoman|btnAuto|btnSide|btnFsSide|btnStartup|btnTray|btnDiscord|btnClearTr)$/.test(b.id)) closeMenu();
   });
   document.addEventListener('pointerdown', (e) => { if (!els.menuPanel.hidden && !e.target.closest('.menu-wrap')) closeMenu(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && closeMenu(true)) e.stopPropagation(); }, true);
@@ -1540,10 +1541,18 @@
   function applyDesktopButtons() {
     els.btnStartup.textContent = state.launchAtLogin ? 'Launch at startup: on' : 'Launch at startup: off';
     els.btnTray.textContent = state.keepInTray ? 'Keep in tray: on' : 'Keep in tray: off';
+    els.btnDiscord.textContent = state.discordPresence ? 'Discord status: on' : 'Discord status: off';
   }
   if (DESKTOP) {
     els.btnStartup.hidden = false;
     els.btnTray.hidden = false;
+    els.btnDiscord.hidden = false;
+    els.btnDiscord.addEventListener('click', () => {
+      state.discordPresence = !state.discordPresence;
+      applyDesktopButtons();
+      window.api.setSettings({ discordPresence: state.discordPresence });
+      toast(state.discordPresence ? 'Discord status on. Your song shows as "Listening to Lyric Player" while the Discord app is open.' : 'Discord status off.', 5000);
+    });
     els.btnStartup.addEventListener('click', () => {
       state.launchAtLogin = !state.launchAtLogin;
       applyDesktopButtons();
@@ -1704,6 +1713,7 @@
     }
     state.launchAtLogin = settings.launchAtLogin === true;
     state.keepInTray = settings.keepInTray === true;
+    state.discordPresence = settings.discordPresence === true;
     applyDesktopButtons();
     // Shuffle, repeat and the album side come back the way they were left.
     state.shuffle = settings.shuffle === true;
