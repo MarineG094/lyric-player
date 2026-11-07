@@ -4,7 +4,7 @@
 
 # Lyric Player
 
-**Your YouTube Music, with lyrics that scroll in time. Free, on Windows, Android, Android Auto and Google TV.**
+**Lyrics that scroll in time with the music. Search any song or bring your Spotify, Deezer and SoundCloud playlists. Free, no account, on Windows, Linux, Android, Android Auto and Google TV.**
 
 [![Build](https://github.com/NaqibC/lyric-player/actions/workflows/build.yml/badge.svg)](https://github.com/NaqibC/lyric-player/actions/workflows/build.yml)
 ![Windows](https://img.shields.io/badge/Windows-installer%20%2B%20portable-0078d4)
