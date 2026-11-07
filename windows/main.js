@@ -1815,16 +1815,23 @@ function applyTray(on) {
 app.on('before-quit', () => { quitting = true; });
 
 
-/* ---------- update in place (Windows portable .exe and Linux AppImage) ----------
+/* ---------- update in place (Windows portable .exe or installed copy, and Linux AppImage) ----------
    Downloads the newest build next to the running file, checks it against the checksum published with the release,
    swaps it in (the old one is kept as ".old" until the new one has started) and restarts. */
 const crypto = require('crypto');
+const os = require('os');
 const { spawn } = require('child_process');
 const RELEASES_URL = 'https://github.com/NaqibC/lyric-player/releases/';
 let updating = false;
 
+// Installed with the Windows setup program (it leaves an uninstaller beside the app).
+function installedWindows() {
+  try { return process.platform === 'win32' && app.isPackaged && !process.env.PORTABLE_EXECUTABLE_FILE && fs.existsSync(path.join(path.dirname(process.execPath), 'Uninstall Lyric Player.exe')); } catch (_) { return false; }
+}
+
 function selfUpdateTarget() {
-  if (process.platform === 'win32' && process.env.PORTABLE_EXECUTABLE_FILE) return { file: process.env.PORTABLE_EXECUTABLE_FILE, tag: 'windows-latest', pick: /\.exe$/i };
+  if (process.platform === 'win32' && process.env.PORTABLE_EXECUTABLE_FILE) return { file: process.env.PORTABLE_EXECUTABLE_FILE, tag: 'windows-latest', pick: /^Lyric-Player-(?!Setup).*\.exe$/i };
+  if (installedWindows()) return { installer: true, tag: 'windows-latest', pick: /^Lyric-Player-Setup-.*\.exe$/i };
   if (process.platform === 'linux' && process.env.APPIMAGE) return { file: process.env.APPIMAGE, tag: 'linux-latest', pick: /\.AppImage$/i };
   return null;
 }
@@ -1837,7 +1844,7 @@ ipcMain.handle('app:selfUpdate', async (e) => {
   if (updating) return { ok: false, error: 'busy' };
   updating = true;
   const send = (pct) => { try { e.sender.send('app:updateProgress', pct); } catch (_) { /* window gone */ } };
-  const tmp = T.file + '.new';
+  const tmp = T.installer ? path.join(os.tmpdir(), 'Lyric-Player-update.exe') : T.file + '.new';
   try {
     const rel = await jsonGet('GitHub', `https://api.github.com/repos/NaqibC/lyric-player/releases/tags/${T.tag}`, { Accept: 'application/vnd.github+json' }, 15000);
     const assets = (rel && rel.assets) || [];
@@ -1866,6 +1873,17 @@ ipcMain.handle('app:selfUpdate', async (e) => {
     }
     await new Promise((r, j) => { out.once('error', j); out.end(r); });
     if (got < 5 * 1024 * 1024 || hash.digest('hex') !== want) throw new Error('checksum mismatch');
+
+    if (T.installer) {
+      // Installed copy: run the new setup program quietly. It closes this copy, installs over it and starts the app again.
+      send(100);
+      const child = spawn(tmp, ['--updated', '/S', '--force-run'], { detached: true, stdio: 'ignore' });
+      child.unref();
+      quitting = true;
+      app.releaseSingleInstanceLock();
+      setTimeout(() => app.quit(), 400);
+      return { ok: true };
+    }
 
     // Swap: a running file can be renamed (both Windows and Linux allow it), so the old one is moved aside first.
     const old = T.file + '.old';
@@ -1900,7 +1918,7 @@ ipcMain.handle('app:selfUpdate', async (e) => {
 // The previous version is left beside the new one while the new one starts; once it is running it is not needed.
 function cleanupOldBuild() {
   const T = selfUpdateTarget();
-  if (!T) return;
+  if (!T || !T.file) return;
   for (const f of [T.file + '.old', T.file + '.new']) { try { fs.rmSync(f, { force: true }); } catch (_) { /* still in use: next start */ } }
 }
 

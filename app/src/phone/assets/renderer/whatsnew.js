@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 12,
+    title: 'Windows installer',
+    items: [
+      { text: 'Windows now has a setup program (Lyric-Player-Setup) with a short wizard: pick where to install, add a desktop shortcut, and start the app when it finishes. The portable .exe is still available. A copy installed this way updates itself from the Update button.', desktop: true },
+    ],
+  },
+  {
     id: 11,
     title: 'TV lyrics edge fix',
     items: [

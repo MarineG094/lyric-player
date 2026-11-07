@@ -7,7 +7,7 @@
 **Your YouTube Music, with lyrics that scroll in time. Free, on Windows, Android, Android Auto and Google TV.**
 
 [![Build](https://github.com/NaqibC/lyric-player/actions/workflows/build.yml/badge.svg)](https://github.com/NaqibC/lyric-player/actions/workflows/build.yml)
-![Windows](https://img.shields.io/badge/Windows-portable%20.exe-0078d4)
+![Windows](https://img.shields.io/badge/Windows-installer%20%2B%20portable-0078d4)
 ![Linux](https://img.shields.io/badge/Linux-AppImage%20%2F%20.deb-fcc624)
 ![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B-3ddc84)
 ![Android Auto](https://img.shields.io/badge/Android%20Auto-media%20app-4285f4)
@@ -34,7 +34,7 @@
 | 🔀 **Shuffle & repeat** | Real shuffle: no repeats until every song has played. |
 | 🌐 **Four lyric sources** | LRCLIB, then NetEase, then lyrics.ovh, plus Quran text for recitations. |
 | 🖥️ **Startup and tray (Windows, Linux)** | Optional **Launch at startup** and **Keep in tray** switches in the Menu. Both are off until you turn them on. |
-| 🔄 **Updates in place (Windows .exe, Linux AppImage)** | **Update available** downloads the new version, checks it against its published checksum, replaces the app and restarts. Phone and TV still ask you to confirm the install. |
+| 🔄 **Updates in place (Windows installed or portable, Linux AppImage)** | **Update available** downloads the new version, checks it against its published checksum, replaces the app and restarts. Phone and TV still ask you to confirm the install. |
 | 📰 **What's new** | A short note shows once the first time you open an updated version (never on a fresh install). |
 | 🌍 **App language** | Pick a language in the Menu (28 to choose from; Arabic, Urdu, Persian and Hebrew read right to left). Spanish, French, Arabic, Urdu and Bengali are bundled. The others are translated online once, then kept on the device (a few KB). Songs, artists and lyrics are never translated this way. Not on the TV app. |
 | 🈯 **Translate lyrics** | Off by default. Pick a language in the Menu to show a translation under each lyric line. Saved translations are capped at about 1 MB (oldest dropped first); **Clear translations** deletes them. Not on the TV app. |
@@ -54,7 +54,7 @@
 
 | | Minimum | Recommended | Notes |
 |---|---|---|---|
-| 💻 **Windows** | Windows 10 (64-bit), 4 GB RAM, about 200 MB free space | Windows 10/11, 8 GB RAM | Portable `.exe`, no install. |
+| 💻 **Windows** | Windows 10 (64-bit), 4 GB RAM, about 200 MB free space | Windows 10/11, 8 GB RAM | Installer (recommended) or a portable `.exe`. |
 | 🐧 **Linux** | A 64-bit (x86_64) Debian or Ubuntu-based system such as Linux Mint, 4 GB RAM, about 200 MB free space | A current Mint or Ubuntu, 8 GB RAM | `.AppImage` (no install) or `.deb`. Made and tested on **Linux Mint**. Older systems may need `sudo apt install libfuse2` for the AppImage. |
 | 📲 **Android phone** | Android 8.0 (API 26) or newer, 3 GB RAM | Android 10+, 4 GB RAM | Keep **Android System WebView** (or Chrome) up to date from the Play Store. |
 | 📺 **Google TV / Android TV** | Android 8.0 or newer, 1.5 GB RAM, 1080p | A 4K stick or box with 2 GB+ RAM | Tested on the **onn. Full HD (1080p) streaming device** (1.5 GB RAM): it plays properly, with some lag. |
@@ -69,8 +69,11 @@
 ## 💻 Windows
 
 1. Open the [**windows-latest release**](https://github.com/NaqibC/lyric-player/releases/tag/windows-latest).
-2. Download **`Lyric-Player-<version>.exe`** and double-click it. It is portable: no install.
+2. Download **`Lyric-Player-Setup-<version>.exe`** (recommended), run it, and follow the short wizard: choose where to install, add a desktop shortcut, and start the app when it finishes. It installs for your account only, so it doesn't ask for administrator rights. Windows may show a "protected your PC" notice because the app isn't signed: click **More info**, then **Run anyway**.
+   Prefer no install? Download **`Lyric-Player-<version>.exe`** instead and double-click it. It is portable.
 3. Click **Change music**, then search or paste a link.
+
+Either way, **Update available** replaces the app by itself. An installed copy runs the new setup quietly and restarts.
 
 **Shortcuts:** `Space` play/pause · `F11` full screen · `Ctrl+→ / ←` next / previous.
 

@@ -301,7 +301,7 @@
     const now = Date.now();
     if (!manual && st.updateCheckedAt && now - st.updateCheckedAt < 30 * 60 * 1000 && now >= st.updateCheckedAt) return;
     const tag = B.platform === 'windows' ? 'windows-latest' : B.platform === 'linux' ? 'linux-latest' : 'latest';
-    const want = B.platform === 'windows' ? /\.exe$/i : B.platform === 'linux' ? /\.deb$/i : B.platform === 'tv' ? /^LyricPlayer-TV\.apk$/i : /^LyricPlayer\.apk$/i;
+    const want = B.platform === 'windows' ? /^Lyric-Player-(?!Setup).*\.exe$/i : B.platform === 'linux' ? /\.deb$/i : B.platform === 'tv' ? /^LyricPlayer-TV\.apk$/i : /^LyricPlayer\.apk$/i;
     try {
       const rel = await window.api.latestRelease(tag);
       if (!rel) return say("Couldn't reach GitHub right now (or a new build is being published). Try again in a minute.");

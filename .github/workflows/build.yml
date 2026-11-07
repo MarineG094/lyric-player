@@ -57,7 +57,7 @@ jobs:
           V="1.0.$GITHUB_RUN_NUMBER"
           printf 'window.__build = { sha: "%s", platform: "windows", version: "%s" };\n' "$GITHUB_SHA" "$V" > windows/renderer/build-info.js
           (cd windows && npm version "$V" --no-git-tag-version --allow-same-version)
-      - name: Install, test, build the portable .exe
+      - name: Install, test, build the installer and the portable .exe
         working-directory: windows
         shell: bash
         env:
@@ -77,7 +77,7 @@ jobs:
         run: |
           for f in windows/dist/Lyric-Player-*.exe; do sha256sum "$f" | cut -d' ' -f1 > "$f.sha256"; done
           gh release delete windows-latest --yes --cleanup-tag || true
-          gh release create windows-latest windows/dist/Lyric-Player-*.exe windows/dist/Lyric-Player-*.exe.sha256 --title "Lyric Player for Windows (latest)" --notes "Lyric-Player-<version>.exe is the portable Windows app: download it and double-click. No install needed." --target "$GITHUB_SHA"
+          gh release create windows-latest windows/dist/Lyric-Player-*.exe windows/dist/Lyric-Player-*.exe.sha256 --title "Lyric Player for Windows (latest)" --notes "Lyric-Player-Setup-<version>.exe is the installer (recommended): run it and follow the steps. Lyric-Player-<version>.exe is the portable app: download it and double-click, no install needed." --target "$GITHUB_SHA"
 
   linux:
     runs-on: ubuntu-latest
