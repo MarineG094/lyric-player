@@ -765,6 +765,27 @@
   /* ---------- cover filter: hides explicit album covers ---------- */
 
   const coverVerdicts = new Map(); // cover key -> true (hide) / false (show)
+  // Verdicts are kept on the device, so a cover is only ever checked once (the check is the heaviest thing the app does).
+  const CV_KEY = 'lp.cv';
+  try {
+    const saved = JSON.parse(localStorage.getItem(CV_KEY) || '[]');
+    for (const [k, v] of saved) coverVerdicts.set(k, !!v);
+  } catch (_) { /* nothing saved yet */ }
+  function saveVerdicts() {
+    try {
+      while (coverVerdicts.size > 2500) coverVerdicts.delete(coverVerdicts.keys().next().value);
+      localStorage.setItem(CV_KEY, JSON.stringify([...coverVerdicts].map(([k, v]) => [k, v ? 1 : 0])));
+    } catch (_) { /* storage full or blocked */ }
+  }
+  // One check at a time (skipping through songs no longer piles them up), and covers already replaced are skipped.
+  let coverQueue = Promise.resolve();
+  function classifyQueued(url, key) {
+    const job = coverQueue.then(() => (state.coverKey !== key ? 'stale' : classifyCover(url))).catch(() => null);
+    coverQueue = job.then(() => undefined);
+    return job;
+  }
+  // If the check can't start, don't try to load it again for every cover: wait 10 minutes.
+  let classifierRetryAt = 0;
   let nsfwModel = null;
   let nsfwLoading = null;
   let nsfwFailedToastShown = false;
@@ -821,7 +842,8 @@
       return window.CoverFilter.shouldBlur(predictions);
     };
     const sleep = window.__lpSleep || ((ms) => new Promise((r) => setTimeout(r, ms)));
-    let result = await Promise.race([run(), sleep(7000).then(() => 'stalled')]);
+    // The first check also loads the AI (about 7 MB), which takes a while on a TV chip: give it much longer than a later check.
+    let result = await Promise.race([run(), sleep(nsfwModel ? 7000 : 45000).then(() => 'stalled')]);
     if (result === 'stalled') { // the graphics route froze (screen off): do it on the processor
       window.__nsfwCpu = true;
       result = await Promise.race([run(), sleep(40000).then(() => null)]);
@@ -850,16 +872,20 @@
 
     let verdict = coverVerdicts.get(key);
     if (verdict === undefined) {
+      if (Date.now() < classifierRetryAt) { setCoverMode('shown'); return; } // it failed a moment ago; covers show normally for now
       setCoverMode('checking'); // stays hidden until the check is done, so nothing flashes up
-      try { verdict = await classifyCover(url); } catch (err) { console.error('[cover filter]', err); verdict = null; }
+      try { verdict = await classifyQueued(url, key); } catch (err) { console.error('[cover filter]', err); verdict = null; }
+      if (verdict === 'stale') return;
       if (verdict === null || verdict === undefined) {
         // The filter itself failed: show the cover rather than hiding every cover, and say so once.
+        classifierRetryAt = Date.now() + 10 * 60 * 1000;
         if (!nsfwFailedToastShown) { nsfwFailedToastShown = true; toast("The cover filter couldn't start, so covers are shown normally. Use Hide cover on any cover you want hidden.", 7000); }
         state.coverFailed = true; // the button says so, so a filter that is quietly not running can be seen
         applyCoverFilterButton();
         verdict = false;
       } else {
         coverVerdicts.set(key, verdict);
+        saveVerdicts();
         if (state.coverFailed) { state.coverFailed = false; applyCoverFilterButton(); }
       }
     }

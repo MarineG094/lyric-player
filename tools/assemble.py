@@ -101,7 +101,8 @@ new_classify = '''  async function classifyCover(url) {
       return window.CoverFilter.shouldBlur(predictions);
     };
     const sleep = window.__lpSleep || ((ms) => new Promise((r) => setTimeout(r, ms)));
-    let result = await Promise.race([run(), sleep(7000).then(() => 'stalled')]);
+    // The first check also loads the AI (about 7 MB), which takes a while on a TV chip: give it much longer than a later check.
+    let result = await Promise.race([run(), sleep(nsfwModel ? 7000 : 45000).then(() => 'stalled')]);
     if (result === 'stalled') { // the graphics route froze (screen off): do it on the processor
       window.__nsfwCpu = true;
       result = await Promise.race([run(), sleep(40000).then(() => null)]);
