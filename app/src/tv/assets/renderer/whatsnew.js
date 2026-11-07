@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 9,
+    title: 'Smoother on Google TV',
+    items: [
+      { text: 'Lighter drawing on TV: the lyrics scroll and change lines with less work for the TV chip, with the same look.', mobile: true },
+    ],
+  },
+  {
     id: 8,
     title: 'Home screen widgets',
     items: [

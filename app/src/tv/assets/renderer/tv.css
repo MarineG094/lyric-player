@@ -38,7 +38,7 @@ input[type="range"]::-webkit-slider-thumb { width: 24px; height: 24px; margin-to
 
 /* Full screen: while the controls are hidden the lyrics and cover slide down to the middle of the TV,
    and slide back up when the controls return. (--dockH is the height of the control bar, set by tv.js.) */
-.stage { transition: grid-template-columns 0.8s cubic-bezier(0.4, 0, 0.2, 1), gap 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.7s cubic-bezier(0.4, 0, 0.2, 1); }
+.stage { transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1); } /* only the slide: animating the columns re-lays-out the whole page every frame */
 #app.immersive.idle .stage { transform: translateY(calc(var(--dockH, 170px) / 2)); }
 
 /* Lighter on TV hardware: colours change at once instead of fading (the fade repaints the whole screen's gradients every frame). */
@@ -49,3 +49,19 @@ input[type="range"]::-webkit-slider-thumb { width: 24px; height: 24px; margin-to
 .cover-toggle { opacity: 1; font-size: 17px; padding: 10px 20px; }
 .cover-toggle[hidden] { display: none; }
 .cover-toggle:focus { outline: 4px solid var(--accent-2); outline-offset: 3px; }
+
+
+/* ---- Lighter drawing for TV chips (the look stays the same, the costly effects go) ---- */
+/* 1. A mask on the scrolling lyrics makes the chip redraw the list offscreen every frame. Soft fades at the top and bottom are plain gradients instead. */
+.lyrics { -webkit-mask-image: none; mask-image: none; }
+.lyrics::before, .lyrics::after { content: ''; display: block; position: sticky; left: 0; right: 0; height: 9%; z-index: 2; pointer-events: none; }
+.lyrics::before { top: 0; margin-bottom: -9%; background: linear-gradient(to bottom, color-mix(in srgb, var(--bg) 78%, transparent), transparent); }
+.lyrics::after { bottom: 0; margin-top: -9%; background: linear-gradient(to top, color-mix(in srgb, var(--bg) 78%, transparent), transparent); }
+/* 2. The glow behind the line being sung is a blurred shadow that has to be redrawn while the line grows. */
+.line.active { text-shadow: none; }
+/* 3. Only fade and size animate; colour changes at once (animating colour repaints the text every frame). */
+.line { transition: opacity 0.45s ease, transform 0.55s cubic-bezier(0.22, 1, 0.36, 1); }
+/* 4. Blurring everything behind a popup is very costly on a TV chip: a solid dim layer looks nearly the same. */
+.overlay, .news, .cover-toggle { backdrop-filter: none; }
+.overlay { background: rgba(10, 8, 6, 0.93); }
+.news { background: rgba(10, 8, 6, 0.9); }
