@@ -323,7 +323,19 @@ button.icon.play svg { width: 26px; height: 26px; }
   border: 1px dashed var(--accent);
   border-radius: 18px;
   text-align: center;
+  /* never taller than the window: the lists give up space first, and anything left over scrolls */
+  max-height: calc(100vh - 24px);
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  display: flex;
+  flex-direction: column;
 }
+.card > * { flex-shrink: 0; }
+.card > .queue { flex-shrink: 1; min-height: 84px; display: flex; flex-direction: column; }
+.card > .results { flex-shrink: 1; min-height: 72px; display: flex; flex-direction: column; }
+.card > .queue .queue-list { flex: 1 1 auto; min-height: 40px; overflow-y: auto; }
+.card > .queue[hidden], .card > .results[hidden] { display: none; }
 .card h1 { margin: 0 0 8px; font-family: var(--serif); font-weight: 500; font-size: 28px; }
 .card .sub { margin: 0 0 22px; color: var(--dim); }
 .paste-row { display: flex; gap: 10px; }
@@ -455,7 +467,7 @@ button.icon.play svg { width: 26px; height: 26px; }
 .queue[hidden] { display: none; }
 .queue-head { display: flex; justify-content: space-between; align-items: center; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); }
 .queue-head .ghost { margin: 0; padding: 4px 10px; }
-.queue-list { max-height: 18vh; overflow-y: auto; margin-top: 4px; scrollbar-width: thin; }
+.queue-list { max-height: clamp(64px, 16vh, 200px); overflow-y: auto; margin-top: 4px; scrollbar-width: thin; }
 .queue-item { display: flex; align-items: center; gap: 8px; padding: 4px 6px; font-size: 13.5px; }
 .queue-item .qn { color: var(--dim); width: 1.6em; flex: none; }
 .queue-item .qt { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -511,3 +523,13 @@ button.icon.play svg { width: 26px; height: 26px; }
 html[dir="rtl"] .controls, html[dir="rtl"] .seek-row, html[dir="rtl"] .transport { direction: ltr; }
 .menu-version { padding: 8px 14px 4px; font-size: 12px; color: var(--dim); opacity: .8; border-top: 1px solid var(--line); margin-top: 4px; }
 .menu-version[hidden] { display: none; }
+
+/* Short windows: the Play/Search panel tightens up so the lists still fit */
+@media (max-height: 680px) {
+  .card { padding: 18px 26px; }
+  .card h1 { font-size: 22px; margin-bottom: 4px; }
+  .card .sub { margin-bottom: 12px; }
+  .queue { margin-top: 6px; padding-top: 6px; }
+  .or { margin: 8px 0 6px; }
+  .fine { margin: 8px 0 6px; }
+}

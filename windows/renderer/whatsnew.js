@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 18,
+    title: 'Fix: the Play a playlist window fits on screen',
+    items: [
+      { text: 'After importing a playlist, a long queue used to push the window past the bottom and cut it off. The window now always fits, and the saved playlists and queue lists scroll inside it.', desktop: true, mobile: true },
+    ],
+  },
+  {
     id: 17,
     title: 'Fix: nasheeds no longer get Quran verses as lyrics',
     items: [
