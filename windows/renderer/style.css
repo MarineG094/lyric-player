@@ -386,6 +386,7 @@ button.icon.play svg { width: 26px; height: 26px; }
 /* while the controls are hidden, the cover and lyrics slide down to the middle of the screen (and back up when they return) */
 #app.immersive.idle .stage { transform: translateY(calc(var(--dockH, 170px) / 2)); }
 .side.left { display: flex; align-items: center; }
+#btnFsSide { display: none; }
 
 /* ---------- no lyrics: the album moves to the middle ---------- */
 .lyrics-col { transition: opacity 0.5s ease; min-width: 0; }

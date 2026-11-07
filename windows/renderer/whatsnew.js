@@ -2,6 +2,14 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 15,
+    title: 'Phone: tidier sync and full screen buttons',
+    items: [
+      { text: 'The Sync buttons now line up in one even row in portrait.', mobile: true },
+      { text: 'In full screen, the button sits centred above the play button in portrait, and in a bottom corner when the phone is sideways. Left-handed? Menu > "Fullscreen button" moves it to the left.', mobile: true },
+    ],
+  },
+  {
     id: 14,
     title: 'Close question every time',
     items: [

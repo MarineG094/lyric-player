@@ -1,5 +1,6 @@
 /* Phone layout. Loaded after style.css. */
 #btnFull, #btnFolder { display: none; }
+#btnFsSide { display: block; }
 #app { height: 100dvh; width: 100vw; max-width: 100vw; overflow: hidden; grid-template-columns: minmax(0, 1fr); }
 .topbar, .stage, .dock, .lyrics-col, .album-col, .meta, .seek-row, .controls, .transport { min-width: 0; max-width: 100%; }
 .lyrics { overflow-x: hidden; }
@@ -31,6 +32,11 @@ button.icon:hover { background: transparent; }
   .synced .line { max-width: 92%; }
   .plain .line { font-size: clamp(17px, 4.6vw, 22px); }
   #btnSide { display: none; }
+  /* Sync row: the label on its own line, then five equal buttons in one row */
+  .nudge { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; justify-items: stretch; }
+  .nudge .nudge-label, .nudge .nudge-val { grid-column: 1 / -1; text-align: center; margin: 0; }
+  .nudge .nudge-val:empty { display: none; }
+  .nudge button { padding: 7px 2px; font-size: 12.5px; white-space: nowrap; }
   /* no lyrics yet / song starting: the cover takes the middle */
   .stage.solo, .stage.intro, .stage.swap.solo, .stage.swap.intro { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) 0fr; gap: 0; }
   .stage.solo .album-col, .stage.intro .album-col { flex-direction: column; justify-content: center; align-items: center; text-align: center; height: 100%; gap: 14px; }
@@ -74,6 +80,15 @@ button.icon:hover { background: transparent; }
 #app.immersive { position: relative; grid-template-rows: minmax(0, 1fr); }
 #app.immersive.idle .stage { transform: none; } /* the controls already float here, so nothing needs centring */
 #app.immersive .dock { position: absolute; left: 0; right: 0; bottom: 0; padding-top: 28px; background: linear-gradient(to top, rgba(0, 0, 0, 0.62), transparent); z-index: 5; }
+
+/* Full screen button: portrait keeps it centred above the play button; sideways it sits in a bottom corner (right by default, left from the menu). */
+#app.immersive .controls { grid-template-columns: minmax(0, 1fr); justify-items: stretch; }
+#app.immersive .side.left { width: 100%; justify-content: center; }
+#app.immersive .transport { justify-content: center; }
+@media (orientation: landscape) and (max-height: 560px) {
+  #app.immersive .side.left { position: absolute; width: auto; right: calc(14px + env(safe-area-inset-right)); bottom: calc(14px + env(safe-area-inset-bottom)); }
+  #app.immersive.fs-left .side.left { right: auto; left: calc(14px + env(safe-area-inset-left)); }
+}
 
 /* Search results on a narrow screen: the Play next / Queue buttons drop under the title. */
 .result-row { flex-wrap: wrap; }

@@ -95,6 +95,7 @@
     btnStartup: $('#btnStartup'),
     btnTray: $('#btnTray'),
     btnSide: $('#btnSide'),
+    btnFsSide: $('#btnFsSide'),
     dragVeil: $('#dragVeil'),
     toast: $('#toast'),
     status: $('#status'),
@@ -121,6 +122,7 @@
     artUrl: '',
     holdFirst: false,
     albumSide: 'right',
+    fsSide: 'right',
     resume: null,
     savedAt: 0,
     pendingKey: null,
@@ -251,7 +253,7 @@
   els.btnMenu.addEventListener('click', () => { if (els.menuPanel.hidden) { openMenu(); const f = [...els.menuPanel.querySelectorAll('button')].find((b) => b.offsetParent !== null); if (f && window.__lpTv) f.focus(); } else closeMenu(); });
   els.menuPanel.addEventListener('click', (e) => { // choices that open something close the menu; the on/off switches stay so several can be flipped
     const b = e.target.closest('button');
-    if (b && !/^(btnAds|btnCover|btnRoman|btnAuto|btnSide|btnStartup|btnTray|btnClearTr)$/.test(b.id)) closeMenu();
+    if (b && !/^(btnAds|btnCover|btnRoman|btnAuto|btnSide|btnFsSide|btnStartup|btnTray|btnClearTr)$/.test(b.id)) closeMenu();
   });
   document.addEventListener('pointerdown', (e) => { if (!els.menuPanel.hidden && !e.target.closest('.menu-wrap')) closeMenu(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && closeMenu(true)) e.stopPropagation(); }, true);
@@ -1486,6 +1488,15 @@
     els.stage.classList.toggle('swap', state.albumSide === 'left');
     els.btnSide.textContent = state.albumSide === 'left' ? 'Album: left' : 'Album: right';
   }
+  function applyFsSide() {
+    els.app.classList.toggle('fs-left', state.fsSide === 'left');
+    els.btnFsSide.textContent = state.fsSide === 'left' ? 'Fullscreen button: left' : 'Fullscreen button: right';
+  }
+  els.btnFsSide.addEventListener('click', () => {
+    state.fsSide = state.fsSide === 'left' ? 'right' : 'left';
+    applyFsSide();
+    window.api.setSettings({ fsSide: state.fsSide });
+  });
   els.btnSide.addEventListener('click', () => {
     state.albumSide = state.albumSide === 'left' ? 'right' : 'left';
     applySide();
@@ -1686,6 +1697,8 @@
     P.cmd('setRepeat', state.repeat);
     state.albumSide = settings.albumSide === 'left' ? 'left' : 'right';
     applySide();
+    state.fsSide = settings.fsSide === 'left' ? 'left' : 'right';
+    applyFsSide();
     els.vol.value = String(state.volume);
     setRangeFill(els.vol);
     setRangeFill(els.seek);
