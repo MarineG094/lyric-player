@@ -12,7 +12,7 @@ window.__whatsnew = [
     id: 10,
     title: 'Lighter cover filter',
     items: [
-      { text: 'Each cover is now checked only once, and the result is remembered on your device. The filter no longer piles up checks when you skip songs, and if it can\'t start it waits 10 minutes before trying again instead of reloading every time.' },
+      { text: 'Lighter cover filter on every version (phone, TV, Windows and Linux): each cover is now checked only once and the result is remembered on your device. The filter no longer piles up checks when you skip songs, and if it can\'t start it waits 10 minutes before trying again instead of reloading every time.' },
       { text: 'On TV and phones, the first check now gets much longer to start up, so it stops failing on slower devices.', mobile: true },
     ],
   },
