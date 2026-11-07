@@ -35,7 +35,7 @@
     'Next in your queue', 'Next in the playlist', 'Play this now', 'Play this right after the current song', 'Add this to the end of the queue', 'Remove from the queue',
     'Added to the queue:', 'Playing next:', "Couldn't add that:", "Couldn't import that:", "Couldn't save the lyrics:", 'Could not load',
     'Lyrics in other scripts now show in English letters.', 'Lyrics show in their original script.',
-    'Closing the window now keeps Lyric Player running in the tray. Use the tray icon to quit.', 'Closing the window quits Lyric Player.',
+    'Closing the window now keeps Lyric Player running in the tray. Use the tray icon to quit.', 'Closing the window asks whether to quit or keep Lyric Player in the tray.',
     'Lyric Player will start when you sign in.', 'Lyric Player will no longer start at sign-in.',
     'Downloading the update. The app restarts by itself when it is ready.', "Couldn't update in place, so the new file is downloading instead.",
     'Version', 'Language', 'Translate lyrics', 'Off', 'Clear translations', 'Saved translations cleared.', "Couldn't translate these lyrics right now.",

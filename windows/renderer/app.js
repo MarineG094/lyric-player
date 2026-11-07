@@ -1356,7 +1356,13 @@
 
   /* ---------- fullscreen ---------- */
 
+  // Height of the control bar, so full screen can centre the content while the bar is hidden.
+  const dockEl = document.querySelector('.dock');
+  const paintDock = () => { if (dockEl) els.app.style.setProperty('--dockH', dockEl.offsetHeight + 'px'); };
+  window.addEventListener('resize', paintDock);
+
   function wakeControls() {
+    paintDock();
     els.app.classList.remove('idle');
     clearTimeout(state.idleTimer);
     if (state.fullscreen) state.idleTimer = setTimeout(() => els.app.classList.add('idle'), 3000);
@@ -1520,8 +1526,10 @@
       state.keepInTray = !state.keepInTray;
       applyDesktopButtons();
       window.api.setSettings({ keepInTray: state.keepInTray });
-      toast(state.keepInTray ? 'Closing the window now keeps Lyric Player running in the tray. Use the tray icon to quit.' : 'Closing the window quits Lyric Player.');
+      toast(state.keepInTray ? 'Closing the window now keeps Lyric Player running in the tray. Use the tray icon to quit.' : 'Closing the window asks whether to quit or keep Lyric Player in the tray.');
     });
+    // The close question can switch "Keep in tray" on by itself: keep the button in step.
+    if (window.api.onSettingsChanged) window.api.onSettingsChanged((s) => { state.keepInTray = !!(s && s.keepInTray === true); applyDesktopButtons(); });
   }
 
   /* ---------- app language and lyric translation ---------- */

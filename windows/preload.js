@@ -15,6 +15,7 @@ contextBridge.exposeInMainWorld('api', {
   translateTexts: (payload) => ipcRenderer.invoke('text:translate', payload),
   canSelfUpdate: () => ipcRenderer.invoke('app:canSelfUpdate'),
   selfUpdate: () => ipcRenderer.invoke('app:selfUpdate'),
+  onSettingsChanged: (cb) => ipcRenderer.on('settings:changed', (_e, s) => cb(s)),
   onUpdateProgress: (cb) => ipcRenderer.on('app:updateProgress', (_e, pct) => cb(pct)),
   latestRelease: (tag) => ipcRenderer.invoke('app:latestRelease', tag),
   getSaved: () => ipcRenderer.invoke('saved:get'),

@@ -107,7 +107,7 @@ button.solid.small { padding: 6px 14px; font-size: 12px; }
   gap: clamp(24px, 5vw, 72px);
   padding: 18px clamp(24px, 5vw, 72px) 8px;
   min-height: 0;
-  transition: grid-template-columns 0.8s cubic-bezier(0.4, 0, 0.2, 1), gap 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: grid-template-columns 0.8s cubic-bezier(0.4, 0, 0.2, 1), gap 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .lyrics-col, .album-col { min-height: 0; display: flex; flex-direction: column; }
@@ -383,6 +383,8 @@ button.icon.play svg { width: 26px; height: 26px; }
 /* the controls fade when idle, but the Up next strip stays in view */
 #app.immersive.idle .dock { pointer-events: none; }
 #app.immersive.idle .dock > *:not(.upnext) { opacity: 0; }
+/* while the controls are hidden, the cover and lyrics slide down to the middle of the screen (and back up when they return) */
+#app.immersive.idle .stage { transform: translateY(calc(var(--dockH, 170px) / 2)); }
 .side.left { display: flex; align-items: center; }
 
 /* ---------- no lyrics: the album moves to the middle ---------- */

@@ -2,6 +2,14 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 13,
+    title: 'Closing the window, and full screen',
+    items: [
+      { text: 'Closing the window now asks whether to close Lyric Player for good or keep it running in the tray. Tick "Don\'t ask again" to remember your choice. Switching "Keep in tray" in the Menu brings the question back.', desktop: true },
+      { text: 'In full screen, the cover and lyrics now sit in the middle of the screen while the controls are hidden, instead of leaving empty space at the bottom.', desktop: true },
+    ],
+  },
+  {
     id: 12,
     title: 'Windows installer',
     items: [

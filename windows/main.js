@@ -144,10 +144,17 @@ function createWindow(startHidden) {
   win.on('resize', layoutYt);
   // With "keep in tray" on, the close button only hides the window; the tray menu's Quit really exits.
   win.on('close', (event) => {
-    if (quitting || !tray || loadSettings().keepInTray !== true) return;
+    if (quitting) return;
+    const st = loadSettings();
+    if (st.keepInTray === true) {
+      if (!tray) return; // no tray on this system: close normally
+      event.preventDefault();
+      hideToTray();
+      return;
+    }
+    if (st.askOnClose === false) return; // "Close for good" was chosen with "Don't ask again"
     event.preventDefault();
-    if (win.isFullScreen()) win.setFullScreen(false);
-    win.hide();
+    askBeforeClosing();
   });
   win.on('session-end', () => { quitting = true; });
   win.on('enter-full-screen', () => win && win.webContents.send('app:fullscreen', true));
@@ -1407,6 +1414,7 @@ ipcMain.handle('settings:get', () => loadSettings());
 
 ipcMain.handle('settings:set', (_event, patch) => {
   const next = { ...loadSettings(), ...(patch || {}) };
+  if (patch && 'keepInTray' in patch && !('askOnClose' in patch)) next.askOnClose = true; // switching it by hand brings the question back
   saveSettings(next);
   if (patch && 'launchAtLogin' in patch) applyLaunchAtLogin(next.launchAtLogin === true);
   if (patch && 'keepInTray' in patch) applyTray(next.keepInTray === true);
@@ -1749,6 +1757,43 @@ ipcMain.handle('lyrics:openFolder', () => shell.openPath(lyricsDir()));
    Both are off until switched on in the Menu. */
 let tray = null;
 let quitting = false;
+let closePromptOpen = false;
+
+function hideToTray() {
+  if (!win || win.isDestroyed()) return;
+  if (win.isFullScreen()) win.setFullScreen(false);
+  win.hide();
+}
+
+// The close button asks once: keep it running in the tray, or close for good. "Don't ask again" remembers the answer.
+async function askBeforeClosing() {
+  if (closePromptOpen || !win || win.isDestroyed()) return;
+  closePromptOpen = true;
+  try {
+    const r = await dialog.showMessageBox(win, {
+      type: 'question', title: 'Close Lyric Player', noLink: true,
+      message: 'Close Lyric Player for good, or keep it running in the tray?',
+      detail: 'In the tray the music keeps playing. Use the tray icon to open it again or to quit.',
+      buttons: ['Keep in tray', 'Close for good', 'Cancel'], defaultId: 0, cancelId: 2,
+      checkboxLabel: "Don't ask again", checkboxChecked: false,
+    });
+    if (r.response === 2) return;
+    if (r.response === 0) {
+      applyTray(true);
+      if (!tray) { dialog.showErrorBox('No tray here', "This system doesn't show tray icons, so Lyric Player can't stay in the tray."); return; }
+      if (r.checkboxChecked) { const next = { ...loadSettings(), keepInTray: true }; saveSettings(next); notifySettings(next); }
+      hideToTray();
+    } else {
+      if (r.checkboxChecked) saveSettings({ ...loadSettings(), askOnClose: false });
+      quitting = true;
+      app.quit();
+    }
+  } finally { closePromptOpen = false; }
+}
+
+function notifySettings(next) {
+  try { if (win && !win.isDestroyed()) win.webContents.send('settings:changed', next); } catch (_) { /* window gone */ }
+}
 const startedAtLogin = process.argv.includes('--at-login');
 
 // What the system should launch: the portable .exe / AppImage itself, the installed binary, or electron + this folder in development.
