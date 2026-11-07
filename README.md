@@ -41,7 +41,7 @@
 | 🔤 **English letters** | Songs in Hindi, Arabic, Korean and more can show in Latin letters. |
 | ⏱ **Sync buttons** | Nudge timed lyrics earlier or later (−3s, −0.5s, +0.5s, +3s). Saved per song. |
 | 📖 **Quran recitations** | Spelling-tolerant surah detection (Arabic titles too). Arabic with an English translation that follows the reciter ayah by ayah, using Quran.com timing (estimated for reciters it doesn't cover). |
-| 🙈 **Cover filter** | Automatically hides explicit album covers (runs on the device). |
+| 🙈 **Cover filter** | Automatically hides explicit album covers (runs on the device). It isn't perfect, and on slower devices (TVs especially) it can fail to start. Covers then show normally, so use **Hide cover** to cover one manually. |
 | 🚫 **Ad block** | Skips and mutes YouTube Music ads. |
 | 🚗 **Android Auto** | Play, pause, next, previous, shuffle, repeat, and the current lyric line on the car screen. |
 | 📺 **Google TV** | A separate app made for the remote, with full screen. |
@@ -61,7 +61,7 @@
 
 > **On low-end hardware it may be slow and laggy, but it still plays properly.** The app runs YouTube Music's own web page behind the lyrics screen, which is heavy for small chips. On a weak device expect a pause of a few seconds when a song changes or you skip, and the lyrics may appear a moment after the song starts. Once a song is playing it is smooth, and the music itself is not affected.
 >
-> **If it feels slow:** restart the device, close other apps, keep Android System WebView updated, and on TV switch off apps you don't use (Settings → Apps). On TV the **Cover filter** starts **off** to save memory; you can turn it on with the button.
+> **If it feels slow:** restart the device, close other apps, keep Android System WebView updated, and on TV switch off apps you don't use (Settings → Apps). On TV the **Cover filter** starts **off** to save memory; you can turn it on with the button. The automatic check can miss a cover or fail to start on slower devices, so you may sometimes need to press **Hide cover** yourself.
 
 ---
 
