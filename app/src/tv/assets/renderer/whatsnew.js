@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 11,
+    title: 'TV lyrics edge fix',
+    items: [
+      { text: 'Fixed the top of the lyrics looking cut off on TV, and the dark band across the lyrics.', mobile: true },
+    ],
+  },
+  {
     id: 10,
     title: 'Lighter cover filter',
     items: [
