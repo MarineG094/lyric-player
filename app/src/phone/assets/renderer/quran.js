@@ -36,7 +36,7 @@ const NOISE = new Set([
   'audio', 'video', 'the', 'of', 'tilawat', 'tilawah', 'complete', 'emotional', 'heart', 'touching', 'sheikh', 'shaykh', 'qari', 'imam', 'new', 'and',
 ]);
 const KEYWORDS = new Set(['surah', 'sura', 'surat', 'soorah', 'soora', 'surahs', 'ayat', 'ayah', 'ayaat', 'ayatul', 'verse', 'verses']);
-const RECITERS = /shuraim|shuraym|sudais|sudays|husar[iy]|hussar[iy]|minshaw[iy]|abdul\s?bas[ie]t|abdulbas[ie]t|ghamd[iy]|ghamid[iy]|ajm[iy]|ajam[iy]|dos+ar[iy]|dus+ar[iy]|tablaw[iy]|rifa[iy]|r[ie]faa?[iy]|shatr[iy]|shaatr[iy]|jalil|jaleel|bukhatir|abkar|budair|bud[ae]ir|qatam[iy]|bas?far|thubait[iy]|akdar|banna|tunaij[iy]|nufais|neana|jabir|jaber|yasin\s?sahl|sahl\s?yasin|haneef|abbad|ayy?ub|juhan[iy]|muaiq?l[iy]|mueaq?l[iy]|luhaid[ai]n|lahid[ai]n|bandar|bal[ei]+la|h[uo](?:dh|th|z|d|t)[aey]+[iy]?f[iy]|الحذيفي|alafasy|afasy|afasi|el\s?afasi|m[ia]shar[iy]|mishary|mishari|sheikh|shaykh|sheik\b|الشيخ|القارئ|قارئ|عفاسي|العفاسي|العفاسى|مشاري|مشارى|السديس|الشريم|الحصري|المنشاوي|عبد الباسط|الغامدي|المعيقلي|العجمي|الدوسري|sudais|sudays|shuraim|shuraym|shureim|husary|hussary|minshawi|abdul\s?basit|abdulbasit|ghamdi|ghamidi|dosari|dossary|dosary|shatri|shaatree|ajmi|ajamy|qatami|luhaidan|lahidan|tablawi|rifai|hudhaify|huzaify|juhany|juhani|muaiqly|muaiqli|mueaqly|maher al|saad al ?ghamdi|ayyub|bandar|baleela|yasser al|qari|quran|qur'?an/i;
+const RECITERS = /shuraim|shuraym|sudais|sudays|husar[iy]|hussar[iy]|minshaw[iy]|abdul\s?bas[ie]t|abdulbas[ie]t|ghamd[iy]|ghamid[iy]|ajm[iy]|ajam[iy]|dos+ar[iy]|dus+ar[iy]|tablaw[iy]|rifa[iy]|r[ie]faa?[iy]|shatr[iy]|shaatr[iy]|jalil|jaleel|abkar|budair|bud[ae]ir|qatam[iy]|bas?far|thubait[iy]|akdar|banna|tunaij[iy]|nufais|neana|jabir|jaber|yasin\s?sahl|sahl\s?yasin|haneef|abbad|ayy?ub|juhan[iy]|muaiq?l[iy]|mueaq?l[iy]|luhaid[ai]n|lahid[ai]n|bandar|bal[ei]+la|h[uo](?:dh|th|z|d|t)[aey]+[iy]?f[iy]|الحذيفي|alafasy|afasy|afasi|el\s?afasi|m[ia]shar[iy]|mishary|mishari|sheikh|shaykh|sheik\b|الشيخ|القارئ|قارئ|عفاسي|العفاسي|العفاسى|مشاري|مشارى|السديس|الشريم|الحصري|المنشاوي|عبد الباسط|الغامدي|المعيقلي|العجمي|الدوسري|sudais|sudays|shuraim|shuraym|shureim|husary|hussary|minshawi|abdul\s?basit|abdulbasit|ghamdi|ghamidi|dosari|dossary|dosary|shatri|shaatree|ajmi|ajamy|qatami|luhaidan|lahidan|tablawi|rifai|hudhaify|huzaify|juhany|juhani|muaiqly|muaiqli|mueaqly|maher al|saad al ?ghamdi|ayyub|bandar|baleela|yasser al|qari|quran|qur'?an/i;
 
 // Letter key that ignores spelling variation: "Al-Baqarah", "Baqara", "baqaraa" all collapse to the same thing.
 function key(s) {
@@ -84,7 +84,7 @@ function fuzzy(k, short) {
   return best <= max && !tie ? num : 0;
 }
 
-function lookup(words) {
+function lookup(words, strict) {
   const k = key(words.join(''));
   if (!k) return 0;
   if (INDEX.has(k)) return INDEX.get(k);
@@ -96,6 +96,7 @@ function lookup(words) {
     if (k.startsWith(p) && k.length > p.length) rests.push(k.slice(p.length));
   }
   for (const r of rests) if (INDEX.has(r)) return INDEX.get(r);
+  if (strict) return 0; // no guessing from spelling
   for (const r of rests) { const n = fuzzy(r, true); if (n) return n; }
   return fuzzy(k, false);
 }
@@ -137,6 +138,14 @@ function detectRecitation(title, artist) {
   const arN = arabicSurah(t);
   const start = hasKeyword ? kwAt + 1 : 0;
   const rest = words.slice(start);
+
+  // Only the artist looks like a reciter (nothing in the title says Quran): the title must be nothing but a surah name,
+  // spelled exactly. "Ya Adheeman" by a nasheed artist must never be guessed into a surah.
+  if (!hintedByTitle) {
+    const only = rest.filter((w) => !NOISE.has(w) && !/^\d+$/.test(w));
+    const n = only.length ? lookup(only, true) : 0;
+    return n ? { surah: n } : arN ? { surah: arN } : null;
+  }
 
   // "Surah 36"
   if (hasKeyword && /^\d{1,3}$/.test(rest[0] || '')) {

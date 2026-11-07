@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 17,
+    title: 'Fix: nasheeds no longer get Quran verses as lyrics',
+    items: [
+      { text: 'Songs by artists who also recite the Quran (for example "Ya Adheeman" by Ahmed Bukhatir) were sometimes given Quran verses as lyrics. The Quran text is now only used when the title says it is a recitation. If a song already has the wrong lyrics saved, press "Wrong lyrics? Try another".', desktop: true, mobile: true },
+    ],
+  },
+  {
     id: 16,
     title: 'Discord status',
     items: [

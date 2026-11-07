@@ -111,3 +111,11 @@ test('estimates timing for a reciter Quran.com does not have', () => {
   assert.ok(out[3].startsWith('[00:32.00]'));
   assert.equal(Q.buildTimed(ar, en, st, 0, 0, 0, true), null); // no track length, no estimate
 });
+
+test('a nasheed is not guessed into a surah just because the artist also recites', () => {
+  const Q = require('../quran.js');
+  assert.equal(Q.detect('Ya Adheeman', 'Ahmed Bukhatir'), null);
+  assert.equal(Q.detect('Ya Adheeman', 'Mishary Alafasy'), null);
+  assert.equal(Q.detect('Al-Baqarah', 'Abdul Rahman Al-Sudais').surah, 2);
+  assert.equal(Q.detect('Surah Al-Kahf', 'Ahmed Bukhatir').surah, 18);
+});
