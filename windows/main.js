@@ -704,11 +704,13 @@ ipcMain.handle('player:importPlaylist', async (_e, ext) => {
       if (importState.cancel) break;
       const label = t.title ? (t.artist ? `${t.artist} – ${t.title}` : t.title) : '(a song without a readable name)';
       let hit = null;
+      let seen = []; // what the search did return, so a "not found" song can say what was rejected
       if (t.title) {
         // Album tracks first (the Songs filter), then looser searches, so a music video is only used when there is no song.
         for (const tryIt of Lyrics.searchTries(t)) {
           const res = await searchYt(tryIt.query, tryIt.songsOnly);
           hit = Lyrics.matchTrack(t, res.results || []);
+          if (!hit && !seen.length) seen = (res.results || []).filter((x) => x && x.kind === 'song').slice(0, 3).map((x) => `${x.title} · ${String(x.sub || '').split(' • ').slice(0, 2).join(' • ')}`);
           if (res.error && !(res.results || []).length && !items.length && importState.done === 0) throw new Error(res.error);
           if (hit) break;
           await wait(Math.min(gap, 250));
@@ -719,7 +721,7 @@ ipcMain.handle('player:importPlaylist', async (_e, ext) => {
         items.push(it);
         ctl.meta.set(it.id, it);
         importState.found += 1;
-      } else if (!hit) missing.push(label);
+      } else if (!hit) missing.push(seen.length ? `${label}  (searched, but only found: ${seen.join(' | ')})` : `${label}  (nothing came back from the search)`);
       importState.done += 1;
       await wait(gap);
     }

@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 31,
+    title: 'Not-found songs now say why',
+    items: [
+      { text: 'When an imported playlist can\'t match a song, the list now shows what the search did find (or that nothing came back), so it is clear whether the song is missing or was rejected.' },
+    ],
+  },
+  {
     id: 30,
     title: 'Fix: the artist, not the album name',
     items: [
