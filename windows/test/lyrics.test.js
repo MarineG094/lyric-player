@@ -359,3 +359,17 @@ test('matchTrack: an artist named in the album does not count (Ambient Translati
   assert.equal(L.matchTrack({ title: 'Without Me', artist: 'Halsey', dur: 202 }, [ambient]), null);
   assert.equal(L.matchTrack({ title: 'Without Me', artist: 'Halsey', dur: 202 }, [ambient, real]).id, 'rrrrrrrrrrr');
 });
+
+test('matchTrack: a result that does not name the artist is used only when the title and length agree', () => {
+  const want = { title: 'Faded', artist: 'Alan Walker', dur: 212 };
+  const noArtist = { kind: 'song', id: 'nnnnnnnnnnn', title: 'Faded', sub: '4B views • 3:33', type: 'Video' };
+  const sameName = { kind: 'song', id: 'sssssssssss', title: 'Faded', sub: 'Faded • 4B views • 3:33', type: 'Video' };
+  const cover = { kind: 'song', id: 'ccccccccccc', title: 'Faded', sub: 'Prvnci • Faded • 3:30', type: 'Song' };
+  assert.equal(L.matchTrack(want, [noArtist]).id, 'nnnnnnnnnnn');
+  assert.equal(L.matchTrack(want, [sameName]).id, 'sssssssssss');
+  assert.equal(L.matchTrack(want, [cover, noArtist]).id, 'nnnnnnnnnnn'); // the cover names another artist
+  assert.equal(L.matchTrack(want, [{ ...noArtist, sub: '4B views • 1:10' }]), null); // wrong length
+  assert.equal(L.matchTrack(want, [{ ...noArtist, title: 'Faded (Sped Up)' }]), null);
+  const real = { kind: 'song', id: 'rrrrrrrrrrr', title: 'Faded', sub: 'Alan Walker • Different World • 3:32', type: 'Song' };
+  assert.equal(L.matchTrack(want, [noArtist, real]).id, 'rrrrrrrrrrr'); // a named artist always beats an unknown one
+});

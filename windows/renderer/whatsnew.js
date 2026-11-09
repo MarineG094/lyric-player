@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 33,
+    title: 'Import: songs whose result has no artist',
+    items: [
+      { text: 'Some YouTube Music results (often the official video of a big song) come without an artist name. The importer now accepts one when the title is exact, it is not a remix, and the length matches the Spotify song, but only if no result names the right artist. Covers by other artists are still rejected.' },
+    ],
+  },
+  {
     id: 32,
     title: 'Import: more ways to find a song',
     items: [
