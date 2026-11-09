@@ -382,11 +382,13 @@ ipcMain.handle('player:enqueue', (_e, item, front) => {
   return ctl.queue.slice();
 });
 ipcMain.handle('player:queue', () => ctl.queue.slice());
-ipcMain.handle('player:enqueueMany', (_e, items, front, asPlaylist) => {
+ipcMain.handle('player:enqueueMany', (_e, items, front, asPlaylist, seed) => {
   const room = 200 - ctl.queue.length;
-  const clean = (Array.isArray(items) ? items : []).filter((x) => x && /^[A-Za-z0-9_-]{11}$/.test(String(x.id || ''))).slice(0, Math.max(0, room)).map((x) => ({
+  const tidy = (list) => (Array.isArray(list) ? list : []).filter((x) => x && /^[A-Za-z0-9_-]{11}$/.test(String(x.id || ''))).map((x) => ({
     id: String(x.id), title: String(x.title || '').slice(0, 200), sub: String(x.sub || '').slice(0, 200), thumb: /^https:/.test(String(x.thumb || '')) ? String(x.thumb) : '',
   }));
+  const clean = tidy(items).slice(0, Math.max(0, room));
+  if (Array.isArray(seed)) ctl.played = tidy(seed).slice(-200); // songs of this playlist that came before (a restored session), so Repeat can start the whole playlist over
   if (front && asPlaylist) ctl.queue.splice(ctl.nextN, 0, ...clean); // a whole playlist: in order, but shuffle and repeat can work on it
   else if (front) { ctl.queue.splice(ctl.nextN, 0, ...clean); ctl.nextN += clean.length; } else ctl.queue.push(...clean);
   ctl.pick = -1;
@@ -1467,7 +1469,7 @@ ipcMain.handle('lyrics:fetched', () => loadSettings().fetchedLyrics || []);
       search: (query) => handlers['player:search'](null, query),
       enqueue: (item, front) => handlers['player:enqueue'](null, item, front),
       queue: () => handlers['player:queue'](),
-      enqueueMany: (items, front, asPlaylist) => handlers['player:enqueueMany'](null, items, front, asPlaylist),
+      enqueueMany: (items, front, asPlaylist, seed) => handlers['player:enqueueMany'](null, items, front, asPlaylist, seed),
       resolveItems: (src) => handlers['player:resolveItems'](null, src),
       importPlaylist: (ext) => handlers['player:importPlaylist'](null, ext),
       importStatus: () => handlers['player:importStatus'](),

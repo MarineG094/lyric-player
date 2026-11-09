@@ -69,3 +69,13 @@ test('clearing the queue forgets what was played', async () => {
   await handlers['player:clearQueue']();
   assert.equal(t.refillQueue(), false);
 });
+
+test('a restored session: Repeat: playlist starts the whole playlist over, not just the rest', async () => {
+  reset(); t.ctl.repeat = 'all';
+  const all = list(5);
+  await handlers['player:enqueueMany'](null, all.slice(3), true, true, all.slice(0, 3)); // resumed on song 3, songs 4 and 5 still to come
+  assert.deepEqual(t.ctl.queue.map((x) => x.title), ['Song 4', 'Song 5']);
+  while (t.ctl.queue.length) t.takeQueued();
+  assert.equal(t.refillQueue(), true);
+  assert.deepEqual(t.ctl.queue.map((x) => x.title), ['Song 1', 'Song 2', 'Song 3', 'Song 4', 'Song 5']);
+});

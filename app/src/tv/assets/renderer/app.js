@@ -403,6 +403,8 @@
         state.playlistId = ''; state.holdFirst = false; hideOverlay(); setBrowse(false);
         setStatus('Opening the song in YouTube Music…', 'info'); startWatchdog();
         try { await P.cmd('next'); } catch (_) { started = false; }
+        // the next launch picks this playlist up again, at the song and spot where it was left
+        if (started && pl.url) window.api.setSettings({ lastImported: pl.url, lastPlaylist: '', lastSong: '', lastVideoId: '', lastPos: 0 });
       }
     } else if (items.length) { try { const out = await P.enqueueMany(items, front); renderQueue(out.queue); } catch (_) { /* ignore */ } }
     const first = started ? items[0] : null;
@@ -583,7 +585,7 @@
     state.gotMedia = false;
     hideOverlay();
     const resume = state.resume && !userInitiated ? state.resume : null;
-    if (userInitiated) { state.resume = null; window.api.setSettings({ lastPlaylist: id, lastSong: '', lastVideoId: '', lastPos: 0 }); }
+    if (userInitiated) { state.resume = null; window.api.setSettings({ lastPlaylist: id, lastSong: '', lastImported: '', lastVideoId: '', lastPos: 0 }); }
     else window.api.setSettings({ lastPlaylist: id });
     setBrowse(false);
     setStatus('Opening your playlist in YouTube Music…', 'info');
@@ -599,7 +601,7 @@
     state.currentTitle = '';
     state.gotMedia = false;
     hideOverlay();
-    if (userInitiated) { state.resume = null; window.api.setSettings({ lastPlaylist: '', lastSong: videoId, lastVideoId: '', lastPos: 0 }); }
+    if (userInitiated) { state.resume = null; window.api.setSettings({ lastPlaylist: '', lastSong: videoId, lastImported: '', lastVideoId: '', lastPos: 0 }); }
     setBrowse(false);
     setStatus('Opening the song in YouTube Music…', 'info');
     startWatchdog();
@@ -1740,7 +1742,16 @@
     await refreshLyricFiles();
     if (window.__lpTv) await idle(2500); // let the first screen draw before YouTube Music starts loading
 
-    if (settings.lastPlaylist) {
+    const savedHit = !settings.lastPlaylist && settings.lastImported ? (await loadSaved()).find((x) => x.url === settings.lastImported && x.items && x.items.length) : null;
+    if (savedHit) {
+      // The last thing played was an imported playlist: same playlist, same song, same spot (it opens paused).
+      const items = savedHit.items;
+      let at = items.findIndex((x) => x.id === settings.lastVideoId);
+      if (at < 0) at = 0;
+      state.resume = { videoId: items[at].id, pos: at === items.findIndex((x) => x.id === settings.lastVideoId) ? Number(settings.lastPos) || 0 : 0 };
+      loadSong(items[at].id, false);
+      try { const out = await P.enqueueMany(items.slice(at + 1), true, true, items.slice(0, at + 1)); renderQueue(out.queue); } catch (_) { /* the song still opens */ }
+    } else if (settings.lastPlaylist) {
       // Pick up where the last session ended: same song, same spot (it opens paused).
       if (settings.lastVideoId && /^[A-Za-z0-9_-]{2,20}$/.test(settings.lastVideoId)) {
         state.resume = { videoId: settings.lastVideoId, pos: Number(settings.lastPos) || 0 };

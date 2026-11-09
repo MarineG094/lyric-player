@@ -7,6 +7,7 @@ window.__whatsnew = [
     items: [
       { text: 'Play on an imported (Spotify, Deezer, SoundCloud) playlist now starts it right away, even if a song is already playing.' },
       { text: 'Shuffle now mixes the imported songs, and Repeat: playlist starts the playlist over when it ends.' },
+      { text: 'When you reopen the app it picks up the imported playlist where you left it, at the same song and spot, instead of going back to an older YouTube playlist.' },
     ],
   },
   {

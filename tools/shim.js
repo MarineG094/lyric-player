@@ -192,7 +192,7 @@
       search: (query) => handlers['player:search'](null, query),
       enqueue: (item, front) => handlers['player:enqueue'](null, item, front),
       queue: () => handlers['player:queue'](),
-      enqueueMany: (items, front, asPlaylist) => handlers['player:enqueueMany'](null, items, front, asPlaylist),
+      enqueueMany: (items, front, asPlaylist, seed) => handlers['player:enqueueMany'](null, items, front, asPlaylist, seed),
       resolveItems: (src) => handlers['player:resolveItems'](null, src),
       importPlaylist: (ext) => handlers['player:importPlaylist'](null, ext),
       importStatus: () => handlers['player:importStatus'](),
