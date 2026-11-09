@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 34,
+    title: 'Import: music videos named "Artist - Song"',
+    items: [
+      { text: 'The importer now reads a video called "Maroon 5 - Payphone ft. Wiz Khalifa" as the song "Payphone", by dropping the artist in front and the "ft." part. The uploader still has to be the right artist, so covers are still rejected.' },
+    ],
+  },
+  {
     id: 33,
     title: 'Import: songs whose result has no artist',
     items: [

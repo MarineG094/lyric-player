@@ -373,3 +373,12 @@ test('matchTrack: a result that does not name the artist is used only when the t
   const real = { kind: 'song', id: 'rrrrrrrrrrr', title: 'Faded', sub: 'Alan Walker • Different World • 3:32', type: 'Song' };
   assert.equal(L.matchTrack(want, [noArtist, real]).id, 'rrrrrrrrrrr'); // a named artist always beats an unknown one
 });
+
+test('matchTrack: a video called "Artist - Title ft. Someone" is the song', () => {
+  const want = { title: 'Payphone', artist: 'Maroon 5, Wiz Khalifa', dur: 231 };
+  const video = { kind: 'song', id: 'vvvvvvvvvvv', title: 'Maroon 5 - Payphone ft. Wiz Khalifa', sub: 'Maroon5VEVO • 1.5B views • 3:57', type: 'Video' };
+  assert.equal(L.matchTrack(want, [video]).id, 'vvvvvvvvvvv');
+  const cover = { kind: 'song', id: 'ccccccccccc', title: 'Maroon 5 - Payphone ft. Wiz Khalifa', sub: 'Some Cover Band • 1M views • 3:50', type: 'Video' };
+  assert.equal(L.matchTrack(want, [cover]), null); // another uploader: still not the song
+  assert.equal(L.matchTrack({ title: 'Payphone', artist: 'Maroon 5', dur: 231 }, [{ kind: 'song', id: 'kkkkkkkkkkk', title: 'Payphone (feat. Wiz Khalifa)', sub: 'Maroon 5, Wiz Khalifa • Overexposed • 3:51', type: 'Song' }]).id, 'kkkkkkkkkkk');
+});

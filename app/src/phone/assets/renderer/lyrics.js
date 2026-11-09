@@ -326,7 +326,11 @@
     for (const r of results || []) {
       if (!r || r.kind !== 'song') continue;
       idx += 1;
-      const rt = wordsOf(r.title);
+      let rt = wordsOf(r.title);
+      // A video is usually called "Maroon 5 - Payphone ft. Wiz Khalifa": drop the artist in front and the "ft." part, then compare.
+      for (const ws of wantArtists) if (rt.length > ws.length && ws.every((w, i) => rt[i] === w)) { rt = rt.slice(ws.length); break; }
+      const ftAt = rt.findIndex((w, i) => i > 0 && (w === 'ft' || w === 'feat' || w === 'featuring'));
+      if (ftAt > 0) rt = rt.slice(0, ftAt);
       if (!rt.length) continue;
       const rset = new Set(rt);
       const inter = wt.filter((w) => rset.has(w)).length;
