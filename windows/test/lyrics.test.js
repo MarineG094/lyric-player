@@ -303,3 +303,11 @@ test('matchTrack: the same title by a different artist is not the song', () => {
   // no artist given: an exact title still matches
   assert.equal(L.matchTrack({ title: 'Wake Me Up', artist: '' }, [real]).id, 'rrrrrrrrrrr');
 });
+
+test('matchTrack: an upload with the artist in its title, and a clip, are not the song', () => {
+  const upload = { kind: 'song', id: 'uuuuuuuuuuu', title: 'Wake Me Up Avicii', sub: 'Andrea garcia • 1:39', type: 'Song' };
+  const real = { kind: 'song', id: 'rrrrrrrrrrr', title: 'Wake Me Up', sub: 'Avicii • True • 4:07', type: 'Song' };
+  assert.equal(L.matchTrack({ title: 'Wake Me Up', artist: 'Avicii', dur: 247 }, [upload]), null);
+  assert.equal(L.matchTrack({ title: 'Wake Me Up', artist: 'Avicii' }, [upload]), null);
+  assert.equal(L.matchTrack({ title: 'Wake Me Up', artist: 'Avicii', dur: 247 }, [upload, real]).id, 'rrrrrrrrrrr');
+});

@@ -309,11 +309,12 @@
       if (t < 0.5) continue;
       const sub = normalize(r.sub);
       const subWords = sub.split(' ');
-      const hay = sub + ' ' + normalize(r.title);
-      // a long artist word also counts inside a channel name ("AviciiVEVO") or a title ("Avicii - Wake Me Up")
-      const a = wantArtists.length ? Math.max(...wantArtists.map((ws) => ws.filter((w) => subWords.includes(w) || (w.length >= 5 && hay.includes(w))).length / ws.length)) : 0;
+      // a long artist word also counts inside a channel name ("AviciiVEVO"). Never the title: an upload called "Wake Me Up Avicii" is not by Avicii.
+      const a = wantArtists.length ? Math.max(...wantArtists.map((ws) => ws.filter((w) => subWords.includes(w) || (w.length >= 5 && sub.includes(w))).length / ws.length)) : 0;
       let score = 0.55 * t + 0.3 * a;
       const d = durFromText(r.sub);
+      // a clip or a different cut: far off the real length is not the song
+      if (want.dur && d && Math.abs(d - want.dur) > Math.max(25, want.dur * 0.1)) continue;
       if (want.dur && d) { const diff = Math.abs(d - want.dur); score += diff <= 5 ? 0.1 : diff <= 15 ? 0.04 : -0.1; }
       if (/^song$/i.test(r.type || '')) score += 0.1;      // the album track
       else if (/^video$/i.test(r.type || '')) score -= 0.05; // a music video only wins when there is nothing better

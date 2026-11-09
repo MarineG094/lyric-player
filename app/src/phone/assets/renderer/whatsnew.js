@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 25,
+    title: 'Fix: fan uploads and clips no longer matched',
+    items: [
+      { text: 'Importing a playlist no longer picks a fan upload with the artist\'s name in its title, or a short clip, instead of the real song. The artist has to be the uploader\'s listed artist, and the length has to be close to the original. Tap Update on a playlist that already has a wrong song.' },
+    ],
+  },
+  {
     id: 24,
     title: 'Fix: the Close button is back',
     items: [
