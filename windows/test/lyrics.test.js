@@ -332,3 +332,13 @@ test('matchFile: a longer or shorter name with other title words is not the song
   assert.ok(L.matchFile('Imagine Dragons - Demons (Official Video)', 'Imagine Dragons', f('Demons')));
   assert.ok(L.matchFile('Demons - Remastered 2011', 'Imagine Dragons', f('Demons')));
 });
+
+test('Interlude / Intro / Outro are different songs from the main track', () => {
+  const f = (name) => [{ file: name + '.lrc', name }];
+  assert.equal(L.matchFile('Faded (Interlude)', 'Alan Walker', f('Faded - Alan Walker')), null);
+  assert.equal(L.matchFile('Faded', 'Alan Walker', f('Faded (Interlude)')), null);
+  assert.ok(L.matchFile('Faded (Interlude)', 'Alan Walker', f('Faded Interlude')));
+  assert.equal(L.sameSong('Faded (Interlude)', 'Alan Walker', 'Faded', 'Alan Walker'), false);
+  assert.equal(L.sameSong('Faded', 'Alan Walker', 'Faded (Interlude)', 'Alan Walker'), false);
+  assert.equal(L.sameSong('Faded (Interlude)', 'Alan Walker', 'Faded (Interlude)', 'Alan Walker'), true);
+});

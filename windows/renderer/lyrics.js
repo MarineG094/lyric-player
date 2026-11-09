@@ -99,6 +99,14 @@
     return longer.split(' ').every((w) => sw.has(w) || aw.has(w) || FILLER.has(w) || /^\d+$/.test(w));
   }
 
+  /* "Faded (Interlude)" is a 40 second track, not the song "Faded". normalize() drops the brackets, so these words are read
+     from the raw title: two titles that differ in them are different songs. */
+  const PARTS = ['interlude', 'intro', 'outro', 'skit', 'reprise', 'prelude', 'instrumental'];
+  function partsOf(raw) {
+    const w = String(raw || '').toLowerCase().split(/[^a-z0-9]+/);
+    return PARTS.filter((p) => w.includes(p)).join(',');
+  }
+
   /* files: [{ file, name }]. Returns the best matching entry or null. */
   function matchFile(title, artist, files) {
     const t = normalize(title);
@@ -110,6 +118,7 @@
     for (const f of files || []) {
       const n = stripTrackNumber(f.name);
       if (!n) continue;
+      if (partsOf(f.name) !== partsOf(title)) continue;
       let score = 0;
       if (n === t) score = 100;
       else if (a && (n === `${a} ${t}` || n === `${t} ${a}`)) score = 95;
@@ -341,6 +350,7 @@
   function sameSong(track, artist, resTrack, resArtist) {
     const nt = normalize(track), rt = normalize(resTrack);
     if (!nt || !rt) return false;
+    if (partsOf(track) !== partsOf(resTrack)) return false;
     const titleOk = rt === nt || rt.startsWith(nt + ' ') || nt.startsWith(rt + ' ');
     const na = normalize(artist), ra = normalize(resArtist);
     const artistOk = !na || (!!ra && (ra.includes(na) || na.includes(ra)));

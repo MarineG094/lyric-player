@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 28,
+    title: 'Fix: interludes, intros and outros',
+    items: [
+      { text: 'A track called "Faded (Interlude)", "Intro", "Outro", "Skit" or "Reprise" no longer gets the lyrics of the full song with the same name.' },
+    ],
+  },
+  {
     id: 27,
     title: 'Fix: two songs with the same name',
     items: [
