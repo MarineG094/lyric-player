@@ -4,7 +4,7 @@
 - **`dev`** is where work happens. Pushing to `dev` only runs the tests (nothing is published).
 
 ## Test builds from `dev`
-Every push to `dev` also builds test copies, published as **pre-releases** (not the normal downloads):
+Every push to `dev` also builds test copies, published as **draft releases**. A draft is visible only to you while signed in to GitHub (Releases page, top of the list, marked Draft); nobody else can see or download it:
 - **dev-windows**: `Lyric-Player-DEV-<version>.exe` (portable, no install).
 - **dev-android**: `LyricPlayer-DEV.apk` (phone) and `LyricPlayer-TV-DEV.apk` (TV).
 
