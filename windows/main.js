@@ -1478,11 +1478,16 @@ ipcMain.handle('app:switchHost', () => {
 
 ipcMain.handle('lyrics:dir', () => lyricsDir());
 
+// Lyrics this app downloaded before the artist went into the file name are named by the title alone, so they can belong to a
+// different song with the same title. They stay on disk but are not matched any more; the song's lyrics are fetched again.
+function oldDownload(file, fetched) { return fetched.has(file) && !/ - /.test(file); }
+
 ipcMain.handle('lyrics:list', () => {
   const dir = lyricsDir();
+  const fetched = new Set(loadSettings().fetchedLyrics || []);
   return fs
     .readdirSync(dir)
-    .filter((f) => /\.(lrc|txt)$/i.test(f))
+    .filter((f) => /\.(lrc|txt)$/i.test(f) && !oldDownload(f, fetched))
     .map((f) => ({ file: f, name: f.replace(/\.(lrc|txt)$/i, '') }))
     .sort((a, b) => a.file.localeCompare(b.file));
 });

@@ -5,7 +5,7 @@ window.__whatsnew = [
     id: 27,
     title: 'Fix: two songs with the same name',
     items: [
-      { text: 'Downloaded lyrics are now saved with the artist in the file name, and a song only uses a saved file when the name really is that song. Before, "Demons" by one artist could show another artist\'s "Demons", and "Memories" could pick up "Dead Memories". If a song still shows the wrong lyrics, tap "Wrong lyrics? Try another" or delete that file in the Lyrics folder.' },
+      { text: 'Downloaded lyrics are now saved with the artist in the file name, and a song only uses a saved file when the name really is that song. Before, "Demons" by one artist could show another artist\'s "Demons", and "Memories" could pick up "Dead Memories". Lyrics downloaded earlier under the title alone are looked up again the next time you play the song (the old files stay in the Lyrics folder). If a song still shows the wrong lyrics, tap "Wrong lyrics? Try another" or delete that file in the Lyrics folder.' },
     ],
   },
   {

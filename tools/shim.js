@@ -142,7 +142,10 @@
     getSaved: async () => { try { return JSON.parse(N.saved()) || []; } catch (_) { return []; } },
     setSaved: async (list) => { try { N.setSaved(JSON.stringify(list || [])); } catch (_) { /* ignore */ } return true; },
     getLyricsDir: async () => N.lyricsDir(),
-    listLyrics: async () => JSON.parse(N.listLyrics()),
+    listLyrics: async () => { // lyrics downloaded under the title alone (before the artist was in the name) are not matched any more
+      const fetched = new Set((await handlers['lyrics:fetched']()) || []);
+      return JSON.parse(N.listLyrics()).filter((f) => !(fetched.has(f.file) && !/ - /.test(f.file)));
+    },
     readLyrics: async (file) => {
       const text = N.readLyrics(safeLyricsFile(file));
       if (text == null) throw new Error('Lyrics file not found');
