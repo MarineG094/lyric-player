@@ -279,7 +279,8 @@ test('searchTries: songs-only first, then a cleaned title, then the plain mixed 
   assert.equal(tries[1].songsOnly, true);
   assert.equal(tries[1].query, 'Glass Animals Heat Waves');
   assert.equal(tries[tries.length - 1].songsOnly, false);
-  assert.equal(L.searchTries({ title: 'Numb', artist: 'Linkin Park' }).length, 2); // nothing to clean: no repeat of the same search
+  const numb = L.searchTries({ title: 'Numb', artist: 'Linkin Park' }); // nothing to clean: no repeat of the same search
+  assert.deepEqual(numb.map((x) => x.query + '|' + x.songsOnly), ['Linkin Park Numb|true', 'Numb|true', 'Linkin Park Numb|false']);
 });
 
 test('matchTrack prefers the album track over the music video of the same song', () => {

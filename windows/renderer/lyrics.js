@@ -304,7 +304,10 @@
     const out = [{ query: `${artist} ${title}`.trim(), songsOnly: true }];
     const second = `${primary} ${clean || title}`.trim();
     if (second && second !== out[0].query) out.push({ query: second, songsOnly: true });
+    // the title alone (an unusual artist list can drown the song), then the plain mixed search
+    if (clean && clean.length >= 3) out.push({ query: clean, songsOnly: true });
     out.push({ query: `${artist} ${title}`.trim(), songsOnly: false });
+    if (second && second !== out[out.length - 1].query) out.push({ query: second, songsOnly: false });
     return out;
   }
 

@@ -538,7 +538,7 @@ ipcMain.handle('player:importPlaylist', async (_e, ext) => {
         for (const tryIt of Lyrics.searchTries(t)) {
           const res = await searchYt(tryIt.query, tryIt.songsOnly);
           hit = Lyrics.matchTrack(t, res.results || []);
-          if (!hit && !seen.length) seen = (res.results || []).filter((x) => x && x.kind === 'song').slice(0, 3).map((x) => `${x.title} · ${String(x.sub || '').split(' • ').slice(0, 2).join(' • ')}`);
+          if (!hit) for (const x of (res.results || []).filter((y) => y && y.kind === 'song').slice(0, 3)) { const s1 = `${x.title} · ${String(x.sub || '').split(' • ').slice(0, 2).join(' • ')}`; if (seen.length < 8 && !seen.includes(s1)) seen.push(s1); }
           if (res.error && !(res.results || []).length && !items.length && importState.done === 0) throw new Error(res.error);
           if (hit) break;
           await wait(Math.min(gap, 250));

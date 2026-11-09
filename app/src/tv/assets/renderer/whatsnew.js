@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 32,
+    title: 'Import: more ways to find a song',
+    items: [
+      { text: 'When a song with several artists isn\'t found, the importer now also searches the title alone and the main artist with the plain search, before giving up. The not-found list shows more of what came back.' },
+    ],
+  },
+  {
     id: 31,
     title: 'Not-found songs now say why',
     items: [
