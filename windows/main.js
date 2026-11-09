@@ -1325,6 +1325,16 @@ function miniStart() {
   return { x, y };
 }
 
+// Windows lets other always-on-top windows, and any window raised after ours, slip over a topmost window that was shown
+// without focus. So the mini player claims the top again when it is shown, when focus moves, and every couple of seconds.
+function raiseMini() {
+  if (!miniWin || miniWin.isDestroyed()) return;
+  try {
+    miniWin.setAlwaysOnTop(true, process.platform === 'win32' ? 'screen-saver' : 'floating');
+    miniWin.moveTop();
+  } catch (_) { /* window closing */ }
+}
+
 function openMini() {
   if (!win || win.isDestroyed()) return false;
   if (miniWin && !miniWin.isDestroyed()) { miniWin.show(); return true; }
@@ -1342,7 +1352,10 @@ function openMini() {
   miniWin.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   miniWin.webContents.on('will-navigate', (e) => e.preventDefault());
   miniWin.loadURL(`http://${host}:${port}/mini.html`);
-  miniWin.once('ready-to-show', () => { if (miniWin && !miniWin.isDestroyed()) miniWin.showInactive(); });
+  miniWin.once('ready-to-show', () => { if (miniWin && !miniWin.isDestroyed()) { miniWin.showInactive(); raiseMini(); } });
+  miniWin.on('blur', raiseMini);
+  miniWin.on('show', raiseMini);
+  const keepTop = setInterval(raiseMini, 2000);
   stateHook = (s) => {
     if (!miniWin || miniWin.isDestroyed()) return;
     const st = { hasMedia: !!s.hasMedia, ad: !!s.ad, title: s.title || '', artist: s.artist || '', art: s.art || '', cur: s.cur || 0, dur: s.dur || 0, playing: !!s.playing,
@@ -1351,6 +1364,7 @@ function openMini() {
     miniWin.webContents.send('mini:state', st);
   };
   miniWin.on('closed', () => {
+    clearInterval(keepTop);
     if (miniDrag) { clearInterval(miniDrag.t); miniDrag = null; }
     miniWin = null;
     stateHook = null;

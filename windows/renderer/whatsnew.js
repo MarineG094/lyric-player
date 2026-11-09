@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 19,
+    title: 'Fix: the mini player stays on top',
+    items: [
+      { text: 'The mini player no longer slips behind other windows and apps. It claims the top again whenever focus moves.', desktop: true },
+    ],
+  },
+  {
     id: 18,
     title: 'Fix: the Play a playlist window fits on screen',
     items: [
