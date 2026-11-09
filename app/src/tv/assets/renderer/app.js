@@ -170,7 +170,7 @@
   function showOverlay(message) {
     els.overlay.hidden = false;
     if (els.savedBox) renderSaved();
-    els.btnCloseOverlay.hidden = !state.playlistId;
+    els.btnCloseOverlay.hidden = false; // always a way out, even when the current song came from an imported playlist
     if (message) {
       els.overlayMsg.textContent = message;
       els.overlayMsg.hidden = false;
@@ -1513,6 +1513,7 @@
   els.btnPlaylist.addEventListener('click', () => showOverlay());
   if (MINI) { els.btnMini.hidden = false; els.btnMini.addEventListener('click', () => MINI.toggle()); } // Windows only
   els.btnCloseOverlay.addEventListener('click', hideOverlay);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !els.overlay.hidden) hideOverlay(); });
   els.btnFolder.addEventListener('click', () => window.api.openLyricsFolder());
 
   function applyAds() {

@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 24,
+    title: 'Fix: the Close button is back',
+    items: [
+      { text: 'The Play a playlist window always has a Close button now (and Esc closes it). It was missing when an imported playlist was playing.' },
+    ],
+  },
+  {
     id: 23,
     title: 'Fix: wrong artist in imported playlists',
     items: [
