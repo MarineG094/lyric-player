@@ -1,0 +1,29 @@
+name: Test (dev)
+# Runs on the dev branch and on pull requests: tests only. Nothing is built or published here.
+# A release happens only when dev is merged into main (see docs/RELEASING.md).
+on:
+  push:
+    branches: [dev]
+    paths-ignore: ['**/*.md', 'docs/**']
+  pull_request:
+    branches: [main]
+    paths-ignore: ['**/*.md', 'docs/**']
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Tests
+        working-directory: windows
+        run: |
+          npm install
+          npm test
+      - name: The phone and TV copies match the Windows code
+        run: |
+          python3 tools/assemble.py windows
+          git diff --exit-code --stat || (echo "Run: python3 tools/assemble.py windows, then commit the result" && exit 1)
