@@ -321,3 +321,14 @@ test('sameSong: a different song that came up in the search is rejected', () => 
   assert.equal(L.sameSong('Wake Me Up', 'Aloe Blacc, Avicii', 'Wake Me Up', 'Avicii'), true);
   assert.equal(L.sameSong('Memories', '', 'Memories', 'Anyone'), true);
 });
+
+test('matchFile: a longer or shorter name with other title words is not the song', () => {
+  const f = (name) => [{ file: name + '.lrc', name }];
+  assert.equal(L.matchFile('Memories', 'Callysta', f('Dead Memories')), null);
+  assert.equal(L.matchFile('Dead Memories', 'Slipknot', f('Memories')), null);
+  assert.ok(L.matchFile('Memories', 'Callysta', f('Memories - Callysta')));
+  assert.equal(L.matchFile('Demons', 'Imagine Dragons', f('Demons - Someone Else')), null);
+  assert.ok(L.matchFile('Demons', 'Imagine Dragons', f('Demons - Imagine Dragons')));
+  assert.ok(L.matchFile('Imagine Dragons - Demons (Official Video)', 'Imagine Dragons', f('Demons')));
+  assert.ok(L.matchFile('Demons - Remastered 2011', 'Imagine Dragons', f('Demons')));
+});

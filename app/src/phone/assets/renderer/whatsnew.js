@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 27,
+    title: 'Fix: two songs with the same name',
+    items: [
+      { text: 'Downloaded lyrics are now saved with the artist in the file name, and a song only uses a saved file when the name really is that song. Before, "Demons" by one artist could show another artist\'s "Demons", and "Memories" could pick up "Dead Memories". If a song still shows the wrong lyrics, tap "Wrong lyrics? Try another" or delete that file in the Lyrics folder.' },
+    ],
+  },
+  {
     id: 26,
     title: 'Fix: lyrics from a different song',
     items: [

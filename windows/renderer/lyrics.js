@@ -90,6 +90,15 @@
     return normalize(String(name).replace(/^\s*\d{1,3}\s*[-._)]\s*/, ''));
   }
 
+  /* "Memories" must not match a file called "Dead Memories": when one name contains the other, the extra words have to be
+     the artist or filler ("official video", "remastered 2011"), not more of the title. */
+  const FILLER = new Set(['official', 'video', 'audio', 'lyrics', 'lyric', 'remastered', 'remaster', 'version', 'hd', 'hq', 'live', 'music', 'feat', 'ft', 'explicit', 'topic', 'vevo', 'single', 'radio', 'edit', 'mono', 'stereo', 'album', 'remix', 'acoustic', 'slowed', 'reverb', 'sped', 'up', 'nightcore', 'mix', 'deluxe']);
+  function extraOk(longer, shorter, artist) {
+    const aw = new Set(String(artist || '').split(' ').filter(Boolean));
+    const sw = new Set(shorter.split(' '));
+    return longer.split(' ').every((w) => sw.has(w) || aw.has(w) || FILLER.has(w) || /^\d+$/.test(w));
+  }
+
   /* files: [{ file, name }]. Returns the best matching entry or null. */
   function matchFile(title, artist, files) {
     const t = normalize(title);
@@ -104,8 +113,8 @@
       let score = 0;
       if (n === t) score = 100;
       else if (a && (n === `${a} ${t}` || n === `${t} ${a}`)) score = 95;
-      else if (n.length >= 3 && (` ${t} `).includes(` ${n} `)) score = 50 + 40 * (n.length / t.length);
-      else if (t.length >= 3 && (` ${n} `).includes(` ${t} `)) score = 50 + 40 * (t.length / n.length);
+      else if (n.length >= 3 && (` ${t} `).includes(` ${n} `) && extraOk(t, n, a)) score = 50 + 40 * (n.length / t.length);
+      else if (t.length >= 3 && (` ${n} `).includes(` ${t} `) && extraOk(n, t, a)) score = 50 + 40 * (t.length / n.length);
       if (score > 0 && /\.lrc$/i.test(f.file || '')) score += 0.5; // prefer timed lyrics on ties
       if (score > bestScore) {
         best = f;

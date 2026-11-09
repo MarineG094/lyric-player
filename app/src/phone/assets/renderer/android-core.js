@@ -1350,7 +1350,8 @@ ipcMain.handle('lyrics:fetch', async (_event, { title, track, artist, author, du
   const pick = ordered[skip];
   if (!pick) return { status: 'nomore' };
   const synced = Lyrics.hasTimestamps(pick.text);
-  const base = Lyrics.sanitizeFileName(title || track);
+  // The artist is part of the name so two songs with the same title ("Demons", "Memories") never share one file.
+  const base = Lyrics.sanitizeFileName((title || track) + (artist ? ' - ' + artist : ''));
   if (skip) for (const f of new Set([replaceFile, base + '.lrc', base + '.txt'].filter(Boolean))) { try { fs.unlinkSync(safeLyricsFile(f)); } catch (_) { /* not there */ } }
   const file = base + (synced ? '.lrc' : '.txt');
   fs.writeFileSync(safeLyricsFile(file), pick.text, 'utf8');
