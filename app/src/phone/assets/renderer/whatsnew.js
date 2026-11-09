@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 21,
+    title: 'Fix: the way back from YouTube Music',
+    items: [
+      { text: 'While the YouTube Music page is open, a "Back to lyrics" button now sits in the top bar. Before, it was only in the Menu, which dropped down behind the page and could not be clicked. The What\'s new card also steps aside while you browse.' },
+    ],
+  },
+  {
     id: 20,
     title: 'Fix: imported playlists play, shuffle and repeat properly',
     items: [

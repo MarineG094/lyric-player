@@ -22,6 +22,7 @@
     title: $('#title'),
     artist: $('#artist'),
     btnBrowse: $('#btnBrowse'),
+    btnBackLyrics: $('#btnBackLyrics'),
     btnFull: $('#btnFull'),
     btnAds: $('#btnAds'),
     btnCover: $('#btnCover'),
@@ -559,12 +560,24 @@
   const P = window.api.player;
   let browsing = false;
 
+  // The What's new card and the "Play a playlist" window sit in the page, so the YouTube Music view (a separate layer on top)
+  // would hide them while they still block clicks on the top bar, leaving no way back. They step aside instead.
+  let pendingNews = null;
   function setBrowse(show) {
     browsing = !!show;
+    if (browsing) {
+      if (els.news && !els.news.hidden) { els.news.hidden = true; pendingNews = pendingNews || { lastSeen: 0, latestOnly: true }; }
+      if (els.overlay && !els.overlay.hidden) hideOverlay();
+    } else if (pendingNews) {
+      const p = pendingNews; pendingNews = null;
+      setTimeout(() => { if (!browsing) showNews(p.lastSeen, p.latestOnly); }, 500);
+    }
     const top = document.querySelector('.topbar').getBoundingClientRect().bottom + 8;
     P.browse(browsing, top);
     els.btnBrowse.textContent = browsing ? 'Back to lyrics' : 'YouTube Music';
     els.btnBrowse.classList.toggle('on', browsing);
+    els.btnBackLyrics.hidden = !browsing; // the Menu drops down behind the YouTube Music page, so the way back lives in the top bar
+    if (browsing) closeMenu();
   }
 
   function startWatchdog() {
@@ -1364,6 +1377,7 @@
   els.btnRepeat.addEventListener('click', cycleRepeat);
   els.btnAddSolo.addEventListener('click', openEditor);
   els.btnBrowse.addEventListener('click', () => setBrowse(!browsing));
+  els.btnBackLyrics.addEventListener('click', () => setBrowse(false));
 
   /* ---------- fullscreen ---------- */
 
@@ -1652,6 +1666,7 @@
   /* ---------- what's new: once, the first time a newer version is opened ---------- */
   // lastSeen = the newest note already read (everything newer is shown); latestOnly = just the newest update's note, for the Menu button.
   function showNews(lastSeen, latestOnly) {
+    if (browsing) { pendingNews = { lastSeen, latestOnly }; return; } // shown once the person is back on the lyrics page
     const desktop = !!(window.api && window.api.desktop);
     const all = window.__whatsnew || [];
     const entries = latestOnly ? all.slice(0, 1) : all.filter((e) => e.id > lastSeen).slice(0, 4);
