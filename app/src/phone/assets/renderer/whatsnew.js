@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 30,
+    title: 'Fix: the artist, not the album name',
+    items: [
+      { text: 'Importing a playlist only matches the artist against the song\'s artist now, not its album title. An album called "Ambient Translations of Halsey" no longer counts as Halsey. Tap Update on a playlist that already has a wrong song.' },
+    ],
+  },
+  {
     id: 29,
     title: 'Fix: the real song, not the remix',
     items: [

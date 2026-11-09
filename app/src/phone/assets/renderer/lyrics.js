@@ -326,7 +326,8 @@
       const inter = wt.filter((w) => rset.has(w)).length;
       const t = inter / Math.max(wt.length, rt.length, 1);
       if (t < 0.5) continue;
-      const sub = normalize(r.sub);
+      // r.sub reads "Artist • Album • 3:25": only the artist part counts. The album can name another artist ("Ambient Translations of Halsey").
+      const sub = normalize(String(r.sub || '').split(/\s*\u2022\s*/)[0]);
       const subWords = sub.split(' ');
       // a long artist word also counts inside a channel name ("AviciiVEVO"). Never the title: an upload called "Wake Me Up Avicii" is not by Avicii.
       const a = wantArtists.length ? Math.max(...wantArtists.map((ws) => ws.filter((w) => subWords.includes(w) || (w.length >= 5 && sub.includes(w))).length / ws.length)) : 0;

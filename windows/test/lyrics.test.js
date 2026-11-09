@@ -351,3 +351,10 @@ test('matchTrack: the real song beats its remix, even when the brackets hide the
   assert.equal(L.matchTrack({ title: 'Miss It (Bardz Remix)', artist: 'William Black', dur: 206 }, [real, remix]).id, 'xxxxxxxxxxx');
   assert.equal(L.matchTrack({ title: 'Miss It', artist: 'William Black', dur: 205 }, [remix]), null);
 });
+
+test('matchTrack: an artist named in the album does not count (Ambient Translations of Halsey)', () => {
+  const ambient = { kind: 'song', id: 'aaaaaaaaaaa', title: 'Without Me', sub: 'Ambient Light Orchestra • Ambient Translations of Halsey • 3:40', type: 'Song' };
+  const real = { kind: 'song', id: 'rrrrrrrrrrr', title: 'Without Me', sub: 'Halsey • Manic • 3:22', type: 'Song' };
+  assert.equal(L.matchTrack({ title: 'Without Me', artist: 'Halsey', dur: 202 }, [ambient]), null);
+  assert.equal(L.matchTrack({ title: 'Without Me', artist: 'Halsey', dur: 202 }, [ambient, real]).id, 'rrrrrrrrrrr');
+});
