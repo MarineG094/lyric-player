@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 37,
+    title: 'TV: cleaner full screen',
+    items: [
+      { text: 'In full screen on the TV, the Hide cover / Show cover button now disappears with the other controls and comes back when you press a button on the remote.', mobile: true },
+    ],
+  },
+  {
     id: 36,
     title: 'TV: Spotify, Deezer and SoundCloud links',
     items: [
