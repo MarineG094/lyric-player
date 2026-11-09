@@ -92,7 +92,7 @@
 
   /* "Memories" must not match a file called "Dead Memories": when one name contains the other, the extra words have to be
      the artist or filler ("official video", "remastered 2011"), not more of the title. */
-  const FILLER = new Set(['official', 'video', 'audio', 'lyrics', 'lyric', 'remastered', 'remaster', 'version', 'hd', 'hq', 'live', 'music', 'feat', 'ft', 'explicit', 'topic', 'vevo', 'single', 'radio', 'edit', 'mono', 'stereo', 'album', 'remix', 'acoustic', 'slowed', 'reverb', 'sped', 'up', 'nightcore', 'mix', 'deluxe']);
+  const FILLER = new Set(['official', 'video', 'audio', 'lyrics', 'lyric', 'remastered', 'remaster', 'version', 'hd', 'hq', 'live', 'music', 'feat', 'ft', 'explicit', 'topic', 'vevo', 'single', 'radio', 'edit', 'mono', 'stereo', 'album', 'remix', 'acoustic', 'slowed', 'reverb', 'sped', 'up', 'nightcore', 'mix', 'deluxe', 'interlude', 'intro', 'outro', 'skit', 'reprise', 'prelude', 'instrumental']); // (the last ones are compared separately, by partsOf)
   function extraOk(longer, shorter, artist) {
     const aw = new Set(String(artist || '').split(' ').filter(Boolean));
     const sw = new Set(shorter.split(' '));
