@@ -304,7 +304,8 @@ ipcMain.handle('player:resolveAlbum', async (_e, browseId) => {
 });
 
 // Runs in the page: searches YouTube Music (the same request its search box makes) and returns songs, albums and playlists.
-const searchScript = (query) => `(async () => {
+const SONGS_ONLY = 'EgWKAQIIAWoMEA4QChADEAQQCRAF'; // YouTube Music's own "Songs" filter: album tracks, no videos
+const searchScript = (query, songsOnly) => `(async () => {
   try {
     const cfg = window.ytcfg;
     const get = (k) => (cfg && typeof cfg.get === 'function' ? cfg.get(k) : cfg && cfg.data_ ? cfg.data_[k] : undefined);
@@ -313,7 +314,7 @@ const searchScript = (query) => `(async () => {
     if (!key || !context) return JSON.stringify({ wait: true });
     const res = await fetch('/youtubei/v1/search?prettyPrint=false&key=' + encodeURIComponent(key), {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-      body: JSON.stringify({ context, query: ${JSON.stringify(query)} }),
+      body: JSON.stringify({ context, query: ${JSON.stringify(query)}${songsOnly ? `, params: ${JSON.stringify(SONGS_ONLY)}` : ''} }),
     });
     if (!res.ok) return JSON.stringify({ error: 'YouTube Music answered HTTP ' + res.status });
     const data = await res.json();
@@ -332,7 +333,9 @@ const searchScript = (query) => `(async () => {
       const title = (text(cols[0])[0] || '').trim();
       const sub = text(cols[1]);
       if (!title) continue;
-      const type = String(sub[0] || '').trim();
+      let type = String(sub[0] || '').trim();
+      let detailRuns = sub.slice(1);
+      if (${songsOnly ? 'true' : 'false'} && !/^(song|video)$/i.test(type)) { type = 'Song'; detailRuns = sub; } // the Songs filter lists "Artist • Album • time" with no "Song" in front
       if (/^(artist|podcast|episode|profile|station)$/i.test(type)) continue;
       let thumb = '';
       try { const th = it.thumbnail.musicThumbnailRenderer.thumbnail.thumbnails; thumb = th[th.length - 1].url; } catch (e) { /* none */ }
@@ -347,7 +350,7 @@ const searchScript = (query) => `(async () => {
       else if (watch && watch.playlistId) { kind = 'list'; id = watch.playlistId; }
       if (!kind || seen.has(kind + id)) continue;
       seen.add(kind + id);
-      const detail = sub.slice(1).join('').replace(/^[\\s•·]+/, '').trim();
+      const detail = detailRuns.join('').replace(/^[\\s•·]+/, '').trim();
       out.push({ kind, id, title, sub: detail || type, type, thumb });
       if (out.length >= 24) break;
     }
@@ -355,14 +358,14 @@ const searchScript = (query) => `(async () => {
   } catch (e) { return JSON.stringify({ error: String(e && e.message || e) }); }
 })()`;
 
-async function searchYt(query) {
+async function searchYt(query, songsOnly) {
   const q = String(query || '').trim().slice(0, 120);
   if (!ytView || q.length < 2) return { results: [] };
   const wc = ytView.webContents;
   let last = 'YouTube Music is still loading';
   for (let i = 0; i < 20; i++) { // the page may still be starting up (up to ~14 s)
     try {
-      const r = JSON.parse(await wc.executeJavaScript(searchScript(q), true) || '{}');
+      const r = JSON.parse(await wc.executeJavaScript(searchScript(q, !!songsOnly), true) || '{}');
       if (r.results) return { results: r.results };
       if (r.error) last = r.error;
       if (i === 6 && r.wait) wc.loadURL(YT_URL).catch(() => {}); // never got a usable page: load the home page (only if nothing else made it ready)
@@ -530,9 +533,14 @@ ipcMain.handle('player:importPlaylist', async (_e, ext) => {
       const label = t.title ? (t.artist ? `${t.artist} – ${t.title}` : t.title) : '(a song without a readable name)';
       let hit = null;
       if (t.title) {
-        const res = await searchYt(`${t.artist} ${t.title}`.trim());
-        hit = Lyrics.matchTrack(t, res.results || []);
-        if (res.error && !(res.results || []).length && !items.length && importState.done === 0) throw new Error(res.error);
+        // Album tracks first (the Songs filter), then looser searches, so a music video is only used when there is no song.
+        for (const tryIt of Lyrics.searchTries(t)) {
+          const res = await searchYt(tryIt.query, tryIt.songsOnly);
+          hit = Lyrics.matchTrack(t, res.results || []);
+          if (res.error && !(res.results || []).length && !items.length && importState.done === 0) throw new Error(res.error);
+          if (hit) break;
+          await wait(Math.min(gap, 250));
+        }
       }
       if (hit && !items.some((x) => x.id === hit.id)) {
         const it = { id: hit.id, title: hit.title, sub: hit.sub, thumb: hit.thumb || '' };

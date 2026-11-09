@@ -276,6 +276,20 @@
     return m ? Number(m[1]) * 60 + Number(m[2]) : 0;
   }
 
+  /* The searches to try, in order, for one wanted song: { query, songsOnly }. Album tracks come first (the Songs filter),
+     then a cleaned-up title, then the plain mixed search (which can also find music videos). */
+  function searchTries(want) {
+    const artist = String(want.artist || '').trim();
+    const primary = artist.split(/\s*(?:,|&| feat\.?| ft\.?| x | and )\s*/i)[0].trim();
+    const title = String(want.title || '').trim();
+    const clean = title.replace(/\s*[\(\[][^\)\]]*[\)\]]/g, ' ').replace(/\s*-\s*(remaster(ed)?|single|radio|mono|stereo|album|live|from)\b.*$/i, '').replace(/\s*(feat\.?|ft\.?|with)\s.*$/i, '').replace(/\s+/g, ' ').trim();
+    const out = [{ query: `${artist} ${title}`.trim(), songsOnly: true }];
+    const second = `${primary} ${clean || title}`.trim();
+    if (second && second !== out[0].query) out.push({ query: second, songsOnly: true });
+    out.push({ query: `${artist} ${title}`.trim(), songsOnly: false });
+    return out;
+  }
+
   /* Picks the YouTube Music result that is the wanted song, or null. results: [{ kind, id, title, sub, type }] */
   function matchTrack(want, results) {
     const wTitle = String(want.title || '').replace(/\s*-\s*(remaster(ed)?|single|radio|mono|stereo|album)\b.*$/i, '').replace(/\s*(feat\.?|ft\.?|with)\s.*$/i, '');
@@ -297,7 +311,8 @@
       let score = 0.55 * t + 0.3 * a;
       const d = durFromText(r.sub);
       if (want.dur && d) { const diff = Math.abs(d - want.dur); score += diff <= 5 ? 0.1 : diff <= 15 ? 0.04 : -0.1; }
-      if (/^song$/i.test(r.type || '')) score += 0.05;
+      if (/^song$/i.test(r.type || '')) score += 0.1;      // the album track
+      else if (/^video$/i.test(r.type || '')) score -= 0.05; // a music video only wins when there is nothing better
       if (!wantNoisy && NOISE.test(normalize(r.title))) score -= 0.3;
       if (a === 0 && t < 0.9) continue; // wrong artist and not clearly the same title
       if (score >= 0.5 && (!best || score > best.score)) best = { score, r };
@@ -305,5 +320,5 @@
     return best ? best.r : null;
   }
 
-  return { extractExternal, SERVICE_NAME, parseSpotifyEmbed, parseDeezer, parseSoundcloud, matchTrack, parse, activeIndex, hasTimestamps, matchFile, normalize, sanitizeFileName, formatTime, extractPlaylistId, extractSource, queryFor };
+  return { searchTries, extractExternal, SERVICE_NAME, parseSpotifyEmbed, parseDeezer, parseSoundcloud, matchTrack, parse, activeIndex, hasTimestamps, matchFile, normalize, sanitizeFileName, formatTime, extractPlaylistId, extractSource, queryFor };
 });

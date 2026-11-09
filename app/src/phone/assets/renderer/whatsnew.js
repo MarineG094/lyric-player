@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 22,
+    title: 'Better matching for imported playlists',
+    items: [
+      { text: 'Importing a Spotify, Deezer or SoundCloud playlist now looks for the real album track first (YouTube Music\'s Songs search, using the artist too), then tries again with a cleaned-up title. A music video is only used when there is no album track. Fewer songs should come back as "not found".' },
+    ],
+  },
+  {
     id: 21,
     title: 'Fix: the way back from YouTube Music',
     items: [

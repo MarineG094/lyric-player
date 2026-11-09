@@ -271,3 +271,22 @@ test('matchTrack picks the right song and rejects wrong ones', () => {
   assert.equal(L.matchTrack({ title: 'Totally Other Song', artist: 'Nobody', dur: 100 }, res), null);
   assert.equal(L.matchTrack({ title: 'Numb - Remastered 2009', artist: 'Linkin Park' }, [{ kind: 'song', id: 'ddddddddddd', title: 'Numb', sub: 'Linkin Park • Meteora • 3:05', type: 'Song' }]).id, 'ddddddddddd');
 });
+
+test('searchTries: songs-only first, then a cleaned title, then the plain mixed search', () => {
+  const tries = L.searchTries({ title: 'Heat Waves (Remastered) - Radio Edit', artist: 'Glass Animals, Someone' });
+  assert.equal(tries[0].songsOnly, true);
+  assert.equal(tries[0].query, 'Glass Animals, Someone Heat Waves (Remastered) - Radio Edit');
+  assert.equal(tries[1].songsOnly, true);
+  assert.equal(tries[1].query, 'Glass Animals Heat Waves');
+  assert.equal(tries[tries.length - 1].songsOnly, false);
+  assert.equal(L.searchTries({ title: 'Numb', artist: 'Linkin Park' }).length, 2); // nothing to clean: no repeat of the same search
+});
+
+test('matchTrack prefers the album track over the music video of the same song', () => {
+  const res = [
+    { kind: 'song', id: 'vvvvvvvvvvv', title: 'I Don\'t Wanna Go', sub: 'Alan Walker • 12M views • 2:49', type: 'Video' },
+    { kind: 'song', id: 'sssssssssss', title: 'I Don\'t Wanna Go', sub: 'Alan Walker, Julie Bergan • I Don\'t Wanna Go • 2:49', type: 'Song' },
+  ];
+  assert.equal(L.matchTrack({ title: "I Don't Wanna Go", artist: 'Alan Walker', dur: 169 }, res).id, 'sssssssssss');
+  assert.equal(L.matchTrack({ title: "I Don't Wanna Go", artist: 'Alan Walker', dur: 169 }, [res[0]]).id, 'vvvvvvvvvvv'); // only the video exists: still found
+});
