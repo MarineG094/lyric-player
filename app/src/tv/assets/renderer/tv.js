@@ -42,7 +42,7 @@
     let addr = '';
     try { addr = N.lanAddress(); } catch (_) { /* ignore */ }
     const html = addr
-      ? 'Easiest: on your phone (same Wi-Fi), open this address, paste the link and press Play.<strong>' + addr + '</strong>'
+      ? 'Easiest: on your phone (same Wi-Fi), open this address, paste a YouTube Music or Spotify link and press Play.<strong>' + addr + '</strong>'
       : 'Connect the TV to Wi-Fi to send links from your phone.';
     if (hint.dataset.h !== html) { hint.dataset.h = html; hint.innerHTML = html; }
   };

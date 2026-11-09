@@ -14,7 +14,7 @@ import java.net.URLDecoder
 object LinkServer {
     @Volatile var port = 0
     private var started = false
-    private val looksRight = Regex("youtu|MPREb_|^(PL|OLAK5uy_|UU|FL|RD)[A-Za-z0-9_-]{6,}$")
+    private val looksRight = Regex("youtu|spotify|deezer|soundcloud|MPREb_|^(PL|OLAK5uy_|UU|FL|RD)[A-Za-z0-9_-]{6,}$")
 
     @Synchronized
     fun start() {
@@ -87,7 +87,7 @@ object LinkServer {
                             }
                             reply(out, page("Sent to your TV. It should start in a moment."))
                         } else {
-                            reply(out, page("That doesn't look like a YouTube Music link. Copy it with Share, then paste it here."))
+                            reply(out, page("That doesn't look like a YouTube Music, Spotify, Deezer or SoundCloud link. Copy it with Share, then paste it here."))
                         }
                     }
                     else -> reply(out, "Not found", 404)
@@ -114,7 +114,7 @@ main{width:min(520px,92vw);padding:28px}h1{font-weight:500;font-size:26px;margin
 input{width:100%;box-sizing:border-box;padding:14px 16px;border-radius:12px;border:1px solid #3a2f27;background:#1f1914;color:#f1e6d8;font-size:16px}
 button{margin-top:14px;width:100%;padding:14px;border:0;border-radius:999px;background:#c08a5e;color:#1a120c;font-weight:700;font-size:16px}
 .note{color:#e0b48a;font-size:16px}</style></head><body><main>
-<h1>Play on your TV</h1><p>Paste a YouTube Music playlist, album or song link.</p>$note
+<h1>Play on your TV</h1><p>Paste a YouTube Music, Spotify, Deezer or SoundCloud link (a playlist, album or song).</p>$note
 <form method=post action=/play><input name=link placeholder="https://music.youtube.com/..." autocomplete=off><button>Play</button></form>
 </main></body></html>"""
     }

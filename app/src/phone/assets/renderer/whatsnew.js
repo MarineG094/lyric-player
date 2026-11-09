@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 36,
+    title: 'TV: Spotify, Deezer and SoundCloud links',
+    items: [
+      { text: 'The page you open on your phone to send a link to the TV now accepts Spotify, Deezer and SoundCloud playlist links too, not only YouTube Music. The songs are matched on YouTube Music the same way as on the other apps.', mobile: true },
+    ],
+  },
+  {
     id: 35,
     title: 'Fix: a different artist named like the song',
     items: [
