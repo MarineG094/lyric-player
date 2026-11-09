@@ -342,3 +342,12 @@ test('Interlude / Intro / Outro are different songs from the main track', () => 
   assert.equal(L.sameSong('Faded', 'Alan Walker', 'Faded (Interlude)', 'Alan Walker'), false);
   assert.equal(L.sameSong('Faded (Interlude)', 'Alan Walker', 'Faded (Interlude)', 'Alan Walker'), true);
 });
+
+test('matchTrack: the real song beats its remix, even when the brackets hide the difference', () => {
+  const remix = { kind: 'song', id: 'xxxxxxxxxxx', title: 'Miss It (Bardz Remix)', sub: 'William Black • Pages (The Remixes) • 3:26', type: 'Song' };
+  const real = { kind: 'song', id: 'rrrrrrrrrrr', title: 'Miss It', sub: 'William Black • Pages • 3:25', type: 'Song' };
+  assert.equal(L.matchTrack({ title: 'Miss It', artist: 'William Black', dur: 205 }, [remix, real]).id, 'rrrrrrrrrrr');
+  assert.equal(L.matchTrack({ title: 'Miss It', artist: 'William Black', dur: 205 }, [real, remix]).id, 'rrrrrrrrrrr');
+  assert.equal(L.matchTrack({ title: 'Miss It (Bardz Remix)', artist: 'William Black', dur: 206 }, [real, remix]).id, 'xxxxxxxxxxx');
+  assert.equal(L.matchTrack({ title: 'Miss It', artist: 'William Black', dur: 205 }, [remix]), null);
+});

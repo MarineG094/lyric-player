@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 29,
+    title: 'Fix: the real song, not the remix',
+    items: [
+      { text: 'Importing a playlist no longer picks a remix, live, sped-up or other altered version when the playlist has the normal song. If only the altered version is found, the song is listed as not found instead. Tap Update on a playlist that already has one.' },
+    ],
+  },
+  {
     id: 28,
     title: 'Fix: interludes, intros and outros',
     items: [

@@ -315,7 +315,8 @@
     if (!wt.length) return null;
     // every wanted artist counts (a song by "A, B" is fine when the result lists A or B), not just the first
     const wantArtists = String(want.artist || '').split(/\s*(?:,|&| feat\.?| ft\.?| x | and )\s*/i).map(wordsOf).filter((w) => w.length);
-    const wantNoisy = NOISE.test(normalize(want.title));
+    // read from the raw title: normalize() drops the brackets, and "(Bardz Remix)" is exactly what has to be seen
+    const wantNoisy = NOISE.test(String(want.title || '').toLowerCase());
     let best = null;
     for (const r of results || []) {
       if (!r || r.kind !== 'song') continue;
@@ -336,7 +337,8 @@
       if (want.dur && d) { const diff = Math.abs(d - want.dur); score += diff <= 5 ? 0.1 : diff <= 15 ? 0.04 : -0.1; }
       if (/^song$/i.test(r.type || '')) score += 0.1;      // the album track
       else if (/^video$/i.test(r.type || '')) score -= 0.05; // a music video only wins when there is nothing better
-      if (!wantNoisy && NOISE.test(normalize(r.title))) score -= 0.3;
+      if (wantNoisy && !NOISE.test(String(r.title || '').toLowerCase())) score -= 0.15; // the playlist has the remix: prefer the remix
+      if (!wantNoisy && NOISE.test(String(r.title || '').toLowerCase())) score -= 0.6; // a remix, live or sped-up version is not the song: with nothing else it counts as not found
       // Same title by a different artist is a different song (a cover, a remix): the artist has to be there.
       // Only when there is no usable artist name to compare does an exact title have to do.
       if (wantArtists.length ? a < 0.5 : t < 0.9) continue;
