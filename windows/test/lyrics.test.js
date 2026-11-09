@@ -366,7 +366,7 @@ test('matchTrack: a result that does not name the artist is used only when the t
   const sameName = { kind: 'song', id: 'sssssssssss', title: 'Faded', sub: 'Faded • 4B views • 3:33', type: 'Video' };
   const cover = { kind: 'song', id: 'ccccccccccc', title: 'Faded', sub: 'Prvnci • Faded • 3:30', type: 'Song' };
   assert.equal(L.matchTrack(want, [noArtist]).id, 'nnnnnnnnnnn');
-  assert.equal(L.matchTrack(want, [sameName]).id, 'sssssssssss');
+  assert.equal(L.matchTrack(want, [sameName]), null); // "Faded" as the first part is a name, not a missing artist
   assert.equal(L.matchTrack(want, [cover, noArtist]).id, 'nnnnnnnnnnn'); // the cover names another artist
   assert.equal(L.matchTrack(want, [{ ...noArtist, sub: '4B views • 1:10' }]), null); // wrong length
   assert.equal(L.matchTrack(want, [{ ...noArtist, title: 'Faded (Sped Up)' }]), null);
@@ -381,4 +381,13 @@ test('matchTrack: a video called "Artist - Title ft. Someone" is the song', () =
   const cover = { kind: 'song', id: 'ccccccccccc', title: 'Maroon 5 - Payphone ft. Wiz Khalifa', sub: 'Some Cover Band • 1M views • 3:50', type: 'Video' };
   assert.equal(L.matchTrack(want, [cover]), null); // another uploader: still not the song
   assert.equal(L.matchTrack({ title: 'Payphone', artist: 'Maroon 5', dur: 231 }, [{ kind: 'song', id: 'kkkkkkkkkkk', title: 'Payphone (feat. Wiz Khalifa)', sub: 'Maroon 5, Wiz Khalifa • Overexposed • 3:51', type: 'Song' }]).id, 'kkkkkkkkkkk');
+});
+
+test('matchTrack: an artist named like the song is a different artist, not a missing one', () => {
+  const want = { title: 'Stereo Hearts', artist: 'Gym Class Heroes, Adam Levine', dur: 212 };
+  const wrong = { kind: 'song', id: 'wwwwwwwwwww', title: 'Stereo Hearts', sub: 'STEREO HEARTS. • Dance Charts Winter 2011 • 3:32', type: 'Song' };
+  const real = { kind: 'song', id: 'rrrrrrrrrrr', title: 'Stereo Hearts (feat. Adam Levine)', sub: 'Gym Class Heroes • The Papercut Chronicles II • 3:32', type: 'Song' };
+  assert.equal(L.matchTrack(want, [wrong]), null);
+  assert.equal(L.matchTrack(want, [wrong, real]).id, 'rrrrrrrrrrr');
+  assert.equal(L.matchTrack(want, [wrong, { ...real, type: 'Video', sub: 'Gym Class Heroes • 1.1B views • 3:32' }]).id, 'rrrrrrrrrrr');
 });

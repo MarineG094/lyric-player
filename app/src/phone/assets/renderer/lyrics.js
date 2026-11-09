@@ -350,10 +350,10 @@
       else if (/^video$/i.test(r.type || '')) score -= 0.05; // a music video only wins when there is nothing better
       if (wantNoisy && !NOISE.test(String(r.title || '').toLowerCase())) score -= 0.15; // the playlist has the remix: prefer the remix
       if (!wantNoisy && NOISE.test(String(r.title || '').toLowerCase())) score -= 0.6; // a remix, live or sped-up version is not the song: with nothing else it counts as not found
-      // Some rows (a video's top result, say) come without the artist: the first part is a view count, the title again, or empty.
+      // Some rows (a video's top result, say) come without the artist: the first part is a view count or empty. (An artist that happens to be named like the song is a real artist: "STEREO HEARTS." is not Gym Class Heroes.)
       // Then the artist cannot be compared, so the title must be exact, not a remix, and the length must agree (or it must be the first hit).
       const seg = String(r.sub || '').split(/\s*\u2022\s*/)[0].trim();
-      const unknown = !seg || /\b(views?|plays?|subscribers?|likes?)\b/i.test(seg) || /^\d{1,2}:\d{2}$/.test(seg) || normalize(seg) === normalize(r.title);
+      const unknown = !seg || /\b(views?|plays?|subscribers?|likes?)\b/i.test(seg) || /^\d{1,2}:\d{2}$/.test(seg);
       if (unknown && wantArtists.length) {
         const noisy = !wantNoisy && NOISE.test(String(r.title || '').toLowerCase());
         const lenOk = want.dur && d ? Math.abs(d - want.dur) <= 3 : (!d && idx === 0);

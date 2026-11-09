@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 35,
+    title: 'Fix: a different artist named like the song',
+    items: [
+      { text: 'Importing a playlist no longer picks a song just because the artist is named like the song (for example "STEREO HEARTS." for Gym Class Heroes\' "Stereo Hearts"). A result is only accepted without an artist when it really shows none, such as a view count.' },
+    ],
+  },
+  {
     id: 34,
     title: 'Import: music videos named "Artist - Song"',
     items: [
