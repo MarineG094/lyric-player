@@ -402,6 +402,7 @@
       try { const out = await P.enqueueMany(items, true, true); renderQueue(out.queue); started = out.added > 0; } catch (_) { /* ignore */ }
       if (started) {
         state.playlistId = ''; state.holdFirst = false; hideOverlay(); setBrowse(false);
+        state.gotMedia = false; // the next song that shows up clears this notice and the timer below
         setStatus('Opening the song in YouTube Music…', 'info'); startWatchdog();
         try { await P.cmd('next'); } catch (_) { started = false; }
         // the next launch picks this playlist up again, at the song and spot where it was left
