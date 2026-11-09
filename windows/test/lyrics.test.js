@@ -290,3 +290,16 @@ test('matchTrack prefers the album track over the music video of the same song',
   assert.equal(L.matchTrack({ title: "I Don't Wanna Go", artist: 'Alan Walker', dur: 169 }, res).id, 'sssssssssss');
   assert.equal(L.matchTrack({ title: "I Don't Wanna Go", artist: 'Alan Walker', dur: 169 }, [res[0]]).id, 'vvvvvvvvvvv'); // only the video exists: still found
 });
+
+test('matchTrack: the same title by a different artist is not the song', () => {
+  const cover = { kind: 'song', id: 'ccccccccccc', title: "Wake Me up (When It's All Over)", sub: 'So So Deluxe • If You Close Your Eyes • 4:06', type: 'Song' };
+  const real = { kind: 'song', id: 'rrrrrrrrrrr', title: 'Wake Me Up', sub: 'Avicii • True • 4:07', type: 'Song' };
+  assert.equal(L.matchTrack({ title: 'Wake Me Up', artist: 'Avicii', dur: 247 }, [cover]), null);
+  assert.equal(L.matchTrack({ title: 'Wake Me Up', artist: 'Avicii', dur: 247 }, [cover, real]).id, 'rrrrrrrrrrr');
+  // other artists of the song count, accents and channel names are fine
+  assert.equal(L.matchTrack({ title: 'Wake Me Up', artist: 'Aloe Blacc, Avicii' }, [real]).id, 'rrrrrrrrrrr');
+  assert.equal(L.matchTrack({ title: 'Halo', artist: 'Beyoncé' }, [{ kind: 'song', id: 'bbbbbbbbbbb', title: 'Halo', sub: 'Beyonce • I AM... SASHA FIERCE • 4:21', type: 'Song' }]).id, 'bbbbbbbbbbb');
+  assert.equal(L.matchTrack({ title: 'Wake Me Up', artist: 'Avicii' }, [{ kind: 'song', id: 'vvvvvvvvvvv', title: 'Wake Me Up', sub: 'AviciiVEVO • 200M views • 4:07', type: 'Video' }]).id, 'vvvvvvvvvvv');
+  // no artist given: an exact title still matches
+  assert.equal(L.matchTrack({ title: 'Wake Me Up', artist: '' }, [real]).id, 'rrrrrrrrrrr');
+});

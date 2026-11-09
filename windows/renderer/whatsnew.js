@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 23,
+    title: 'Fix: wrong artist in imported playlists',
+    items: [
+      { text: 'Importing a playlist no longer picks a cover or another artist\'s version of a song. The artist has to match, so Avicii\'s "Wake Me Up" is no longer swapped for a song with the same name by someone else. If a playlist already has a wrong song, tap Update on it to match it again. A few songs may now show as "not found" instead of being the wrong track.' },
+    ],
+  },
+  {
     id: 22,
     title: 'Better matching for imported playlists',
     items: [

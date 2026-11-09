@@ -295,7 +295,8 @@
     const wTitle = String(want.title || '').replace(/\s*-\s*(remaster(ed)?|single|radio|mono|stereo|album)\b.*$/i, '').replace(/\s*(feat\.?|ft\.?|with)\s.*$/i, '');
     const wt = wordsOf(wTitle);
     if (!wt.length) return null;
-    const wa = wordsOf(String(want.artist || '').split(/[,&]| feat\.?| x /i)[0]);
+    // every wanted artist counts (a song by "A, B" is fine when the result lists A or B), not just the first
+    const wantArtists = String(want.artist || '').split(/\s*(?:,|&| feat\.?| ft\.?| x | and )\s*/i).map(wordsOf).filter((w) => w.length);
     const wantNoisy = NOISE.test(normalize(want.title));
     let best = null;
     for (const r of results || []) {
@@ -307,14 +308,19 @@
       const t = inter / Math.max(wt.length, rt.length, 1);
       if (t < 0.5) continue;
       const sub = normalize(r.sub);
-      const a = wa.length ? wa.filter((w) => sub.split(' ').includes(w)).length / wa.length : 0;
+      const subWords = sub.split(' ');
+      const hay = sub + ' ' + normalize(r.title);
+      // a long artist word also counts inside a channel name ("AviciiVEVO") or a title ("Avicii - Wake Me Up")
+      const a = wantArtists.length ? Math.max(...wantArtists.map((ws) => ws.filter((w) => subWords.includes(w) || (w.length >= 5 && hay.includes(w))).length / ws.length)) : 0;
       let score = 0.55 * t + 0.3 * a;
       const d = durFromText(r.sub);
       if (want.dur && d) { const diff = Math.abs(d - want.dur); score += diff <= 5 ? 0.1 : diff <= 15 ? 0.04 : -0.1; }
       if (/^song$/i.test(r.type || '')) score += 0.1;      // the album track
       else if (/^video$/i.test(r.type || '')) score -= 0.05; // a music video only wins when there is nothing better
       if (!wantNoisy && NOISE.test(normalize(r.title))) score -= 0.3;
-      if (a === 0 && t < 0.9) continue; // wrong artist and not clearly the same title
+      // Same title by a different artist is a different song (a cover, a remix): the artist has to be there.
+      // Only when there is no usable artist name to compare does an exact title have to do.
+      if (wantArtists.length ? a < 0.5 : t < 0.9) continue;
       if (score >= 0.5 && (!best || score > best.score)) best = { score, r };
     }
     return best ? best.r : null;
