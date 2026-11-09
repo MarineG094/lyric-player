@@ -41,7 +41,7 @@ contextBridge.exposeInMainWorld('api', {
     search: (query) => ipcRenderer.invoke('player:search', query),
     enqueue: (item, front) => ipcRenderer.invoke('player:enqueue', item, front),
     queue: () => ipcRenderer.invoke('player:queue'),
-    enqueueMany: (items, front) => ipcRenderer.invoke('player:enqueueMany', items, front),
+    enqueueMany: (items, front, asPlaylist) => ipcRenderer.invoke('player:enqueueMany', items, front, asPlaylist),
     resolveItems: (src) => ipcRenderer.invoke('player:resolveItems', src),
     importPlaylist: (ext) => ipcRenderer.invoke('player:importPlaylist', ext),
     importStatus: () => ipcRenderer.invoke('player:importStatus'),

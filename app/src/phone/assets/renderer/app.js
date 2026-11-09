@@ -394,19 +394,23 @@
   async function applyImported(pl, front, playFirst, fresh) {
     const items = pl.items || [];
     const missing = pl.missing || [];
-    let rest = items;
-    let first = null;
-    if (playFirst && !state.currentVideoId) { first = items[0]; rest = items.slice(1); }
-    else if (playFirst && items.length) { // something is playing: "Play" means play this next
-      front = true;
-    }
-    if (rest.length) { try { const out = await P.enqueueMany(rest, front); renderQueue(out.queue); } catch (_) { /* ignore */ } }
+    let started = false;
+    if (playFirst && items.length) {
+      // "Play" starts the playlist right away: every song goes in as one playlist, then Next takes the first
+      // (a random one when Shuffle is on). Repeat: playlist and Shuffle then work on these songs.
+      try { const out = await P.enqueueMany(items, true, true); renderQueue(out.queue); started = out.added > 0; } catch (_) { /* ignore */ }
+      if (started) {
+        state.playlistId = ''; state.holdFirst = false; hideOverlay(); setBrowse(false);
+        setStatus('Opening the song in YouTube Music…', 'info'); startWatchdog();
+        try { await P.cmd('next'); } catch (_) { started = false; }
+      }
+    } else if (items.length) { try { const out = await P.enqueueMany(items, front); renderQueue(out.queue); } catch (_) { /* ignore */ } }
+    const first = started ? items[0] : null;
     const bits = [`${fresh ? 'Found' : 'Saved playlist:'} ${items.length}${fresh ? ' of ' + (pl.total || items.length) : ''} songs${pl.name ? ' from "' + pl.name + '"' : ''}, ${first ? 'started' : playFirst ? 'playing next' : 'added to the queue'}.`];
     if (missing.length) bits.push(`Not all songs were found. Missing ${missing.length}:`);
     if (pl.cut) bits.push(`(${pl.cut} more songs in the playlist were left out; at most 200 are imported.)`);
     if (pl.cancelled) bits.push('(Stopped early.)');
     showImport(bits.join(' '), { running: false, missing });
-    if (first) loadSong(first.id, true);
   }
 
   async function importAndQueue(ext, front, playFirst, refresh) {

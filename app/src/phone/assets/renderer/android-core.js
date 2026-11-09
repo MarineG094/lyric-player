@@ -382,12 +382,14 @@ ipcMain.handle('player:enqueue', (_e, item, front) => {
   return ctl.queue.slice();
 });
 ipcMain.handle('player:queue', () => ctl.queue.slice());
-ipcMain.handle('player:enqueueMany', (_e, items, front) => {
+ipcMain.handle('player:enqueueMany', (_e, items, front, asPlaylist) => {
   const room = 200 - ctl.queue.length;
   const clean = (Array.isArray(items) ? items : []).filter((x) => x && /^[A-Za-z0-9_-]{11}$/.test(String(x.id || ''))).slice(0, Math.max(0, room)).map((x) => ({
     id: String(x.id), title: String(x.title || '').slice(0, 200), sub: String(x.sub || '').slice(0, 200), thumb: /^https:/.test(String(x.thumb || '')) ? String(x.thumb) : '',
   }));
-  if (front) { ctl.queue.splice(ctl.nextN, 0, ...clean); ctl.nextN += clean.length; } else ctl.queue.push(...clean);
+  if (front && asPlaylist) ctl.queue.splice(ctl.nextN, 0, ...clean); // a whole playlist: in order, but shuffle and repeat can work on it
+  else if (front) { ctl.queue.splice(ctl.nextN, 0, ...clean); ctl.nextN += clean.length; } else ctl.queue.push(...clean);
+  ctl.pick = -1;
   return { queue: ctl.queue.slice(), added: clean.length, skipped: (Array.isArray(items) ? items.length : 0) - clean.length };
 });
 
@@ -548,10 +550,10 @@ ipcMain.handle('player:importStatus', () => ({ ...importState }));
 ipcMain.handle('player:importCancel', () => { importState.cancel = true; return true; });
 ipcMain.handle('player:dequeue', (_e, index) => {
   const i = Number(index);
-  if (Number.isInteger(i) && i >= 0 && i < ctl.queue.length) { ctl.queue.splice(i, 1); if (i < ctl.nextN) ctl.nextN -= 1; }
+  if (Number.isInteger(i) && i >= 0 && i < ctl.queue.length) { ctl.queue.splice(i, 1); if (i < ctl.nextN) ctl.nextN -= 1; ctl.pick = -1; }
   return ctl.queue.slice();
 });
-ipcMain.handle('player:clearQueue', () => { ctl.queue = []; ctl.nextN = 0; return []; });
+ipcMain.handle('player:clearQueue', () => { ctl.queue = []; ctl.nextN = 0; ctl.played = []; ctl.pick = -1; return []; });
 
 ipcMain.handle('player:browse', (_e, show, top) => {
   ytBrowse = !!show;
@@ -569,7 +571,7 @@ const playerApi = (method) => `(() => { const p = document.querySelector('#movie
 
 /* ---------- shuffle and repeat (handled here, not by clicking the page's buttons) ---------- */
 
-const ctl = { meta: new Map(), wantId: '', queue: [], nextN: 0, divert: null, trace: [], solo: false, shuffle: false, repeat: 'off', order: [], pos: 0, lastJump: 0, snap: null, spaWorks: null, spaFails: 0, ids: [], idsFor: '', idsAt: 0, idsTries: 0, idsBusy: false };
+const ctl = { meta: new Map(), wantId: '', queue: [], nextN: 0, played: [], pick: -1, divert: null, trace: [], solo: false, shuffle: false, repeat: 'off', order: [], pos: 0, lastJump: 0, snap: null, spaWorks: null, spaFails: 0, ids: [], idsFor: '', idsAt: 0, idsTries: 0, idsBusy: false };
 const enc = encodeURIComponent;
 
 function shuffled(list) {
@@ -720,10 +722,30 @@ function openInList(query) {
    Songs the person adds play before the playlist carries on. A queued song plays on its own; when the queue is
    empty the playlist resumes with the song that would have come next. */
 
+// Which queued song is next: the first one, or with Shuffle on a random one (chosen once, so "Up next" can show it).
+// Songs added with "play next" always go first.
+function queueIndex() {
+  if (ctl.nextN > 0 || !ctl.shuffle || ctl.queue.length < 2) return 0;
+  if (!(ctl.pick >= 0 && ctl.pick < ctl.queue.length)) ctl.pick = Math.floor(Math.random() * ctl.queue.length);
+  return ctl.pick;
+}
+
 function takeQueued() {
-  const it = ctl.queue.shift();
+  if (!ctl.queue.length) return null;
+  const idx = queueIndex();
+  const it = ctl.queue.splice(idx, 1)[0];
   if (it && ctl.nextN > 0) ctl.nextN -= 1;
+  ctl.pick = -1;
+  if (it) { ctl.played.push(it); if (ctl.played.length > 200) ctl.played.shift(); }
   return it || null;
+}
+
+// Repeat: playlist. The queue ran dry, so it fills up again with the songs that were played from it.
+function refillQueue() {
+  if (ctl.repeat !== 'all' || ctl.queue.length || ctl.played.length < 2) return false;
+  ctl.queue = ctl.played.splice(0);
+  ctl.nextN = 0; ctl.pick = -1;
+  return true;
 }
 
 async function playQueued(fromId) {
@@ -780,7 +802,8 @@ function computeNext(s) {
   let id = '';
   let item = null;
   if (ctl.repeat === 'one') return null;
-  if (ctl.queue.length) item = ctl.queue[0];
+  if (!ctl.queue.length && ctl.repeat === 'all' && onQueuedSong(s) && ctl.played.length > 1) item = ctl.played[0];
+  else if (ctl.queue.length) item = ctl.queue[queueIndex()];
   else if (onQueuedSong(s) && ctl.divert) {
     const d = ctl.divert;
     if (d.wasSolo || !d.listId) return null;
@@ -798,7 +821,7 @@ function computeNext(s) {
   if (!item && id) item = ctl.meta.get(id) || { id, title: '', sub: '', thumb: '' };
   ctl.wantId = item && !item.title ? item.id : ''; // ask the page for this song's details on the next look
   if (!item) return null;
-  return { id: item.id, title: item.title || '', sub: item.sub || '', thumb: item.thumb || (item.id ? `https://i.ytimg.com/vi/${item.id}/mqdefault.jpg` : ''), queued: item === ctl.queue[0] };
+  return { id: item.id, title: item.title || '', sub: item.sub || '', thumb: item.thumb || (item.id ? `https://i.ytimg.com/vi/${item.id}/mqdefault.jpg` : ''), queued: item === ctl.queue[queueIndex()] };
 }
 
 // Called after every poll. Handles what should happen when a song reaches its end.
@@ -815,6 +838,7 @@ function controllerTick(s) {
 
   if (ctl.repeat !== 'one') {
     if (ctl.queue.length) { playQueued(s.videoId); return; }
+    if (onQueuedSong(s) && refillQueue()) { playQueued(s.videoId); return; }
     if (onQueuedSong(s)) { resumeAfterDivert(); return; }
   }
   if (ctl.solo) {
@@ -938,6 +962,7 @@ async function stepTrack(wc, name) {
 
   // Next goes to the queue first; at the end of the queue it picks the playlist up again.
   if (name === 'next' && ctl.queue.length) { await playQueued(ctl.snap && ctl.snap.videoId); return true; }
+  if (name === 'next' && onQueuedSong(ctl.snap) && refillQueue()) { await playQueued(ctl.snap && ctl.snap.videoId); return true; }
   if (name === 'next' && onQueuedSong(ctl.snap)) { await resumeAfterDivert(); return true; }
 
   // A single song has nothing to move to: Next / Back just start it over.
@@ -994,7 +1019,7 @@ const playerCmd = async (name, arg) => {
       case 'pause': await wc.executeJavaScript(videoDo('v.pause();'), true); return true;
       case 'toggle': await wc.executeJavaScript(videoDo('if (v.paused) v.play(); else v.pause();'), true); return true;
       case 'next': case 'prev': return await stepTrack(wc, name);
-      case 'setShuffle': ctl.shuffle = !!arg; ctl.order = []; ctl.orderLen = 0; ctl.pos = 0; return true;
+      case 'setShuffle': ctl.shuffle = !!arg; ctl.pick = -1; ctl.order = []; ctl.orderLen = 0; ctl.pos = 0; return true;
       case 'setRepeat': ctl.repeat = ['off', 'all', 'one'].includes(arg) ? arg : 'off'; return true;
       case 'seek':
         if (!Number.isFinite(num) || num < 0) return false;
@@ -1442,7 +1467,7 @@ ipcMain.handle('lyrics:fetched', () => loadSettings().fetchedLyrics || []);
       search: (query) => handlers['player:search'](null, query),
       enqueue: (item, front) => handlers['player:enqueue'](null, item, front),
       queue: () => handlers['player:queue'](),
-      enqueueMany: (items, front) => handlers['player:enqueueMany'](null, items, front),
+      enqueueMany: (items, front, asPlaylist) => handlers['player:enqueueMany'](null, items, front, asPlaylist),
       resolveItems: (src) => handlers['player:resolveItems'](null, src),
       importPlaylist: (ext) => handlers['player:importPlaylist'](null, ext),
       importStatus: () => handlers['player:importStatus'](),

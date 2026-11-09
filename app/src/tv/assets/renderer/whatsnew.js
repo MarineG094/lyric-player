@@ -2,6 +2,14 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 20,
+    title: 'Fix: imported playlists play, shuffle and repeat properly',
+    items: [
+      { text: 'Play on an imported (Spotify, Deezer, SoundCloud) playlist now starts it right away, even if a song is already playing.' },
+      { text: 'Shuffle now mixes the imported songs, and Repeat: playlist starts the playlist over when it ends.' },
+    ],
+  },
+  {
     id: 19,
     title: 'Fix: the mini player stays on top',
     items: [
