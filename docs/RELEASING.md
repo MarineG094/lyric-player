@@ -3,6 +3,13 @@
 - **`main`** is what people get. Every push to `main` builds Windows, Linux and Android and publishes them as the `latest` releases.
 - **`dev`** is where work happens. Pushing to `dev` only runs the tests (nothing is published).
 
+## Test builds from `dev`
+Every push to `dev` also builds test copies, published as **pre-releases** (not the normal downloads):
+- **dev-windows**: `Lyric-Player-DEV-<version>.exe` (portable, no install).
+- **dev-android**: `LyricPlayer-DEV.apk` (phone) and `LyricPlayer-TV-DEV.apk` (TV).
+
+They have their own name and settings and install next to the real app, and they never show "Update available". Try them, then merge `dev` into `main` to release.
+
 ## Small update or hotfix
 1. Work on `dev`, push, wait for the **Test (dev)** check to pass.
 2. Merge `dev` into `main` (`git checkout main && git merge --ff-only dev && git push`, or a pull request on GitHub).

@@ -43,6 +43,13 @@ android {
         debug {
             signingConfig = signingConfigs.getByName("debug")
         }
+        // The test build from the dev branch: its own app id (installs next to the real app, own settings) and name.
+        create("dev") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
+            matchingFallbacks += listOf("debug")
+        }
         release {
             isMinifyEnabled = false
             signingConfig = signingConfigs.getByName("debug")
