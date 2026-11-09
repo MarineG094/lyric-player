@@ -327,5 +327,16 @@
     return best ? best.r : null;
   }
 
-  return { searchTries, extractExternal, SERVICE_NAME, parseSpotifyEmbed, parseDeezer, parseSoundcloud, matchTrack, parse, activeIndex, hasTimestamps, matchFile, normalize, sanitizeFileName, formatTime, extractPlaylistId, extractSource, queryFor };
+  /* Is this lyrics-service result the same song? The title has to be the same (a longer title that starts with it is fine:
+     "Memories" is not "Dead Memories") and, when we know the artist, the artist has to match too. */
+  function sameSong(track, artist, resTrack, resArtist) {
+    const nt = normalize(track), rt = normalize(resTrack);
+    if (!nt || !rt) return false;
+    const titleOk = rt === nt || rt.startsWith(nt + ' ') || nt.startsWith(rt + ' ');
+    const na = normalize(artist), ra = normalize(resArtist);
+    const artistOk = !na || (!!ra && (ra.includes(na) || na.includes(ra)));
+    return titleOk && artistOk;
+  }
+
+  return { sameSong, searchTries, extractExternal, SERVICE_NAME, parseSpotifyEmbed, parseDeezer, parseSoundcloud, matchTrack, parse, activeIndex, hasTimestamps, matchFile, normalize, sanitizeFileName, formatTime, extractPlaylistId, extractSource, queryFor };
 });

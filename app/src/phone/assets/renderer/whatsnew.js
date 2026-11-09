@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 26,
+    title: 'Fix: lyrics from a different song',
+    items: [
+      { text: 'Lyrics are now only taken from a result with the same title and the same artist. Before, a different song that showed up in the lyrics search (like "Dead Memories" for "Memories") could be shown. If a song has no lyrics found, use Add lyrics.' },
+    ],
+  },
+  {
     id: 25,
     title: 'Fix: fan uploads and clips no longer matched',
     items: [

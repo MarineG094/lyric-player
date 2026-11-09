@@ -1196,7 +1196,8 @@ async function fromLrclib(track, artist, seconds) {
   const results = await lrclibRequest('/search?' + new URLSearchParams({ track_name: track, artist_name: artist || '' }));
   if (Array.isArray(results)) {
     const na = Lyrics.normalize(artist);
-    const usable = results.filter(hasLyrics);
+    // only the same song: a different song that merely came up in the search must never be shown
+    const usable = results.filter((r) => hasLyrics(r) && Lyrics.sameSong(track, artist, r.trackName, r.artistName));
     // With a known length, only accept results within 10 seconds of it so we don't show a different version's timing.
     const close = seconds > 0 ? usable.filter((r) => Math.abs((r.duration || 0) - seconds) <= 10) : usable;
     const rank = (r) => {

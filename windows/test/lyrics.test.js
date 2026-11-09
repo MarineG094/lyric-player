@@ -311,3 +311,13 @@ test('matchTrack: an upload with the artist in its title, and a clip, are not th
   assert.equal(L.matchTrack({ title: 'Wake Me Up', artist: 'Avicii' }, [upload]), null);
   assert.equal(L.matchTrack({ title: 'Wake Me Up', artist: 'Avicii', dur: 247 }, [upload, real]).id, 'rrrrrrrrrrr');
 });
+
+test('sameSong: a different song that came up in the search is rejected', () => {
+  assert.equal(L.sameSong('Memories', 'Callysta', 'Dead Memories', 'Slipknot'), false);
+  assert.equal(L.sameSong('Memories', 'Callysta', 'Memories', 'Slipknot'), false);
+  assert.equal(L.sameSong('Memories', 'Callysta', 'Memories', 'Callysta'), true);
+  assert.equal(L.sameSong('Halo', 'Beyoncé', 'Halo', 'Beyonce'), true);
+  assert.equal(L.sameSong('Wake Me Up', 'Avicii', 'Wake Me Up (Radio Edit)', 'Avicii'), true);
+  assert.equal(L.sameSong('Wake Me Up', 'Aloe Blacc, Avicii', 'Wake Me Up', 'Avicii'), true);
+  assert.equal(L.sameSong('Memories', '', 'Memories', 'Anyone'), true);
+});
