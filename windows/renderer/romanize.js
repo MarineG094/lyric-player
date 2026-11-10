@@ -2,9 +2,10 @@
    Hindi / Devanagari has its own converter that reads like everyday "Hinglish" (chala chal rahi);
    every other script goes through any-ascii. Latin-script lyrics and Quran text are left alone. */
 (function (root, factory) {
-  if (typeof module === 'object' && module.exports) module.exports = factory(require('./anyascii.js'));
-  else root.Romanize = factory(root.AnyAscii);
-})(this, function (anyAscii) {
+  // The big any-ascii table is only fetched when a lyric in another script shows up (see ready()).
+  if (typeof module === 'object' && module.exports) module.exports = factory(() => require('./anyascii.js'));
+  else root.Romanize = factory(() => root.AnyAscii || null);
+})(this, function (getAnyAscii) {
   'use strict';
 
   const VOWEL = { 'अ': 'a', 'आ': 'aa', 'इ': 'i', 'ई': 'ee', 'उ': 'u', 'ऊ': 'oo', 'ऋ': 'ri', 'ए': 'e', 'ऐ': 'ai', 'ओ': 'o', 'औ': 'au', 'ऑ': 'o', 'ऍ': 'e' };
@@ -93,6 +94,8 @@
   const ANY_NON_LATIN = /[Ͱ-ۿݐ-ݿऀ-๿ᄀ-ᇿ぀-ヿ㄰-㆏一-鿿가-힯ﭐ-﷿ﹰ-﻿]/;
   const STAMP_PREFIX = /^((?:\s*\[[^\]]*\])*\s*)([\s\S]*)$/;
 
+  const anyAscii = (w) => getAnyAscii()(w);
+
   function line(text) {
     let s = text.replace(DEVANAGARI, (w) => hindiWord(w));
     s = s.replace(/[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]+/g, (w) => anyAscii(w).toLowerCase()); // Korean comes out in odd capitals
@@ -118,5 +121,8 @@
     return ANY_NON_LATIN.test(t) && !t.includes('﴿');
   }
 
-  return { text, needsRomanizing, hindiWord };
+  /* True when the any-ascii table is loaded (always in tests). Hindi alone does not need it, but keep it simple. */
+  function ready() { try { return typeof getAnyAscii() === 'function'; } catch { return false; } }
+
+  return { text, needsRomanizing, hindiWord, ready };
 });

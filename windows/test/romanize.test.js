@@ -32,3 +32,9 @@ test('Quran text (Arabic with a translation) is not converted', () => {
   assert.strictEqual(R.text(s), s);
   assert.strictEqual(R.needsRomanizing(s), false);
 });
+
+test('romanize reports when its conversion table is available', () => {
+  assert.strictEqual(R.ready(), true);
+  assert.strictEqual(R.needsRomanizing('안녕하세요'), true);
+  assert.strictEqual(R.needsRomanizing('hello'), false);
+});

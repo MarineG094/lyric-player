@@ -1052,7 +1052,30 @@
 
   // Songs in other scripts are shown in English letters (the saved file keeps the original text).
   function shown(raw) {
-    return state.romanize && window.Romanize ? window.Romanize.text(raw) : raw;
+    if (!state.romanize || !window.Romanize) return raw;
+    if (!window.Romanize.ready()) {
+      // First non-Latin lyric: fetch the conversion table once, then redraw.
+      if (window.Romanize.needsRomanizing(raw)) loadRomanTable();
+      return raw;
+    }
+    return window.Romanize.text(raw);
+  }
+
+  let romanLoading = false;
+  function loadRomanTable() {
+    if (romanLoading) return;
+    romanLoading = true;
+    const sc = document.createElement('script');
+    sc.src = 'anyascii.js';
+    sc.onload = () => {
+      if (state.romanize && state.lyricsRaw) {
+        state.lyricsData = L.parse(shown(state.lyricsRaw));
+        state.activeIdx = -1;
+        renderLyrics();
+      }
+    };
+    sc.onerror = () => { romanLoading = false; };
+    document.head.appendChild(sc);
   }
 
   async function showLyricsForCurrent() {

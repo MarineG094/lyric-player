@@ -27,17 +27,40 @@ let host = '127.0.0.1';
 
 const settingsPath = () => path.join(app.getPath('userData'), 'settings.json');
 
+let settingsCache = null;
+let settingsTimer = null;
+
+/* Read once, then served from memory (a copy, so callers can change theirs freely). */
 function loadSettings() {
+  if (settingsCache === null) {
+    try {
+      settingsCache = JSON.parse(fs.readFileSync(settingsPath(), 'utf8'));
+    } catch {
+      settingsCache = {};
+    }
+    if (!settingsCache || typeof settingsCache !== 'object' || Array.isArray(settingsCache)) settingsCache = {};
+  }
+  return { ...settingsCache };
+}
+
+function writeSettingsNow() {
+  if (settingsTimer) { clearTimeout(settingsTimer); settingsTimer = null; }
+  if (settingsCache === null) return;
   try {
-    return JSON.parse(fs.readFileSync(settingsPath(), 'utf8'));
-  } catch {
-    return {};
+    fs.mkdirSync(path.dirname(settingsPath()), { recursive: true });
+    const tmp = settingsPath() + '.tmp';
+    fs.writeFileSync(tmp, JSON.stringify(settingsCache, null, 2));
+    fs.renameSync(tmp, settingsPath());
+  } catch (e) {
+    try { fs.writeFileSync(settingsPath(), JSON.stringify(settingsCache, null, 2)); } catch { /* nothing more to try */ }
   }
 }
 
+/* The memory copy changes at once; the file follows a moment later (and always on quit), so the
+   resume-position save every few seconds does not hit the disk each time. */
 function saveSettings(settings) {
-  fs.mkdirSync(path.dirname(settingsPath()), { recursive: true });
-  fs.writeFileSync(settingsPath(), JSON.stringify(settings, null, 2));
+  settingsCache = { ...settings };
+  if (!settingsTimer) settingsTimer = setTimeout(writeSettingsNow, 400);
 }
 
 function lyricsDir() {
@@ -1921,7 +1944,8 @@ function applyTray(on) {
   }
 }
 
-app.on('before-quit', () => { quitting = true; Discord.stop(); });
+app.on('before-quit', () => { quitting = true; writeSettingsNow(); Discord.stop(); });
+app.on('will-quit', writeSettingsNow);
 
 
 /* ---------- update in place (Windows portable .exe or installed copy, and Linux AppImage) ----------
