@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 38,
+    title: 'Moved to a new address',
+    items: [
+      { text: 'The app\'s home on GitHub has a new address. This update checks that updating still works after the move. If Check for updates ever says it can\'t read the newest version, download the latest build once by hand from the Releases page, and updates will work from then on.' },
+    ],
+  },
+  {
     id: 37,
     title: 'TV: cleaner full screen',
     items: [
