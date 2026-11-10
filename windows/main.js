@@ -1572,7 +1572,7 @@ const lrclibRequest = (pathAndQuery) => jsonGet('LRCLIB', LRCLIB + pathAndQuery)
 ipcMain.handle('app:latestRelease', async (_e, tag) => {
   if (tag !== 'latest' && tag !== 'windows-latest' && tag !== 'linux-latest') return null;
   try {
-    const r = await jsonGet('GitHub', `https://api.github.com/repos/MarineG094/lyric-player/releases/tags/${tag}`, { Accept: 'application/vnd.github+json' });
+    const r = await jsonGet('GitHub', `https://api.github.com/repos/Syncstanza/lyric-player/releases/tags/${tag}`, { Accept: 'application/vnd.github+json' });
     if (!r) return null;
     return { sha: String(r.target_commitish || ''), assets: (r.assets || []).map((x) => ({ name: String(x.name || ''), url: String(x.browser_download_url || '') })) };
   } catch (_) { return null; }
@@ -1980,7 +1980,7 @@ ipcMain.handle('app:selfUpdate', async (e) => {
   const send = (pct) => { try { e.sender.send('app:updateProgress', pct); } catch (_) { /* window gone */ } };
   const tmp = T.installer ? path.join(os.tmpdir(), 'Lyric-Player-update.exe') : T.file + '.new';
   try {
-    const rel = await jsonGet('GitHub', `https://api.github.com/repos/MarineG094/lyric-player/releases/tags/${T.tag}`, { Accept: 'application/vnd.github+json' }, 15000);
+    const rel = await jsonGet('GitHub', `https://api.github.com/repos/Syncstanza/lyric-player/releases/tags/${T.tag}`, { Accept: 'application/vnd.github+json' }, 15000);
     const assets = (rel && rel.assets) || [];
     const bin = assets.find((a) => T.pick.test(String(a.name || '')));
     const sum = bin && assets.find((a) => a.name === bin.name + '.sha256');
