@@ -1704,7 +1704,7 @@
     els.news.hidden = false;
     els.newsClose.focus();
   }
-  if (window.__build && window.__build.version) { els.menuVersion.textContent = 'Version ' + window.__build.version; els.menuVersion.hidden = false; }
+  if (window.__build && window.__build.version) { els.menuVersion.textContent = 'Version ' + window.__build.version + ' \u00b7 Syncstanza'; els.menuVersion.hidden = false; }
   els.btnWhatsNew.addEventListener('click', () => showNews(0, true));
   els.newsClose.addEventListener('click', () => { els.news.hidden = true; });
   els.news.addEventListener('keydown', (e) => { if (e.key === 'Escape') els.news.hidden = true; });

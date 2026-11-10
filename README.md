@@ -4,6 +4,8 @@
 
 # Lyric Player
 
+<sub>Made by **Syncstanza**</sub>
+
 **Lyrics that scroll in time with the music. Search any song or bring your Spotify, Deezer and SoundCloud playlists. Free, no account, on Windows, Linux, Android, Android Auto and Google TV.**
 
 [![Build](https://github.com/NaqibC/lyric-player/actions/workflows/build.yml/badge.svg)](https://github.com/NaqibC/lyric-player/actions/workflows/build.yml)
