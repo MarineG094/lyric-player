@@ -313,7 +313,7 @@
       const sha = String(rel.sha || '');
       const asset = (rel.assets || []).find((x) => want.test(x.name || ''));
       const url = asset && String(asset.url || '');
-      if (!/^[0-9a-f]{40}$/.test(sha) || !url.startsWith(`https://github.com/${REPO}/releases/`)) return say("Couldn't read the newest version's details.");
+      if (!/^[0-9a-f]{40}$/.test(sha) || !/^https:\/\/github\.com\/[A-Za-z0-9-]+\/lyric-player\/releases\//.test(url)) return say("Couldn't read the newest version's details.");
       if (sha !== B.sha) {
         const info = { sha, url, platform: B.platform };
         window.api.setSettings({ updateInfo: info });

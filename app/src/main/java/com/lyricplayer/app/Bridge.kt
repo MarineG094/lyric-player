@@ -16,7 +16,7 @@ class Bridge {
     @JavascriptInterface fun mergeSettings(json: String) { Hub.store.merge(json) }
     /** Opens a GitHub download link of this app (for the update button) in the browser. Anything else is ignored. */
     @JavascriptInterface fun openUrl(url: String) {
-        if (!url.startsWith("https://github.com/NaqibC/lyric-player/")) return
+        if (!Regex("^https://github\\.com/[A-Za-z0-9-]+/lyric-player/").containsMatchIn(url)) return
         val act = Hub.activity ?: return
         act.runOnUiThread {
             try { act.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))) } catch (_: Exception) { /* no browser on this device */ }

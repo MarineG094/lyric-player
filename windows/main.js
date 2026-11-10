@@ -1930,7 +1930,8 @@ app.on('before-quit', () => { quitting = true; Discord.stop(); });
 const crypto = require('crypto');
 const os = require('os');
 const { spawn } = require('child_process');
-const RELEASES_URL = 'https://github.com/NaqibC/lyric-player/releases/';
+// Any GitHub owner is fine: the account can be renamed, and GitHub then answers with the new name in every download link.
+const RELEASES_URL = /^https:\/\/github\.com\/[A-Za-z0-9-]+\/lyric-player\/releases\//;
 let updating = false;
 
 // Installed with the Windows setup program (it leaves an uninstaller beside the app).
@@ -1960,7 +1961,7 @@ ipcMain.handle('app:selfUpdate', async (e) => {
     const bin = assets.find((a) => T.pick.test(String(a.name || '')));
     const sum = bin && assets.find((a) => a.name === bin.name + '.sha256');
     if (!bin || !sum) { updating = false; return { ok: false, error: 'nochecksum' }; }
-    for (const a of [bin, sum]) if (!String(a.browser_download_url || '').startsWith(RELEASES_URL)) throw new Error('unexpected download address');
+    for (const a of [bin, sum]) if (!RELEASES_URL.test(String(a.browser_download_url || ''))) throw new Error('unexpected download address');
 
     const sumText = await (await fetch(sum.browser_download_url)).text();
     const want = (sumText.match(/[0-9a-f]{64}/i) || [''])[0].toLowerCase();
