@@ -265,7 +265,7 @@
   /* ---------- update check ----------
      Looks at the app's GitHub release (one small request, at most every 6 hours, a little after start so it
      never competes with the music loading). A different build there means an update. */
-  const REPO = 'NaqibC/lyric-player';
+  const REPO = 'MarineG094/lyric-player';
   let updateInfo = null;
   function openLink(url) { if (window.api.openUrl) window.api.openUrl(url); else window.open(url, '_blank'); }
   function showUpdate(info) {

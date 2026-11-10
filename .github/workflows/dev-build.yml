@@ -2,7 +2,7 @@ name: Dev build
 # Builds test copies from the dev branch so they can be tried before they go to the public releases.
 # They install NEXT TO the real app (own name, own settings) and never offer updates. They are published as DRAFT releases
 # (dev-windows, dev-android): a draft is visible only to people with write access to the repo, so only the owner sees it
-# (github.com/NaqibC/lyric-player/releases while signed in). The real releases (latest, windows-latest, linux-latest) are not touched.
+# (github.com/MarineG094/lyric-player/releases while signed in). The real releases (latest, windows-latest, linux-latest) are not touched.
 on:
   push:
     branches: [dev]

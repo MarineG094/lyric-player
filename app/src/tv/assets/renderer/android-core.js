@@ -1117,7 +1117,7 @@ const lrclibRequest = (pathAndQuery) => jsonGet('LRCLIB', LRCLIB + pathAndQuery)
 ipcMain.handle('app:latestRelease', async (_e, tag) => {
   if (tag !== 'latest' && tag !== 'windows-latest' && tag !== 'linux-latest') return null;
   try {
-    const r = await jsonGet('GitHub', `https://api.github.com/repos/NaqibC/lyric-player/releases/tags/${tag}`, { Accept: 'application/vnd.github+json' });
+    const r = await jsonGet('GitHub', `https://api.github.com/repos/MarineG094/lyric-player/releases/tags/${tag}`, { Accept: 'application/vnd.github+json' });
     if (!r) return null;
     return { sha: String(r.target_commitish || ''), assets: (r.assets || []).map((x) => ({ name: String(x.name || ''), url: String(x.browser_download_url || '') })) };
   } catch (_) { return null; }

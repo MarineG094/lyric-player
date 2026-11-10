@@ -8,14 +8,14 @@
 
 **Lyrics that scroll in time with the music. Search any song or bring your Spotify, Deezer and SoundCloud playlists. Free, no account, on Windows, Linux, Android, Android Auto and Google TV.**
 
-[![Build](https://github.com/NaqibC/lyric-player/actions/workflows/build.yml/badge.svg)](https://github.com/NaqibC/lyric-player/actions/workflows/build.yml)
+[![Build](https://github.com/MarineG094/lyric-player/actions/workflows/build.yml/badge.svg)](https://github.com/MarineG094/lyric-player/actions/workflows/build.yml)
 ![Windows](https://img.shields.io/badge/Windows-installer%20%2B%20portable-0078d4)
 ![Linux](https://img.shields.io/badge/Linux-AppImage%20%2F%20.deb-fcc624)
 ![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B-3ddc84)
 ![Android Auto](https://img.shields.io/badge/Android%20Auto-media%20app-4285f4)
 ![Google TV](https://img.shields.io/badge/Google%20TV-remote%20ready-ea4335)
 
-[**⬇ Windows**](https://github.com/NaqibC/lyric-player/releases/tag/windows-latest) · [**⬇ Linux**](https://github.com/NaqibC/lyric-player/releases/tag/linux-latest) · [**⬇ Android + TV**](https://github.com/NaqibC/lyric-player/releases/tag/latest)
+[**⬇ Windows**](https://github.com/MarineG094/lyric-player/releases/tag/windows-latest) · [**⬇ Linux**](https://github.com/MarineG094/lyric-player/releases/tag/linux-latest) · [**⬇ Android + TV**](https://github.com/MarineG094/lyric-player/releases/tag/latest)
 
 <img src="docs/windows-main.jpg" width="900" alt="Lyric Player on Windows: album cover on the left, synced lyrics on the right, controls along the bottom">
 
@@ -71,7 +71,7 @@
 
 ## 💻 Windows
 
-1. Open the [**windows-latest release**](https://github.com/NaqibC/lyric-player/releases/tag/windows-latest).
+1. Open the [**windows-latest release**](https://github.com/MarineG094/lyric-player/releases/tag/windows-latest).
 2. Download **`Lyric-Player-Setup-<version>.exe`** (recommended), run it, and follow the short wizard: choose where to install, add a desktop shortcut, and start the app when it finishes. It installs for your account only, so it doesn't ask for administrator rights. Windows may show a "protected your PC" notice because the app isn't signed: click **More info**, then **Run anyway**.
    Prefer no install? Download **`Lyric-Player-<version>.exe`** instead and double-click it. It is portable.
 3. Click **Change music**, then search or paste a link.
@@ -92,7 +92,7 @@ Made and tested on **Linux Mint**; other Debian/Ubuntu-based systems should work
 
 **AppImage (recommended: it updates itself)**
 
-1. Open the [**linux-latest release**](https://github.com/NaqibC/lyric-player/releases/tag/linux-latest) and download **`Lyric-Player-<version>.AppImage`** into a folder you can write to, such as Downloads.
+1. Open the [**linux-latest release**](https://github.com/MarineG094/lyric-player/releases/tag/linux-latest) and download **`Lyric-Player-<version>.AppImage`** into a folder you can write to, such as Downloads.
 2. Make it runnable and start it:
    ```
    cd ~/Downloads
@@ -113,7 +113,7 @@ Everything in the Windows version is included, including the mini player. It nee
 
 ## 📲 Android
 
-1. Open the [**latest release**](https://github.com/NaqibC/lyric-player/releases/tag/latest) on your phone.
+1. Open the [**latest release**](https://github.com/MarineG094/lyric-player/releases/tag/latest) on your phone.
 2. Download **`LyricPlayer.apk`**.
 3. Open it and allow **Install unknown apps** for your browser when asked.
 4. Open **Lyric Player**, allow notifications, then search or paste a link.
