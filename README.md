@@ -17,6 +17,10 @@
 
 [**⬇ Windows**](https://github.com/Syncstanza/lyric-player/releases/tag/windows-latest) · [**⬇ Linux**](https://github.com/Syncstanza/lyric-player/releases/tag/linux-latest) · [**⬇ Android + TV**](https://github.com/Syncstanza/lyric-player/releases/tag/latest)
 
+<img src="docs/promo.gif" width="720" alt="A 25-second tour: lyrics scrolling in time, importing a playlist, and Lyric Player on Windows, Linux, Android, Android Auto and Google TV">
+
+<sub>[▶ Watch with sound (MP4)](docs/promo.mp4)</sub>
+
 <img src="docs/windows-main.jpg" width="900" alt="Lyric Player on Windows: album cover on the left, synced lyrics on the right, controls along the bottom">
 
 </div>
