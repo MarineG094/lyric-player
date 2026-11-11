@@ -1,3 +1,10 @@
 {
-  "items": []
+  "items": [
+    {
+      "id": 1,
+      "title": "Announcements are here",
+      "text": "News and tips from the developer will show up in this bar. Tip: when a playlist import can't find a song, press Search next to it to pick the right one yourself. A queue panel with playlists is coming next.",
+      "date": "2026-11-11"
+    }
+  ]
 }
