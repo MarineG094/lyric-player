@@ -67,6 +67,12 @@ html, body {
 #btnMenu[aria-expanded="true"]::after { transform: rotate(225deg); margin-bottom: -2px; }
 .menu-panel { position: fixed; z-index: 80; min-width: 232px; max-width: calc(100vw - 20px); padding: 6px; display: flex; flex-direction: column; border-radius: 16px; border: 1px solid var(--line); background: color-mix(in srgb, var(--bg) 90%, var(--text) 10%); box-shadow: 0 16px 44px rgba(0, 0, 0, .5); backdrop-filter: blur(14px); }
 .menu-panel[hidden] { display: none; }
+.menu-panel { overflow-y: auto; }
+.menu-panel .menu-group-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.menu-group-head .chev { opacity: .7; transition: transform .15s; }
+.menu-group-head[aria-expanded="true"] .chev { transform: rotate(180deg); }
+.menu-group-body { display: flex; flex-direction: column; margin: 2px 0 6px 12px; padding-left: 6px; border-left: 2px solid var(--line); }
+.menu-group-body[hidden] { display: none; }
 .menu-panel button { border: 0; background: transparent; text-align: left; white-space: nowrap; padding: 10px 14px; border-radius: 10px; font-size: 13.5px; color: var(--text); }
 .menu-panel button:hover, .menu-panel button:focus-visible { background: color-mix(in srgb, var(--text) 11%, transparent); }
 

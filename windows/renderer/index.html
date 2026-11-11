@@ -21,21 +21,24 @@
           <button id="btnMenu" class="ghost" type="button" aria-haspopup="true" aria-expanded="false" title="More options">Menu</button>
           <div id="menuPanel" class="menu-panel" role="menu" hidden>
             <button id="btnBrowse" type="button" title="Show the YouTube Music page: browse, accept cookies, or sign in">YouTube Music</button>
-            <button id="btnAds" type="button" title="Block and skip YouTube Music ads">Ad block: on</button>
-            <button id="btnCover" type="button" title="Automatically hide explicit album covers">Cover filter: on</button>
-            <button id="btnRoman" type="button" title="Show lyrics in English letters when a song is in another script (Hindi, Arabic, Korean, ...)">English letters: on</button>
-            <button id="btnAuto" type="button" title="Look up lyrics online (LRCLIB) when a song has no lyrics file">Auto lyrics: on</button>
-            <button id="btnSide" type="button" title="Switch the album cover between the right and left side">Album: right</button>
-            <button id="btnStartup" type="button" title="Start Lyric Player when you sign in to the computer" hidden>Launch at startup: off</button>
-            <button id="btnDiscord" type="button" title="Show the song you are playing as your Discord status (needs the Discord app open on this computer)" hidden>Discord status: off</button>
-            <button id="btnTray" type="button" title="Closing the window keeps Lyric Player running in the tray. Quit from the tray icon." hidden>Keep in tray: off</button>
-            <label class="menu-row" id="rowLang" hidden><span>Language</span><select id="selLang" aria-label="Language"></select></label>
-            <label class="menu-row" id="rowTrans" hidden><span>Translate lyrics</span><select id="selTrans" aria-label="Translate lyrics"></select></label>
-            <button id="btnClearTr" type="button" title="Delete the saved translations from this device" hidden>Clear translations</button>
+            <button id="btnMenuSettings" class="menu-group-head" type="button" aria-expanded="false" title="Switches and options"><span>Settings</span><span class="chev" aria-hidden="true">▾</span></button>
+            <div id="menuSettings" class="menu-group-body" hidden>
+              <button id="btnAds" type="button" title="Block and skip YouTube Music ads">Ad block: on</button>
+              <button id="btnCover" type="button" title="Automatically hide explicit album covers">Cover filter: on</button>
+              <button id="btnRoman" type="button" title="Show lyrics in English letters when a song is in another script (Hindi, Arabic, Korean, ...)">English letters: on</button>
+              <button id="btnAuto" type="button" title="Look up lyrics online (LRCLIB) when a song has no lyrics file">Auto lyrics: on</button>
+              <button id="btnSide" type="button" title="Switch the album cover between the right and left side">Album: right</button>
+              <button id="btnStartup" type="button" title="Start Lyric Player when you sign in to the computer" hidden>Launch at startup: off</button>
+              <button id="btnDiscord" type="button" title="Show the song you are playing as your Discord status (needs the Discord app open on this computer)" hidden>Discord status: off</button>
+              <button id="btnTray" type="button" title="Closing the window keeps Lyric Player running in the tray. Quit from the tray icon." hidden>Keep in tray: off</button>
+              <label class="menu-row" id="rowLang" hidden><span>Language</span><select id="selLang" aria-label="Language"></select></label>
+              <label class="menu-row" id="rowTrans" hidden><span>Translate lyrics</span><select id="selTrans" aria-label="Translate lyrics"></select></label>
+              <button id="btnClearTr" type="button" title="Delete the saved translations from this device" hidden>Clear translations</button>
+              <button id="btnAnnShow" type="button" title="Show a small bar at the top when there is a new announcement">Show announcements: on</button>
+              <button id="btnFsSide" type="button" title="Which corner the full screen button sits in when the phone is sideways (left-handed? pick left)">Fullscreen button: right</button>
+            </div>
             <button id="btnWhatsNew" type="button" title="See what changed in the latest update">What's new</button>
             <button id="btnAnn" type="button" title="Notes from the developer: news, tips, things to know">Announcements</button>
-            <button id="btnAnnShow" type="button" title="Show a small bar at the top when there is a new announcement">Show announcements: on</button>
-            <button id="btnFsSide" type="button" title="Which corner the full screen button sits in when the phone is sideways (left-handed? pick left)">Fullscreen button: right</button>
             <button id="btnCheckUpdate" type="button" title="Look for a newer version of the app">Check for updates</button>
             <button id="btnFolder" type="button" title="Open the folder where lyrics files live">Lyrics folder</button>
             <div id="menuVersion" class="menu-version" hidden></div>

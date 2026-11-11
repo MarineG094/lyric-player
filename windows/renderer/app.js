@@ -84,6 +84,8 @@
     btnAuto: $('#btnAuto'),
     btnRoman: $('#btnRoman'),
     btnAnn: $('#btnAnn'),
+    btnMenuSettings: $('#btnMenuSettings'),
+    menuSettings: $('#menuSettings'),
     btnAnnShow: $('#btnAnnShow'),
     annBar: $('#annBar'),
     annText: $('#annText'),
@@ -249,6 +251,7 @@
     // Line up with the Menu button's right edge, but never run off either side of the screen.
     m.style.left = `${Math.round(Math.max(10, Math.min(r.right - w, vw - w - 10)))}px`;
     m.style.top = `${Math.round(r.bottom + 8)}px`;
+    m.style.maxHeight = `${Math.max(160, window.innerHeight - Math.round(r.bottom + 8) - 10)}px`; // never runs off the window: it scrolls instead
     els.btnMenu.setAttribute('aria-expanded', 'true');
   }
   function closeMenu(refocus) {
@@ -261,7 +264,7 @@
   els.btnMenu.addEventListener('click', () => { if (els.menuPanel.hidden) { openMenu(); const f = [...els.menuPanel.querySelectorAll('button')].find((b) => b.offsetParent !== null); if (f && window.__lpTv) f.focus(); } else closeMenu(); });
   els.menuPanel.addEventListener('click', (e) => { // choices that open something close the menu; the on/off switches stay so several can be flipped
     const b = e.target.closest('button');
-    if (b && !/^(btnAds|btnCover|btnRoman|btnAnnShow|btnAuto|btnSide|btnFsSide|btnStartup|btnTray|btnDiscord|btnClearTr)$/.test(b.id)) closeMenu();
+    if (b && !/^(btnMenuSettings|btnAds|btnCover|btnRoman|btnAnnShow|btnAuto|btnSide|btnFsSide|btnStartup|btnTray|btnDiscord|btnClearTr)$/.test(b.id)) closeMenu();
   });
   document.addEventListener('pointerdown', (e) => { if (!els.menuPanel.hidden && !e.target.closest('.menu-wrap')) closeMenu(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && closeMenu(true)) e.stopPropagation(); }, true);
@@ -1731,6 +1734,12 @@
   }
   if (window.__build && window.__build.version) { els.menuVersion.textContent = 'Version ' + window.__build.version + ' \u00b7 Syncstanza'; els.menuVersion.hidden = false; }
   els.btnWhatsNew.addEventListener('click', () => showNews(0, true));
+  els.btnMenuSettings.addEventListener('click', () => { // the switches are tucked into one group so the menu stays short
+    const open = els.menuSettings.hidden;
+    els.menuSettings.hidden = !open;
+    els.btnMenuSettings.setAttribute('aria-expanded', String(open));
+    openMenu(); // the panel changed size: line it up with the Menu button again
+  });
 
   /* ---------- announcements: notes from the developer, read from a small file online ---------- */
   let annList = null; // null = not fetched yet

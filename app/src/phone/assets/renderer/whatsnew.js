@@ -8,6 +8,7 @@ window.__whatsnew = [
       { text: 'Announcements: a small bar can now appear at the top with news or tips from the developer. Menu > Announcements shows them all, and Menu > Show announcements turns the bar off.' },
       { text: 'When a playlist import can\'t find a song, the list now has a Search button next to it. It opens the search with the song already typed in, so you can pick the right one yourself.' },
       { text: 'Spotify only shares the first 100 songs of a playlist. If an import hits exactly 100, the app now tells you the rest may not have been read.' },
+      { text: 'The Menu is tidier: the switches (ad block, cover filter, English letters, and so on) now sit under one Settings row that opens and closes, and the menu scrolls if the window is small.' },
       { text: 'Faster start and less disk use: settings are kept in memory and saved a moment later, and the English-letters table loads only when a song needs it.', desktop: true },
     ],
   },
