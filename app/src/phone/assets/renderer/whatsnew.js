@@ -2,6 +2,16 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 39,
+    title: 'Announcements, and a Search button for missing songs',
+    items: [
+      { text: 'Announcements: a small bar can now appear at the top with news or tips from the developer. Menu > Announcements shows them all, and Menu > Show announcements turns the bar off.' },
+      { text: 'When a playlist import can\'t find a song, the list now has a Search button next to it. It opens the search with the song already typed in, so you can pick the right one yourself.' },
+      { text: 'Spotify only shares the first 100 songs of a playlist. If an import hits exactly 100, the app now tells you the rest may not have been read.' },
+      { text: 'Faster start and less disk use: settings are kept in memory and saved a moment later, and the English-letters table loads only when a song needs it.', desktop: true },
+    ],
+  },
+  {
     id: 38,
     title: 'Moved to a new address',
     items: [
