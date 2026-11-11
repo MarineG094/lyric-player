@@ -22,3 +22,16 @@ Add a new entry at the top of `windows/renderer/whatsnew.js` (next id), run `pyt
 
 ## If a build shows a red mark
 Open the Releases page first. If every platform shows the newest commit, it is only GitHub failing to start a job: run **Build APK** again by hand (Actions, Build APK, Run workflow).
+
+
+## Announcements
+
+`announcements.json` in the repo root (main branch) is read by the app a few seconds after start. Format:
+
+```json
+{ "items": [ { "id": 1, "title": "Short title", "text": "One or two sentences, plain text.", "date": "2026-11-11", "until": "2026-12-01" } ] }
+```
+
+- `id` must be a number and go up with each new announcement; people who dismissed id N only see ids above N.
+- `until` (optional) hides it after that date. At most the 5 newest are shown. No links or formatting.
+- Change the file on `main` and it goes live within minutes, with no new release. An empty list (`"items": []`) shows nothing.

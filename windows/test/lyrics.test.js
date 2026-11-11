@@ -391,3 +391,29 @@ test('matchTrack: an artist named like the song is a different artist, not a mis
   assert.equal(L.matchTrack(want, [wrong, real]).id, 'rrrrrrrrrrr');
   assert.equal(L.matchTrack(want, [wrong, { ...real, type: 'Video', sub: 'Gym Class Heroes • 1.1B views • 3:32' }]).id, 'rrrrrrrrrrr');
 });
+
+test('missingQuery turns a not-found line into words to search for', () => {
+  const L = require('../renderer/lyrics.js');
+  assert.strictEqual(L.missingQuery('Wiz Khalifa – Payphone  (searched, but only found: A | B)'), 'Wiz Khalifa Payphone');
+  assert.strictEqual(L.missingQuery('Maroon 5 – Payphone  (nothing came back from the search)'), 'Maroon 5 Payphone');
+  assert.strictEqual(L.missingQuery('Just A Title'), 'Just A Title');
+  assert.strictEqual(L.missingQuery(''), '');
+});
+
+test('cleanAnnouncements keeps only valid, current items, newest first, as plain text', () => {
+  const now = Date.parse('2026-11-11');
+  const out = L.cleanAnnouncements({ items: [
+    { id: 1, title: 'Old', text: 'one', until: '2026-01-01' },
+    { id: 2, title: 'Two', text: ' second ', date: '2026-11-10T10:00:00Z' },
+    { id: 3, text: 'third', until: '2027-01-01' },
+    { id: 'x', text: 'bad id' }, { id: 4, text: '' }, null, 'junk',
+    { id: 5, title: 'T'.repeat(200), text: 'y'.repeat(900) },
+  ] }, now);
+  assert.deepStrictEqual(out.map((a) => a.id), [5, 3, 2]);
+  assert.strictEqual(out[0].title.length, 80);
+  assert.strictEqual(out[0].text.length, 600);
+  assert.strictEqual(out[2].text, 'second');
+  assert.strictEqual(out[2].date, '2026-11-10');
+  assert.deepStrictEqual(L.cleanAnnouncements(null), []);
+  assert.deepStrictEqual(L.cleanAnnouncements({ items: 'no' }), []);
+});

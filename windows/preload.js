@@ -19,6 +19,7 @@ contextBridge.exposeInMainWorld('api', {
   onSettingsChanged: (cb) => ipcRenderer.on('settings:changed', (_e, s) => cb(s)),
   onUpdateProgress: (cb) => ipcRenderer.on('app:updateProgress', (_e, pct) => cb(pct)),
   latestRelease: (tag) => ipcRenderer.invoke('app:latestRelease', tag),
+  announcements: () => ipcRenderer.invoke('app:announcements'),
   getSaved: () => ipcRenderer.invoke('saved:get'),
   setSaved: (list) => ipcRenderer.invoke('saved:set', list),
   getLyricsDir: () => ipcRenderer.invoke('lyrics:dir'),

@@ -35,6 +35,8 @@
             <label class="menu-row" id="rowTrans" hidden><span>Translate lyrics</span><select id="selTrans" aria-label="Translate lyrics"></select></label>
             <button id="btnClearTr" type="button" title="Delete the saved translations from this device" hidden>Clear translations</button>
             <button id="btnWhatsNew" type="button" title="See what changed in the latest update">What's new</button>
+            <button id="btnAnn" type="button" title="Notes from the developer: news, tips, things to know">Announcements</button>
+            <button id="btnAnnShow" type="button" title="Show a small bar at the top when there is a new announcement">Show announcements: on</button>
             <button id="btnFsSide" type="button" title="Which corner the full screen button sits in when the phone is sideways (left-handed? pick left)">Fullscreen button: right</button>
             <button id="btnCheckUpdate" type="button" title="Look for a newer version of the app">Check for updates</button>
             <button id="btnDiag" type="button">Diagnose</button>
@@ -44,6 +46,8 @@
         </div>
       </div>
     </header>
+
+    <div id="annBar" class="ann-bar" role="status" hidden><span id="annText"></span><button id="annClose" class="ghost small" type="button" aria-label="Dismiss">Dismiss</button></div>
 
     <main id="stage" class="stage">
       <section class="lyrics-col" aria-label="Lyrics">

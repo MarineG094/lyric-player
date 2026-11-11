@@ -83,10 +83,16 @@
     btnFolder: $('#btnFolder'),
     btnAuto: $('#btnAuto'),
     btnRoman: $('#btnRoman'),
+    btnAnn: $('#btnAnn'),
+    btnAnnShow: $('#btnAnnShow'),
+    annBar: $('#annBar'),
+    annText: $('#annText'),
+    annClose: $('#annClose'),
     menuVersion: $('#menuVersion'),
     btnWhatsNew: $('#btnWhatsNew'),
     news: $('#news'),
     newsBody: $('#newsBody'),
+    newsTitle: $('#newsTitle'),
     newsClose: $('#newsClose'),
     rowLang: $('#rowLang'),
     rowTrans: $('#rowTrans'),
@@ -255,7 +261,7 @@
   els.btnMenu.addEventListener('click', () => { if (els.menuPanel.hidden) { openMenu(); const f = [...els.menuPanel.querySelectorAll('button')].find((b) => b.offsetParent !== null); if (f && window.__lpTv) f.focus(); } else closeMenu(); });
   els.menuPanel.addEventListener('click', (e) => { // choices that open something close the menu; the on/off switches stay so several can be flipped
     const b = e.target.closest('button');
-    if (b && !/^(btnAds|btnCover|btnRoman|btnAuto|btnSide|btnFsSide|btnStartup|btnTray|btnDiscord|btnClearTr)$/.test(b.id)) closeMenu();
+    if (b && !/^(btnAds|btnCover|btnRoman|btnAnnShow|btnAuto|btnSide|btnFsSide|btnStartup|btnTray|btnDiscord|btnClearTr)$/.test(b.id)) closeMenu();
   });
   document.addEventListener('pointerdown', (e) => { if (!els.menuPanel.hidden && !e.target.closest('.menu-wrap')) closeMenu(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && closeMenu(true)) e.stopPropagation(); }, true);
@@ -337,7 +343,18 @@
     els.importClose.hidden = !!(opts && opts.running);
     els.importMissing.hidden = !(opts && opts.missing && opts.missing.length);
     els.importMissing.textContent = '';
-    if (opts && opts.missing) for (const m of opts.missing) { const li = document.createElement('li'); li.textContent = m; els.importMissing.appendChild(li); }
+    if (opts && opts.missing) for (const m of opts.missing) {
+      const li = document.createElement('li');
+      const span = document.createElement('span'); span.textContent = m;
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'ghost small miss-search'; b.textContent = 'Search'; b.title = 'Search YouTube Music for this song yourself';
+      b.addEventListener('click', () => { // opens the search with the song already typed in; pick the right result there
+        showOverlay();
+        els.searchInput.value = L.missingQuery(m);
+        runSearch();
+      });
+      li.append(span, b);
+      els.importMissing.appendChild(li);
+    }
   }
   els.importCancel.addEventListener('click', () => { P.importCancel(); els.importCancel.hidden = true; els.importText.textContent += ' Stopping…'; });
   els.importClose.addEventListener('click', () => { els.importNote.hidden = true; });
@@ -412,6 +429,7 @@
     const first = started ? items[0] : null;
     const bits = [`${fresh ? 'Found' : 'Saved playlist:'} ${items.length}${fresh ? ' of ' + (pl.total || items.length) : ''} songs${pl.name ? ' from "' + pl.name + '"' : ''}, ${first ? 'started' : playFirst ? 'playing next' : 'added to the queue'}.`];
     if (missing.length) bits.push(`Not all songs were found. Missing ${missing.length}:`);
+    if (pl.service === 'spotify' && pl.total === 100) bits.push('(Spotify only shares the first 100 songs of a playlist, so if yours is longer the rest were not read.)');
     if (pl.cut) bits.push(`(${pl.cut} more songs in the playlist were left out; at most 200 are imported.)`);
     if (pl.cancelled) bits.push('(Stopped early.)');
     showImport(bits.join(' '), { running: false, missing });
@@ -1696,6 +1714,7 @@
     const all = window.__whatsnew || [];
     const entries = latestOnly ? all.slice(0, 1) : all.filter((e) => e.id > lastSeen).slice(0, 4);
     els.newsBody.textContent = '';
+    els.newsTitle.textContent = "What's new";
     let any = false;
     for (const e of entries) {
       const items = (e.items || []).filter((i) => (!i.desktop || desktop) && (!i.mobile || !desktop));
@@ -1712,6 +1731,47 @@
   }
   if (window.__build && window.__build.version) { els.menuVersion.textContent = 'Version ' + window.__build.version + ' \u00b7 Syncstanza'; els.menuVersion.hidden = false; }
   els.btnWhatsNew.addEventListener('click', () => showNews(0, true));
+
+  /* ---------- announcements: notes from the developer, read from a small file online ---------- */
+  let annList = null; // null = not fetched yet
+  async function fetchAnnouncements() {
+    try { annList = (window.api.announcements && await window.api.announcements()) || []; } catch (_) { annList = []; }
+    return annList;
+  }
+  async function checkAnnouncements() {
+    if (window.__lpTv || !state.showAnn) return;
+    const list = await fetchAnnouncements();
+    const seen = Number(state.annSeen) || 0;
+    const a = list.find((x) => x.id > seen);
+    if (!a) { els.annBar.hidden = true; return; }
+    els.annText.textContent = (a.title ? a.title + ': ' : '') + a.text;
+    els.annBar.dataset.id = String(list[0].id); // dismissing marks the newest one as read
+    els.annBar.hidden = false;
+  }
+  els.annClose.addEventListener('click', () => {
+    state.annSeen = Number(els.annBar.dataset.id) || state.annSeen;
+    window.api.setSettings({ annSeen: state.annSeen });
+    els.annBar.hidden = true;
+  });
+  els.btnAnn.addEventListener('click', async () => {
+    const list = annList || await fetchAnnouncements();
+    if (!list.length) { toast('No announcements right now.'); return; }
+    els.newsTitle.textContent = 'Announcements';
+    els.newsBody.textContent = '';
+    for (const a of list) {
+      if (a.title) { const h = document.createElement('h3'); h.textContent = a.title + (a.date ? ' · ' + a.date : ''); els.newsBody.appendChild(h); }
+      const p = document.createElement('p'); p.textContent = a.text; els.newsBody.appendChild(p);
+    }
+    state.annSeen = list[0].id; window.api.setSettings({ annSeen: state.annSeen }); els.annBar.hidden = true;
+    els.news.hidden = false; els.newsClose.focus();
+  });
+  function applyAnnShow() { els.btnAnnShow.textContent = state.showAnn ? 'Show announcements: on' : 'Show announcements: off'; }
+  els.btnAnnShow.addEventListener('click', () => {
+    state.showAnn = !state.showAnn;
+    window.api.setSettings({ showAnnouncements: state.showAnn });
+    applyAnnShow();
+    if (state.showAnn) checkAnnouncements(); else els.annBar.hidden = true;
+  });
   els.newsClose.addEventListener('click', () => { els.news.hidden = true; });
   els.news.addEventListener('keydown', (e) => { if (e.key === 'Escape') els.news.hidden = true; });
 
@@ -1735,6 +1795,10 @@
     applyAuto();
     state.romanize = settings.romanize !== false;
     applyRoman();
+    state.showAnn = settings.showAnnouncements !== false;
+    state.annSeen = Number(settings.annSeen) || 0;
+    applyAnnShow();
+    setTimeout(checkAnnouncements, 20000);
     state.transTarget = LANG_UI && typeof settings.translateTo === 'string' ? settings.translateTo : '';
     if (LANG_UI) {
       els.selTrans.value = state.transTarget;

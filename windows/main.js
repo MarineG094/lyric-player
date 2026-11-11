@@ -1578,6 +1578,12 @@ ipcMain.handle('app:latestRelease', async (_e, tag) => {
   } catch (_) { return null; }
 });
 
+/* ---------- announcements: a small file in the repo that the app reads (see docs/RELEASING.md) ---------- */
+ipcMain.handle('app:announcements', async () => {
+  try { return Lyrics.cleanAnnouncements(await jsonGet('GitHub', 'https://raw.githubusercontent.com/Syncstanza/lyric-player/main/announcements.json', {}, 10000)); }
+  catch (_) { return []; }
+});
+
 /* ---------- translation (lyric lines and the app's own labels) ----------
    The free Google Translate web endpoint first, MyMemory as a backup. Only the text to translate is sent. */
 const GT_URL = 'https://translate.googleapis.com/translate_a/single';

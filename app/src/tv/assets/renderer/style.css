@@ -494,6 +494,8 @@ button.icon.play svg { width: 26px; height: 26px; }
 .import-note[hidden], .import-note [hidden] { display: none; }
 .import-note p { margin: 0 0 8px; }
 .import-note ul { margin: 0 0 8px; padding-left: 20px; font-size: 13px; opacity: .85; }
+.import-note li { margin: 3px 0; }
+.import-note .miss-search { margin-left: 8px; padding: 1px 8px; font-size: 12px; vertical-align: baseline; }
 .import-btns { display: flex; gap: 8px; justify-content: flex-end; }
 .import-btns .ghost { margin-top: 0; }
 
@@ -533,3 +535,8 @@ html[dir="rtl"] .controls, html[dir="rtl"] .seek-row, html[dir="rtl"] .transport
   .or { margin: 8px 0 6px; }
   .fine { margin: 8px 0 6px; }
 }
+
+.ann-bar { display: flex; align-items: center; gap: 12px; margin: 0 16px 8px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--accent, #7a5cff) 14%, transparent); font-size: 14px; }
+.ann-bar[hidden] { display: none; }
+.ann-bar span { flex: 1; min-width: 0; }
+.ann-bar .ghost { flex: none; }

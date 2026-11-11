@@ -153,6 +153,32 @@
   /* Turns a YouTube title + channel name into { track, artist } for an online lookup.
      Auto-generated "Artist - Topic" channels have clean titles; regular uploads
      are often "Artist - Song (Official Video)". */
+  /* A "not found" line from an import ("Artist – Title  (searched, but only found: …)") -> the words to search for by hand. */
+  function missingQuery(line) {
+    return String(line || '')
+      .replace(/\s{2,}\((searched, but only found|nothing came back)[\s\S]*$/, '')
+      .replace(/\s+[–-]\s+/, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  /* announcements.json from the repo -> a short, safe list, newest first. Plain text only, no links or markup. */
+  function cleanAnnouncements(json, now) {
+    const list = json && Array.isArray(json.items) ? json.items : [];
+    const t = now || Date.now();
+    const out = [];
+    for (const a of list) {
+      if (!a || typeof a !== 'object') continue;
+      const id = Number(a.id);
+      const text = typeof a.text === 'string' ? a.text.trim().slice(0, 600) : '';
+      if (!Number.isInteger(id) || id < 1 || !text) continue;
+      if (typeof a.until === 'string' && Date.parse(a.until) < t) continue; // past its end date
+      out.push({ id, title: typeof a.title === 'string' ? a.title.trim().slice(0, 80) : '', text, date: typeof a.date === 'string' ? a.date.slice(0, 10) : '' });
+    }
+    out.sort((x, y) => y.id - x.id);
+    return out.slice(0, 5);
+  }
+
   function queryFor(title, author) {
     const isTopic = /-\s*Topic$/i.test(String(author || ''));
     let artist = String(author || '').replace(/\s*-\s*Topic$/i, '').replace(/\s*VEVO$/i, '').trim();
@@ -380,5 +406,5 @@
     return titleOk && artistOk;
   }
 
-  return { sameSong, searchTries, extractExternal, SERVICE_NAME, parseSpotifyEmbed, parseDeezer, parseSoundcloud, matchTrack, parse, activeIndex, hasTimestamps, matchFile, normalize, sanitizeFileName, formatTime, extractPlaylistId, extractSource, queryFor };
+  return { sameSong, searchTries, extractExternal, SERVICE_NAME, parseSpotifyEmbed, parseDeezer, parseSoundcloud, matchTrack, parse, activeIndex, hasTimestamps, matchFile, normalize, sanitizeFileName, formatTime, extractPlaylistId, extractSource, queryFor, missingQuery, cleanAnnouncements };
 });
