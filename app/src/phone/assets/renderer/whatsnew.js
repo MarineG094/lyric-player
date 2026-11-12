@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 40,
+    title: 'Steadier volume',
+    items: [
+      { text: 'The app no longer pushes the volume back to your slider setting every quarter second. It now sets it only when you move the slider or a new song starts, so it stops fighting YouTube\'s own level changes. This should stop the sudden volume jumps some people heard during a song.', desktop: true },
+    ],
+  },
+  {
     id: 39,
     title: 'Announcements, and a Search button for missing songs',
     items: [

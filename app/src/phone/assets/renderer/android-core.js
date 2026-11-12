@@ -111,6 +111,7 @@ const probeScript = (desiredVolume, blockAds, wantId) => `(() => {
     if (!title) { try { const pm = q('#movie_player'); const pr = pm && pm.getPlayerResponse && pm.getPlayerResponse(); const d = pr && pr.videoDetails; if (d) { title = d.title || ''; if (!artist) artist = String(d.author || '').replace(/ - Topic$/, ''); const th = d.thumbnail && d.thumbnail.thumbnails; if (!art && th && th.length) art = th[th.length - 1].url; } } catch (e) { /* keep empty */ } }
     if (art) art = art.replace(/=w\\d+-h\\d+[^"']*$/, '=w800-h800');
     const adNow = !!q('.ad-showing, .ad-interrupting');
+    window.__lpAdNow = adNow;
     if (adNow && ${blockAds ? 'true' : 'false'}) {
       if (v) {
         if (!window.__lpMuted) { window.__lpMuted = true; window.__lpWasMuted = v.muted; }
@@ -127,8 +128,16 @@ const probeScript = (desiredVolume, blockAds, wantId) => `(() => {
       if (v) { v.muted = !!window.__lpWasMuted; v.playbackRate = 1; }
     }
     const want = ${desiredVolume == null ? 'null' : Number(desiredVolume)};
-    if (v && want != null && Math.abs(v.volume * 100 - want) > 1.5) v.volume = Math.max(0, Math.min(1, want / 100));
     const vid = new URL(location.href).searchParams.get('v') || '';
+    // Set the volume only when it needs setting (the slider moved, a new song, or a new player), not on every look:
+    // pushing it back every quarter second fights YouTube's own level changes and can be heard as jumps.
+    if (v && want != null && !window.__lpAdNow) {
+      const key = want + '|' + vid;
+      if (window.__lpVolKey !== key || window.__lpVolEl !== v) {
+        window.__lpVolKey = key; window.__lpVolEl = v;
+        if (Math.abs(v.volume * 100 - want) > 1.5) v.volume = Math.max(0, Math.min(1, want / 100));
+      }
+    }
     // The queue is a big list of components; walking it is the costly part of a look. So it is only walked when the
     // song, the list or the wanted song changed (or every 5 seconds); otherwise the last answer is reused.
     const nl = document.querySelectorAll('ytmusic-player-queue-item');
