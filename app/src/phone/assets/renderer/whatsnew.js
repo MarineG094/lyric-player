@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 43,
+    title: 'Volume spike fix',
+    items: [
+      { text: 'Found the cause of the sudden volume jumps: YouTube Music was resetting its volume to 100 at the start of songs and sometimes mid-song. The app now blocks that and keeps the volume where your slider is.', desktop: true },
+    ],
+  },
+  {
     id: 42,
     title: 'Smoother start on phones',
     items: [

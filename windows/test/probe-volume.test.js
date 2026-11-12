@@ -24,17 +24,17 @@ function look(want, st) {
   vm.runInNewContext(probeScript(want, true, null), ctx);
 }
 
-test('volume is set once per song or slider move, not fought over every look', () => {
+test('volume is put back whenever YouTube moves it, and left alone during an ad', () => {
   const v = { readyState: 4, paused: false, volume: 1, muted: false, duration: 200, currentTime: 5, playbackRate: 1 };
   const st = { v, win: {}, vid: 'abc', ad: false };
   look(80, st);
   assert.strictEqual(v.volume, 0.8);                 // first look applies the wanted volume
-  v.volume = 0.5; look(80, st); look(80, st);
-  assert.strictEqual(v.volume, 0.5);                 // YouTube changed it mid-song: left alone
-  st.vid = 'def'; look(80, st);
-  assert.strictEqual(v.volume, 0.8);                 // a new song applies it again
+  v.volume = 1; look(80, st);
+  assert.strictEqual(v.volume, 0.8);                 // YouTube jumped it to 100 mid-song: put back
+  st.vid = 'def'; v.volume = 1; look(80, st);
+  assert.strictEqual(v.volume, 0.8);                 // a new song
   v.volume = 1; look(60, st);
-  assert.strictEqual(v.volume, 0.6);                 // the slider moved: applied
+  assert.strictEqual(v.volume, 0.6);                 // the slider moved
   st.ad = true; st.vid = 'ghi'; v.volume = 1; look(60, st);
   assert.strictEqual(v.volume, 1);                   // during an ad it is not touched
 });

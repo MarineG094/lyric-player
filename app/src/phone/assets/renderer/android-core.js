@@ -130,14 +130,34 @@ const probeScript = (desiredVolume, blockAds, wantId) => `(() => {
     }
     const want = ${desiredVolume == null ? 'null' : Number(desiredVolume)};
     const vid = new URL(location.href).searchParams.get('v') || '';
-    // Set the volume only when it needs setting (the slider moved, a new song, or a new player), not on every look:
-    // pushing it back every quarter second fights YouTube's own level changes and can be heard as jumps.
-    if (v && want != null && !window.__lpAdNow) {
-      const key = want + '|' + vid;
-      if (window.__lpVolKey !== key || window.__lpVolEl !== v) {
-        window.__lpVolKey = key; window.__lpVolEl = v;
-        if (Math.abs(v.volume * 100 - want) > 1.5) { v.volume = Math.max(0, Math.min(1, want / 100)); window.__lpLastVol = v.volume; }
-      }
+    // YouTube resets the volume to 100 now and then (at the start of a song and sometimes mid-song), which is heard as a
+    // spike. So the page's own volume setter is blocked while a volume is wanted (only this app sets it), and the level
+    // is put back at once on the media events and, as a safety net, on every look if it still differs.
+    window.__lpWant = ${desiredVolume == null ? 'null' : Number(desiredVolume)};
+    if (!window.__lpGuard && typeof HTMLMediaElement !== 'undefined' && typeof document.addEventListener === 'function') {
+      window.__lpGuard = true;
+      try {
+        const d = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'volume');
+        if (d && d.set && d.get) {
+          window.__lpSetVol = (el, x) => d.set.call(el, x);
+          Object.defineProperty(HTMLMediaElement.prototype, 'volume', {
+            configurable: true, enumerable: d.enumerable, get: d.get,
+            set(x) { if (window.__lpWant != null && !window.__lpAdNow) return; d.set.call(this, x); },
+          });
+        }
+      } catch (_) { /* the look below still corrects it */ }
+      const enforce = (e) => {
+        const el = e.target;
+        if (!el || el.tagName !== 'VIDEO' || window.__lpWant == null || window.__lpAdNow) return;
+        const w = Math.max(0, Math.min(1, window.__lpWant / 100));
+        if (Math.abs(el.volume - w) > 0.015) (window.__lpSetVol || ((q, x) => { q.volume = x; }))(el, w);
+      };
+      for (const ev of ['loadstart', 'emptied', 'playing', 'volumechange']) document.addEventListener(ev, enforce, true);
+    }
+    if (v && want != null && !window.__lpAdNow && Math.abs(v.volume * 100 - want) > 1.5) {
+      const w = Math.max(0, Math.min(1, want / 100));
+      (window.__lpSetVol || ((q, x) => { q.volume = x; }))(v, w);
+      window.__lpLastVol = v.volume;
     }
     // Diagnostic: remember any sudden volume change the app did not make, so the cause can be found.
     if (v) {
