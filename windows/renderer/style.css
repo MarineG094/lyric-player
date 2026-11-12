@@ -578,3 +578,11 @@ html:not(.no-intro) #app{animation:app-in .9s cubic-bezier(.2,.8,.2,1) 2.3s both
 html.no-intro #splash,html.intro-done #splash{display:none}
 html.intro-done #app{animation:none}
 @media (prefers-reduced-motion: reduce){#splash,#splash *{animation-duration:.01s!important;animation-delay:0s!important}html:not(.no-intro) #app{animation-duration:.01s;animation-delay:0s}}
+/* intro on narrow screens (phones): centred, smaller text that never wraps oddly */
+#splash{text-align:center;padding:0 24px}
+#splash .icon{width:min(150px,34vw);height:auto;aspect-ratio:1}
+#splash h1{font-size:clamp(34px,10vw,64px);white-space:nowrap}
+#splash .line{font-size:clamp(15px,4.4vw,24px);white-space:nowrap}
+#splash .by{font-size:clamp(10px,2.8vw,14px);letter-spacing:.3em;white-space:nowrap}
+#splash .by img{width:30px;height:30px}
+#splash .orb{max-width:90vw;max-height:90vw}
