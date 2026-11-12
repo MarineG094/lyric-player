@@ -17,5 +17,13 @@
   }
   window.addEventListener('keydown', finish, true);
   window.addEventListener('pointerdown', finish, true);
-  setTimeout(finish, 3500);
+  // Start the animation once the page is loaded and painted, then end it 3.5 s later (or at once on a click or key).
+  var started = false;
+  function go() {
+    if (started || done) return;
+    started = true;
+    requestAnimationFrame(function () { requestAnimationFrame(function () { root.classList.add('intro-go'); setTimeout(finish, 3500); }); });
+  }
+  if (document.readyState === 'complete') go(); else window.addEventListener('load', go);
+  setTimeout(function () { go(); setTimeout(finish, 4500); }, 5000); // safety net if load never fires
 })();
