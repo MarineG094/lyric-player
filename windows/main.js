@@ -331,8 +331,17 @@ const probeScript = (desiredVolume, blockAds, wantId) => `(() => {
       const key = want + '|' + vid;
       if (window.__lpVolKey !== key || window.__lpVolEl !== v) {
         window.__lpVolKey = key; window.__lpVolEl = v;
-        if (Math.abs(v.volume * 100 - want) > 1.5) v.volume = Math.max(0, Math.min(1, want / 100));
+        if (Math.abs(v.volume * 100 - want) > 1.5) { v.volume = Math.max(0, Math.min(1, want / 100)); window.__lpLastVol = v.volume; }
       }
+    }
+    // Diagnostic: remember any sudden volume change the app did not make, so the cause can be found.
+    if (v) {
+      const lg = window.__lpVolLog || (window.__lpVolLog = []);
+      const lv = window.__lpLastVol;
+      if (lv != null && Math.abs(v.volume - lv) > 0.1 && lg.length < 20) {
+        lg.push({ at: Date.now(), pos: Math.round(v.currentTime), from: Math.round(lv * 100), to: Math.round(v.volume * 100), muted: v.muted, ad: !!window.__lpAdNow, gap: window.__lpPrev ? Date.now() - window.__lpPrev : 0 });
+      }
+      window.__lpLastVol = v.volume; window.__lpPrev = Date.now();
     }
     // The queue is a big list of components; walking it is the costly part of a look. So it is only walked when the
     // song, the list or the wanted song changed (or every 5 seconds); otherwise the last answer is reused.
@@ -380,6 +389,7 @@ const probeScript = (desiredVolume, blockAds, wantId) => `(() => {
       ended: !!(v && v.ended),
       queueCount: items.length,
       queueIds,
+      volLog: (window.__lpVolLog && window.__lpVolLog.length) ? window.__lpVolLog.splice(0) : null,
       curIdx,
       volume: v ? Math.round(v.volume * 100) : null,
       listId: new URL(location.href).searchParams.get('list') || '',
@@ -387,6 +397,16 @@ const probeScript = (desiredVolume, blockAds, wantId) => `(() => {
     };
   } catch (e) { return { hasMedia: false, error: String(e) }; }
 })()`;
+
+// Writes sudden volume changes (the app did not cause them) to volume-log.txt in the app's data folder.
+function logVolume(list) {
+  try {
+    const f = path.join(app.getPath('userData'), 'volume-log.txt');
+    let old = ''; try { old = fs.readFileSync(f, 'utf8'); } catch (_) { /* first entry */ }
+    const lines = list.map((e) => new Date(e.at).toISOString() + ' song@' + e.pos + 's volume ' + e.from + ' -> ' + e.to + ' muted=' + e.muted + ' ad=' + e.ad + ' lookGap=' + e.gap + 'ms (adblock ' + (adBlock ? 'on' : 'off') + ')');
+    fs.writeFileSync(f, (old + lines.join('\n') + '\n').split('\n').slice(-200).join('\n'));
+  } catch (_) { /* diagnostic only */ }
+}
 
 async function pollYt() {
   if (ytPolling || !ytView || !win || ytView.webContents.isDestroyed()) return;
@@ -406,6 +426,7 @@ async function pollYt() {
       }
       if (state.listId && !ctl.solo) ytListId = state.listId;
     }
+    if (state && Array.isArray(state.volLog) && state.volLog.length) logVolume(state.volLog);
     ctl.snap = state;
     if (state && Array.isArray(state.queueIds)) ctl.qids = state.queueIds;
     if (state && state.hasMedia) controllerTick(state);

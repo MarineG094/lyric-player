@@ -65,3 +65,4 @@ input[type="range"]::-webkit-slider-thumb { width: 24px; height: 24px; margin-to
 .overlay, .news, .cover-toggle { backdrop-filter: none; }
 .overlay { background: rgba(10, 8, 6, 0.93); }
 .news { background: rgba(10, 8, 6, 0.9); }
+#splash{display:none!important}

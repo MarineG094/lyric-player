@@ -2,6 +2,14 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 41,
+    title: 'Opening animation',
+    items: [
+      { text: 'The app now opens with a short animation that flows into the player. Click or press any key to skip it, or turn it off in Menu > Settings > Intro screen.' },
+      { text: 'To help track down the odd volume jump, the app now notes any sudden volume change it did not cause in a small log file (volume-log.txt in the app data folder).', desktop: true },
+    ],
+  },
+  {
     id: 40,
     title: 'Steadier volume',
     items: [

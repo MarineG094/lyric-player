@@ -8,8 +8,14 @@
         content="default-src 'self'; script-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; connect-src 'self'">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="tv.css">
+  <script src="intro.js"></script>
 </head>
 <body>
+  <div id="splash" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
+    <div class="ring"></div><div class="ring r2"></div>
+    <img class="icon" src="intro-icon.png" alt=""><h1>Lyric Player</h1>
+    <div class="line">Lyrics that move with the music<span>Lyrics that move with the music</span></div>
+    <div class="by"><img src="intro-sync.png" alt="">by Syncstanza</div></div>
   <div id="app">
     <header class="topbar">
       <div class="brand">Lyric Player</div>
@@ -36,6 +42,7 @@
               <label class="menu-row" id="rowLang" hidden><span>Language</span><select id="selLang" aria-label="Language"></select></label>
               <label class="menu-row" id="rowTrans" hidden><span>Translate lyrics</span><select id="selTrans" aria-label="Translate lyrics"></select></label>
               <button id="btnClearTr" type="button" title="Delete the saved translations from this device" hidden>Clear translations</button>
+              <button id="btnIntro" type="button" title="The short animation when the app opens">Intro screen: on</button>
               <button id="btnAnnShow" type="button" title="Show a small bar at the top when there is a new announcement">Show announcements: on</button>
               <button id="btnFsSide" type="button" title="Which corner the full screen button sits in when the phone is sideways (left-handed? pick left)">Fullscreen button: right</button>
             </div>

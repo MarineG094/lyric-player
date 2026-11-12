@@ -87,6 +87,7 @@
     btnMenuSettings: $('#btnMenuSettings'),
     menuSettings: $('#menuSettings'),
     btnAnnShow: $('#btnAnnShow'),
+    btnIntro: $('#btnIntro'),
     annBar: $('#annBar'),
     annText: $('#annText'),
     annClose: $('#annClose'),
@@ -264,7 +265,7 @@
   els.btnMenu.addEventListener('click', () => { if (els.menuPanel.hidden) { openMenu(); const f = [...els.menuPanel.querySelectorAll('button')].find((b) => b.offsetParent !== null); if (f && window.__lpTv) f.focus(); } else closeMenu(); });
   els.menuPanel.addEventListener('click', (e) => { // choices that open something close the menu; the on/off switches stay so several can be flipped
     const b = e.target.closest('button');
-    if (b && !/^(btnMenuSettings|btnAds|btnCover|btnRoman|btnAnnShow|btnAuto|btnSide|btnFsSide|btnStartup|btnTray|btnDiscord|btnClearTr)$/.test(b.id)) closeMenu();
+    if (b && !/^(btnMenuSettings|btnAds|btnCover|btnRoman|btnAnnShow|btnIntro|btnAuto|btnSide|btnFsSide|btnStartup|btnTray|btnDiscord|btnClearTr)$/.test(b.id)) closeMenu();
   });
   document.addEventListener('pointerdown', (e) => { if (!els.menuPanel.hidden && !e.target.closest('.menu-wrap')) closeMenu(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && closeMenu(true)) e.stopPropagation(); }, true);
@@ -1781,6 +1782,13 @@
     applyAnnShow();
     if (state.showAnn) checkAnnouncements(); else els.annBar.hidden = true;
   });
+  function applyIntro() { els.btnIntro.textContent = state.showIntro ? 'Intro screen: on' : 'Intro screen: off'; }
+  els.btnIntro.addEventListener('click', () => {
+    state.showIntro = !state.showIntro;
+    window.api.setSettings({ showIntro: state.showIntro });
+    try { localStorage.setItem('lpIntro', state.showIntro ? '1' : '0'); } catch (_) { /* ignore */ }
+    applyIntro();
+  });
   els.newsClose.addEventListener('click', () => { els.news.hidden = true; });
   els.news.addEventListener('keydown', (e) => { if (e.key === 'Escape') els.news.hidden = true; });
 
@@ -1807,6 +1815,9 @@
     state.showAnn = settings.showAnnouncements !== false;
     state.annSeen = Number(settings.annSeen) || 0;
     applyAnnShow();
+    state.showIntro = settings.showIntro !== false;
+    try { localStorage.setItem('lpIntro', state.showIntro ? '1' : '0'); } catch (_) { /* ignore */ }
+    applyIntro();
     setTimeout(checkAnnouncements, 20000);
     state.transTarget = LANG_UI && typeof settings.translateTo === 'string' ? settings.translateTo : '';
     if (LANG_UI) {
