@@ -2,6 +2,7 @@
    and defines window.api for the page. Everything the phone has to do natively goes through LPNative. */
 (() => {
   const N = window.LPNative;
+  window.__lpAndroid = true;
   const YT_URL = 'https://music.youtube.com/';
   const process = { env: {} };
 

@@ -93,3 +93,6 @@ button.icon:hover { background: transparent; }
 /* Search results on a narrow screen: the Play next / Queue buttons drop under the title. */
 .result-row { flex-wrap: wrap; }
 .result-row .qbtns { width: 100%; padding: 0 0 6px 66px; }
+/* opening animation: only fade the app in on phones (no scaling of the whole screen), which is lighter to draw */
+html:not(.no-intro) #app { animation-name: app-fade; }
+@keyframes app-fade { from { opacity: 0; } to { opacity: 1; } }

@@ -1848,6 +1848,7 @@
     renderLyrics();
     await refreshLyricFiles();
     if (window.__lpTv) await idle(2500); // let the first screen draw before YouTube Music starts loading
+    else if (window.__lpAndroid && window.__lpIntroWait) await window.__lpIntroWait; // phones: after the opening animation
 
     const savedHit = !settings.lastPlaylist && settings.lastImported ? (await loadSaved()).find((x) => x.url === settings.lastImported && x.items && x.items.length) : null;
     if (savedHit) {

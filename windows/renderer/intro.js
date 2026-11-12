@@ -6,9 +6,13 @@
   try { on = localStorage.getItem('lpIntro') !== '0'; } catch (_) { /* storage blocked: keep the default */ }
   if (!on) { root.classList.add('no-intro'); return; }
   var done = false;
+  var release;
+  // The page waits on this (phones) so YouTube Music does not start loading while the animation is playing.
+  window.__lpIntroWait = new Promise(function (r) { release = r; });
   function finish() {
     if (done) return;
     done = true;
+    release();
     root.classList.add('intro-done');
     var s = document.getElementById('splash');
     if (s && s.parentNode) s.parentNode.removeChild(s);

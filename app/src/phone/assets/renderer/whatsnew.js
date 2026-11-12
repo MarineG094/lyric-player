@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 42,
+    title: 'Smoother start on phones',
+    items: [
+      { text: 'Phone: the app opens faster and the opening animation runs smoothly. YouTube Music now starts loading just after the animation instead of during it.', mobile: true },
+    ],
+  },
+  {
     id: 41,
     title: 'Opening animation',
     items: [

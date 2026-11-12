@@ -108,8 +108,16 @@ object Hub {
     private var ytParentV: ViewGroup? = null
 
     private fun buildMissing() {
-        if (yt == null) { yt = buildYt(ytCtx!!); yt!!.loadUrl(YT_URL) }
+        // The player screen loads first so the opening animation has the phone to itself. The YouTube Music page only gets
+        // its warm-up load a moment later, and not at all if a song has already sent it somewhere.
         if (ui == null) { ui = buildUi(uiCtx!!); ui!!.loadUrl(UI_URL) }
+        if (yt == null) {
+            yt = buildYt(ytCtx!!)
+            main.postDelayed({
+                val u = yt?.url
+                if (u.isNullOrEmpty() || u == "about:blank") yt?.loadUrl(YT_URL)
+            }, 3000)
+        }
     }
 
     private fun mount() {
