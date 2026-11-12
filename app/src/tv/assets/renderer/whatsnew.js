@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 44,
+    title: 'What\'s new button fixed',
+    items: [
+      { text: 'The What\'s new button in the menu works again. It was showing nothing when the newest update only had notes for the other platform.' },
+    ],
+  },
+  {
     id: 43,
     title: 'Volume spike fix',
     items: [

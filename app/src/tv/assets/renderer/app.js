@@ -1733,7 +1733,9 @@
     if (browsing) { pendingNews = { lastSeen, latestOnly }; return; } // shown once the person is back on the lyrics page
     const desktop = !!(window.api && window.api.desktop);
     const all = window.__whatsnew || [];
-    const entries = latestOnly ? all.slice(0, 1) : all.filter((e) => e.id > lastSeen).slice(0, 4);
+    const visible = (e) => (e.items || []).some((i) => (!i.desktop || desktop) && (!i.mobile || !desktop));
+    // The button shows the newest update that has something for this device (the newest one may be only for the other platform).
+    const entries = latestOnly ? all.filter(visible).slice(0, 1) : all.filter((e) => e.id > lastSeen).slice(0, 4);
     els.newsBody.textContent = '';
     els.newsTitle.textContent = "What's new";
     let any = false;
@@ -1746,7 +1748,7 @@
       for (const i of items) { const li = document.createElement('li'); li.textContent = i.text; ul.appendChild(li); }
       els.newsBody.appendChild(ul);
     }
-    if (!any) return;
+    if (!any) { if (latestOnly) toast('Nothing new to show yet.'); return; }
     els.news.hidden = false;
     els.newsClose.focus();
   }
