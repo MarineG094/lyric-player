@@ -434,6 +434,11 @@ button.icon.play svg { width: 26px; height: 26px; }
   backdrop-filter: blur(6px);
   opacity: 0; transition: opacity 0.2s;
 }
+/* "ask me" cover question, across the top of the cover */
+.cover-ask { position: absolute; left: 10px; right: 10px; top: 10px; display: flex; align-items: center; gap: 8px; padding: 6px 8px 6px 12px; border-radius: 999px; background: rgba(10, 8, 6, 0.78); border: 1px solid var(--line); backdrop-filter: blur(6px); font-size: 13px; }
+.cover-ask[hidden] { display: none; }
+.cover-ask span { flex: 1; }
+.cover-ask button { padding: 5px 12px; border-radius: 999px; font-size: 12.5px; border: 1px solid var(--line); background: transparent; color: var(--text); }
 .album-box:hover .cover-toggle, .album-box.cover-hidden .cover-toggle, .cover-toggle:focus-visible { opacity: 1; }
 
 /* Arabic text (Quran recitations): centred so Arabic and its translation line up */

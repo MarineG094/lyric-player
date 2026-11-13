@@ -32,7 +32,7 @@
             <button id="btnMenuSettings" class="menu-group-head" type="button" aria-expanded="false" title="Switches and options"><span>Settings</span><span class="chev" aria-hidden="true">▾</span></button>
             <div id="menuSettings" class="menu-group-body" hidden>
               <button id="btnAds" type="button" title="Block and skip YouTube Music ads">Ad block: on</button>
-              <button id="btnCover" type="button" title="Automatically hide explicit album covers">Cover filter: on</button>
+              <button id="btnCover" type="button" title="Automatically hide explicit album covers, or ask about each new cover and remember the answer">Cover filter: on</button>
               <button id="btnRoman" type="button" title="Show lyrics in English letters when a song is in another script (Hindi, Arabic, Korean, ...)">English letters: on</button>
               <button id="btnAuto" type="button" title="Look up lyrics online (LRCLIB) when a song has no lyrics file">Auto lyrics: on</button>
               <button id="btnSide" type="button" title="Switch the album cover between the right and left side">Album: right</button>
@@ -93,6 +93,7 @@
           <div id="artEmpty" class="art-empty">♪</div>
           <div id="coverVeil" class="cover-veil" hidden>Cover hidden</div>
           <button id="btnCoverToggle" class="cover-toggle" type="button" hidden>Show cover</button>
+          <div id="coverAsk" class="cover-ask" hidden><span>Hide this cover?</span><button id="btnAskHide" type="button">Hide</button><button id="btnAskKeep" type="button">Keep</button></div>
         </div>
         <div class="meta">
           <div id="title" class="song-title">Nothing playing</div>

@@ -29,6 +29,9 @@
     albumBox: $('#albumBox'),
     coverVeil: $('#coverVeil'),
     btnCoverToggle: $('#btnCoverToggle'),
+    coverAsk: $('#coverAsk'),
+    btnAskHide: $('#btnAskHide'),
+    btnAskKeep: $('#btnAskKeep'),
     stage: $('#stage'),
     soloNote: $('#soloNote'),
     btnAddSolo: $('#btnAddSolo'),
@@ -141,6 +144,7 @@
     fullscreen: false,
     adBlock: true,
     coverFilter: true,
+    coverAsk: false,
     coverOverrides: {},
     coverKey: '',
     coverMode: 'shown',
@@ -896,9 +900,15 @@
     state.coverKey = key;
     if (!url || !key) { setCoverMode('shown'); return; }
 
+    hideCoverAsk();
     const choice = state.coverOverrides[key];
     if (choice === 'hide') { setCoverMode('hidden'); return; }
-    if (choice === 'show' || !state.coverFilter) { setCoverMode('shown'); return; }
+    if (choice === 'show') { setCoverMode('shown'); return; }
+    if (!state.coverFilter) {
+      setCoverMode('shown');
+      if (state.coverAsk) showCoverAsk(key); // "ask me" mode: no check runs, the person decides once per cover
+      return;
+    }
 
     let verdict = coverVerdicts.get(key);
     if (verdict === undefined) {
@@ -923,23 +933,48 @@
     setCoverMode(verdict ? 'hidden' : 'shown');
   }
 
-  els.btnCoverToggle.addEventListener('click', () => {
-    if (!state.coverKey) return;
-    const nowHidden = state.coverMode === 'shown'; // clicking "Hide cover" hides it, "Show cover" shows it
-    state.coverOverrides[state.coverKey] = nowHidden ? 'hide' : 'show';
+  function saveCoverChoice(key, choice) {
+    state.coverOverrides[key] = choice;
     const keys = Object.keys(state.coverOverrides);
     if (keys.length > 500) delete state.coverOverrides[keys[0]];
     window.api.setSettings({ coverOverrides: state.coverOverrides });
+  }
+  els.btnCoverToggle.addEventListener('click', () => {
+    if (!state.coverKey) return;
+    const nowHidden = state.coverMode === 'shown'; // clicking "Hide cover" hides it, "Show cover" shows it
+    saveCoverChoice(state.coverKey, nowHidden ? 'hide' : 'show');
+    hideCoverAsk();
     setCoverMode(nowHidden ? 'hidden' : 'shown');
   });
 
+  // "Ask me" mode: a small question on a cover that has no saved answer. The answer is saved, so that cover is never checked or asked again.
+  let coverAskTimer = null;
+  function hideCoverAsk() { clearTimeout(coverAskTimer); if (els.coverAsk) els.coverAsk.hidden = true; }
+  function showCoverAsk(key) {
+    els.coverAsk.hidden = false;
+    clearTimeout(coverAskTimer);
+    coverAskTimer = setTimeout(() => { if (state.coverKey === key) els.coverAsk.hidden = true; }, 15000); // ignored: nothing is saved, it asks again next time
+  }
+  function answerCoverAsk(hide) {
+    if (!state.coverKey) return;
+    saveCoverChoice(state.coverKey, hide ? 'hide' : 'show');
+    hideCoverAsk();
+    setCoverMode(hide ? 'hidden' : 'shown');
+    const b = document.getElementById('btnPlay'); if (b && window.__lpTv) b.focus();
+  }
+  els.btnAskHide.addEventListener('click', () => answerCoverAsk(true));
+  els.btnAskKeep.addEventListener('click', () => answerCoverAsk(false));
+
   function applyCoverFilterButton() {
-    els.btnCover.textContent = state.coverFilter ? (state.coverFailed ? 'Cover filter: on (not working)' : 'Cover filter: on') : 'Cover filter: off';
+    els.btnCover.textContent = state.coverFilter ? (state.coverFailed ? 'Cover filter: on (not working)' : 'Cover filter: on') : (state.coverAsk ? 'Cover filter: ask me' : 'Cover filter: off');
   }
   els.btnCover.addEventListener('click', () => {
-    state.coverFilter = !state.coverFilter;
+    // on (checks every cover) -> ask me (nothing is checked; asks once per cover and remembers) -> off
+    if (state.coverFilter) { state.coverFilter = false; state.coverAsk = true; }
+    else if (state.coverAsk) { state.coverAsk = false; }
+    else { state.coverFilter = true; }
     applyCoverFilterButton();
-    window.api.setSettings({ coverFilter: state.coverFilter });
+    window.api.setSettings({ coverFilter: state.coverFilter, coverAsk: state.coverAsk });
     if (state.artUrl) evaluateCover(state.artUrl);
   });
 
@@ -1808,6 +1843,7 @@
     state.adBlock = settings.adBlock !== false;
     // The cover check runs an 8 MB image model; a TV stick starts with it off (it can be turned on with the button).
     state.coverFilter = settings.coverFilter === undefined && window.__lpTv ? false : settings.coverFilter !== false;
+    state.coverAsk = settings.coverAsk === undefined ? (settings.coverFilter === undefined && !!window.__lpTv) : settings.coverAsk === true;
     state.coverOverrides = settings.coverOverrides && typeof settings.coverOverrides === 'object' ? settings.coverOverrides : {};
     applyCoverFilterButton();
     applyAds();

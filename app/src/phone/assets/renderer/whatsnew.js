@@ -2,6 +2,13 @@
    To announce an update, add an entry at the top with the next id. `desktop: true` items are only shown on Windows and Linux, `mobile: true` items only on the phone and TV. */
 window.__whatsnew = [
   {
+    id: 45,
+    title: 'Cover filter: ask me',
+    items: [
+      { text: 'New "Cover filter: ask me" choice (Menu > Settings). Nothing is checked, so it is fast. A new cover shows a small question, Hide or Keep, and your answer is remembered for that cover so it is never asked or checked again. Android TV now starts in this mode.' },
+    ],
+  },
+  {
     id: 44,
     title: 'What\'s new button fixed',
     items: [
