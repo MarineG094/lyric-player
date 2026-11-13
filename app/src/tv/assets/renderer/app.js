@@ -30,7 +30,7 @@
     coverVeil: $('#coverVeil'),
     btnCoverToggle: $('#btnCoverToggle'),
     coverAsk: $('#coverAsk'),
-    btnAskHide: $('#btnAskHide'),
+    btnAskShow: $('#btnAskShow'),
     btnAskKeep: $('#btnAskKeep'),
     stage: $('#stage'),
     soloNote: $('#soloNote'),
@@ -922,8 +922,8 @@
     if (choice === 'hide') { setCoverMode('hidden'); return; }
     if (choice === 'show') { setCoverMode('shown'); return; }
     if (!state.coverFilter) {
+      if (state.coverAsk) { setCoverMode('hidden'); showCoverAsk(key); return; } // "ask me" mode: no check runs; hidden until the person decides, once per cover
       setCoverMode('shown');
-      if (state.coverAsk) showCoverAsk(key); // "ask me" mode: no check runs, the person decides once per cover
       return;
     }
 
@@ -970,16 +970,16 @@
   function showCoverAsk(key) {
     els.coverAsk.hidden = false;
     clearTimeout(coverAskTimer);
-    coverAskTimer = setTimeout(() => { if (state.coverKey === key) els.coverAsk.hidden = true; }, 15000); // ignored: nothing is saved, it asks again next time
+    coverAskTimer = setTimeout(() => { if (state.coverKey === key) els.coverAsk.hidden = true; }, 15000); // ignored: the cover stays hidden and nothing is saved, so it asks again next time
   }
-  function answerCoverAsk(hide) {
+  function answerCoverAsk(show) {
     if (!state.coverKey) return;
-    saveCoverChoice(state.coverKey, hide ? 'hide' : 'show');
+    saveCoverChoice(state.coverKey, show ? 'show' : 'hide');
     hideCoverAsk();
-    setCoverMode(hide ? 'hidden' : 'shown');
+    setCoverMode(show ? 'shown' : 'hidden');
     const b = document.getElementById('btnPlay'); if (b && window.__lpTv) b.focus();
   }
-  els.btnAskHide.addEventListener('click', () => answerCoverAsk(true));
+  els.btnAskShow.addEventListener('click', () => answerCoverAsk(true));
   els.btnAskKeep.addEventListener('click', () => answerCoverAsk(false));
 
   function applyCoverFilterButton() {
